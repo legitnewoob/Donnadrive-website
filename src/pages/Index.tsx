@@ -7,6 +7,7 @@ import Pricing from "../components/Pricing";
 import FAQ from "../components/FAQ";
 import Contact from "../components/Contact";
 import ScrollProgress from "../components/ScrollProgress";
+import BeautyOfDonnaDrive from "@/components/BeautyOfDonnaDrive";
 
 const Index = () => {
   return (
@@ -16,6 +17,7 @@ const Index = () => {
       <Hero />
       <MeetDonna />
       <Features />
+      <BeautyOfDonnaDrive/>
       <HowItWorks />
       <Pricing />
       <FAQ />

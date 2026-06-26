@@ -7,7 +7,7 @@ on:
       - UAT
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
 jobs:
@@ -17,22 +17,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create PR Development → UAT
+      - name: Create Development → UAT PR
         if: github.ref == 'refs/heads/Development'
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: auto-dev-to-uat
-          base: UAT
-          title: "Auto Promotion: Development → UAT"
-          body: "Automated promotion from Development to UAT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base UAT \
+            --head Development \
+            --title "Auto Promotion: Development → UAT" \
+            --body "Automatically created after push to Development." \
+          || echo "PR already exists"
 
-      - name: Create PR UAT → Master
+      - name: Create UAT → Master PR
         if: github.ref == 'refs/heads/UAT'
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: auto-uat-to-master
-          base: Master
-          title: "Auto Promotion: UAT → Master"
-          body: "Automated promotion from UAT to Master"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base Master \
+            --head UAT \
+            --title "Auto Promotion: UAT → Master" \
+            --body "Automatically created after push to UAT." \
+          || echo "PR already exists"

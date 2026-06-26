@@ -2,76 +2,52 @@ import {
   MessageCircle,
   Calendar,
   Route,
-  LayoutDashboard,
   Bell,
+  LayoutDashboard,
   BarChart3,
 } from "lucide-react";
 
 export const capabilities = [
   {
     icon: MessageCircle,
-    title: "AI WhatsApp Receptionist",
+    title: "WhatsApp Booking",
     description:
-      "Replies naturally to learners, books lessons and answers common questions automatically.",
-    bullets: [
-      "Natural conversations",
-      "Books lessons",
-      "Handles cancellations",
-    ],
+      "Donna chats naturally with learners, answers questions and books lessons instantly.",
+    size: "large",
   },
   {
     icon: Calendar,
-    title: "Smart Diary",
+    title: "Google Calendar",
     description:
-      "Donna keeps your calendar organised and never books over existing lessons.",
-    bullets: [
-      "Google Calendar",
-      "Availability",
-      "No clashes",
-    ],
+      "Every booking automatically appears in your calendar with no manual work.",
+    size: "small",
   },
   {
     icon: Route,
-    title: "Route Optimisation",
+    title: "Smart Routes",
     description:
-      "Groups nearby lessons together to reduce driving time and fuel costs.",
-    bullets: [
-      "Less driving",
-      "Better planning",
-      "More lessons",
-    ],
-  },
-  {
-    icon: LayoutDashboard,
-    title: "Learner Portal",
-    description:
-      "Students can view bookings, progress and upcoming lessons.",
-    bullets: [
-      "Lesson history",
-      "Progress tracking",
-      "Upcoming lessons",
-    ],
+      "Lessons are grouped together to reduce travel time and fuel costs.",
+    size: "small",
   },
   {
     icon: Bell,
     title: "Automatic Reminders",
     description:
-      "Donna reminds learners before every lesson automatically.",
-    bullets: [
-      "Reduce no-shows",
-      "WhatsApp reminders",
-      "Custom timing",
-    ],
+      "Donna reminds learners before every lesson to reduce no-shows.",
+    size: "small",
+  },
+  {
+    icon: LayoutDashboard,
+    title: "Student Portal",
+    description:
+      "Track payments, lesson history, progress and upcoming bookings in one place.",
+    size: "wide",
   },
   {
     icon: BarChart3,
     title: "Business Insights",
     description:
-      "Track bookings, utilisation and instructor performance.",
-    bullets: [
-      "Revenue",
-      "Bookings",
-      "Growth",
-    ],
+      "See bookings, cancellations and learner activity at a glance.",
+    size: "small",
   },
 ];

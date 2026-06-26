@@ -1,85 +1,73 @@
 import { motion } from "framer-motion";
+import type { LucideIcon } from "lucide-react";
 import { ArrowRight } from "lucide-react";
 
 interface Props {
-  icon: any;
+  icon: LucideIcon;
   title: string;
   description: string;
-  bullets: string[];
+  size: "small" | "large" | "wide";
+  index: number;
 }
 
-export default function CapabilityCard({
+const CapabilityCard = ({
   icon: Icon,
   title,
   description,
-  bullets,
-}: Props) {
+  size,
+  index,
+}: Props) => {
   return (
     <motion.div
-      whileHover={{
-        y: -10,
-        scale: 1.02,
-      }}
+      initial={{ opacity: 0, y: 35 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
       transition={{
-        duration: .25,
+        delay: index * 0.08,
+        duration: 0.5,
       }}
-      className="
-      group
-      rounded-3xl
-      border
-      bg-white
-      p-8
-      shadow-sm
-      hover:shadow-2xl
-      hover:border-primary/40
-      transition-all
-      duration-300
-      "
+      whileHover={{
+        y: -8,
+      }}
+      className={`
+        group
+        rounded-3xl
+        border
+        border-border
+        bg-card
+        p-8
+        shadow-sm
+        hover:shadow-2xl
+        transition-all
+        duration-300
+
+        ${
+          size === "large"
+            ? "lg:col-span-2 lg:row-span-2"
+            : size === "wide"
+            ? "lg:col-span-2"
+            : ""
+        }
+      `}
     >
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-orange-400 flex items-center justify-center text-white mb-8 group-hover:rotate-6 transition-transform">
-
-        <Icon size={30} />
-
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+        <Icon className="h-7 w-7 text-primary transition-transform group-hover:scale-110 group-hover:rotate-6" />
       </div>
 
-      <h3 className="text-2xl font-bold">
-
+      <h3 className="mt-6 text-2xl font-bold">
         {title}
-
       </h3>
 
-      <p className="mt-4 text-muted-foreground leading-7">
-
+      <p className="mt-4 leading-7 text-muted-foreground">
         {description}
-
       </p>
 
-      <div className="mt-8 space-y-3">
-
-        {bullets.map((bullet) => (
-          <div
-            key={bullet}
-            className="flex items-center gap-3"
-          >
-            <div className="w-2 h-2 rounded-full bg-primary" />
-
-            <span>{bullet}</span>
-          </div>
-        ))}
-
+      <div className="mt-8 flex items-center gap-2 font-semibold text-primary">
+        Learn more
+        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
       </div>
-
-      <div className="mt-8 flex items-center gap-2 text-primary font-semibold">
-
-        Learn More
-
-        <ArrowRight
-          size={18}
-          className="group-hover:translate-x-1 transition-transform"
-        />
-
-      </div>
-
     </motion.div>
   );
-}
+};
+
+export default CapabilityCard;

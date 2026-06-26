@@ -161,24 +161,24 @@ const SmartCalendar = () => {
             </p>
           </motion.div>
 
-          <motion.div 
-            className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-8 max-w-4xl mx-auto items-start"
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-4 lg:gap-8 max-w-4xl mx-auto items-start"
             {...staggerContainer}
           >
             {setupSteps.map((step, index) => (
               <motion.div
                 key={index}
-                className="relative text-center p-2 sm:p-6"
+                className="relative text-center p-4 sm:p-6"
                 {...staggerItem}
               >
-                <div className="w-10 h-10 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4">
-                  <step.icon className="w-5 h-5 sm:w-8 sm:h-8 text-primary" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <step.icon className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
                 </div>
-                <div className="absolute top-5 sm:top-8 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 sm:w-8 sm:h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[10px] sm:text-sm font-bold">
+                <div className="absolute top-7 sm:top-8 left-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 sm:w-8 sm:h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs sm:text-sm font-bold">
                   {index + 1}
                 </div>
-                <h3 className="text-[10px] sm:text-lg font-semibold text-foreground mb-1 sm:mb-2">{step.title}</h3>
-                <p className="text-[9px] sm:text-base text-muted-foreground">{step.description}</p>
+                <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 sm:mb-2">{step.title}</h3>
+                <p className="text-sm sm:text-base text-muted-foreground">{step.description}</p>
               </motion.div>
             ))}
           </motion.div>

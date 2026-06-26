@@ -1,0 +1,42 @@
+name: Auto Promote Branches
+
+on:
+  push:
+    branches:
+      - Development
+      - UAT
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Development → UAT PR
+        if: github.ref == 'refs/heads/Development'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base UAT \
+            --head Development \
+            --title "Auto Promotion: Development → UAT" \
+            --body "Automatically created after push to Development." \
+          || echo "PR already exists"
+
+      - name: Create UAT → Master PR
+        if: github.ref == 'refs/heads/UAT'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base Master \
+            --head UAT \
+            --title "Auto Promotion: UAT → Master" \
+            --body "Automatically created after push to UAT." \
+          || echo "PR already exists"

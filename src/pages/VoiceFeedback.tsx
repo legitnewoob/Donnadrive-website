@@ -2,7 +2,7 @@ import Header from "../components/Header";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Mic, Bot, Sunrise, MessageSquare, Brain, Lock, Lightbulb, ArrowLeft, ArrowRight } from "lucide-react";
+import { Mic, Bot, UserCheck, MessageSquare, Brain, Lock, Lightbulb, ArrowLeft, ArrowRight } from "lucide-react";
 
 const VoiceFeedback = () => {
   const timelineSteps = [
@@ -17,15 +17,15 @@ const VoiceFeedback = () => {
     {
       icon: Bot,
       title: "Donna Transcribes & Organizes",
-      text: "Donna converts your voice into accurate text, logs it under the correct learner in your Google Sheet, and timestamps it.",
+      text: "Donna converts your voice into accurate text, logs it under the correct learner's Portal profile, and timestamps it.",
       subtext: "All your records — organized, easy, private, and accessible anywhere.",
       color: "coral"
     },
     {
-      icon: Sunrise,
-      title: "Smart Reminders via Morning Message",
-      text: "Before the next lesson, Donna reminds you of the last feedback and suggests what to focus on next — delivered as part of your morning message.",
-      subtext: "Your daily Assistant briefing keeps you one step ahead.",
+      icon: UserCheck,
+      title: "Feedback Lives in Their Profile",
+      text: "Every note is saved straight to the learner's Portal profile, so you can look back before their next lesson and pick up exactly where you left off.",
+      subtext: "No more digging through old messages.",
       color: "teal"
     }
   ];

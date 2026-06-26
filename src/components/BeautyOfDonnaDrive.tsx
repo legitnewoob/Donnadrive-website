@@ -1,4 +1,4 @@
-import { MessageSquare, Calendar, Sheet, Settings } from "lucide-react";
+import { MessageSquare, Calendar, LayoutDashboard, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
@@ -15,9 +15,9 @@ const BeautyOfDonnaDrive = () => {
       description: "Automatically updates your schedule with each new lesson."
     },
     {
-      icon: Sheet,
-      title: "Google Sheets Tracking",
-      description: "Keeps all your learner data organized, private, and accessible anytime."
+      icon: LayoutDashboard,
+      title: "Student Portal",
+      description: "All your learners — progress, test dates, payments — in one place, not a spreadsheet."
     },
     {
       icon: Settings,
@@ -47,7 +47,7 @@ const BeautyOfDonnaDrive = () => {
             The beauty of Donna Drive? It all works through WhatsApp.
           </h2>
           <p className="text-base sm:text-lg lg:text-xl text-white/90 max-w-3xl mx-auto px-4">
-            No new apps. No complicated setup. Donna Drive connects seamlessly with the tools you already use — WhatsApp, Google Sheets, and Google Calendar — to make your day run smoothly.
+            No new apps. No complicated setup. Donna Drive connects seamlessly with the tools you already use — WhatsApp and Google Calendar — plus your own Donna Portal to make your day run smoothly.
           </p>
         </motion.div>
         

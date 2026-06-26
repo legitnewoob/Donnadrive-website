@@ -65,34 +65,34 @@ const Pricing = () => {
           </p>
         </motion.div>
         
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-4 lg:gap-6 max-w-4xl mx-auto">
           {plans.map((plan, index) => {
             const Icon = plan.icon;
             return (
               <motion.div
                 key={plan.title}
-                className={`bg-card rounded-xl sm:rounded-2xl p-2.5 sm:p-6 shadow-card border ${plan.highlighted ? 'border-primary ring-1 sm:ring-2 ring-primary/20' : 'border-border'}`}
+                className={`bg-card rounded-2xl p-5 sm:p-6 shadow-card border ${plan.highlighted ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.5, ease: "easeOut", delay: index * 0.1 }}
               >
-                <div className="text-center mb-3 sm:mb-6">
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                    <Icon className="w-4 h-4 sm:w-6 sm:h-6 text-primary" />
+                <div className="text-center mb-4 sm:mb-6">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                   </div>
-                  <h3 className="text-xs sm:text-lg font-bold text-card-foreground">{plan.title}</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-card-foreground">{plan.title}</h3>
                   <div className="mt-1 sm:mt-2">
-                    <span className="text-lg sm:text-3xl font-bold text-card-foreground">{plan.price}</span>
-                    {plan.period && <span className="text-muted-foreground text-[10px] sm:text-sm">{plan.period}</span>}
+                    <span className="text-2xl sm:text-3xl font-bold text-card-foreground">{plan.price}</span>
+                    {plan.period && <span className="text-muted-foreground text-sm">{plan.period}</span>}
                   </div>
                 </div>
 
-                <ul className="space-y-1.5 sm:space-y-3 mb-3 sm:mb-6">
+                <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-1 sm:gap-2">
-                      <Check className="w-3 h-3 sm:w-4 sm:h-4 text-primary flex-shrink-0 mt-0.5" />
-                      <span className="text-[9px] sm:text-sm text-card-foreground leading-tight">{feature}</span>
+                    <li key={idx} className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-card-foreground leading-tight">{feature}</span>
                     </li>
                   ))}
                 </ul>

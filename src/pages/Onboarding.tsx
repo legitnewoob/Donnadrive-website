@@ -61,10 +61,10 @@ const Onboarding = () => {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50">
         <ScrollProgress />
       <Header/>
-      <div className="container mx-auto px-6 py-16">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <div className="container mx-auto px-4 sm:px-6 py-10 sm:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
           {/* LEFT SECTION */}
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* <Badge
               variant="secondary"
               className="rounded-full px-4 py-1"
@@ -73,14 +73,14 @@ const Onboarding = () => {
             </Badge> */}
 
             <div className="space-y-4">
-              <h1 className="text-5xl font-bold leading-tight tracking-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight">
                 Grow your driving school with{" "}
                 <span className="text-sky-600">
                   Donna Drive
                 </span>
               </h1>
 
-              <p className="text-lg text-muted-foreground max-w-xl">
+              <p className="text-base sm:text-lg text-muted-foreground max-w-xl">
                 Automate learner communication, lesson reminders,
                 instructor coordination and support through a
                 powerful WhatsApp-first platform.
@@ -128,7 +128,7 @@ const Onboarding = () => {
           {/* FORM */}
           <Card className="border-0 shadow-2xl rounded-3xl">
             <CardHeader className="pb-2">
-              <CardTitle className="text-3xl">
+              <CardTitle className="text-2xl sm:text-3xl">
                 Get Started
               </CardTitle>
 

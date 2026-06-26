@@ -1,0 +1,38 @@
+name: Auto Promote Branches
+
+on:
+  push:
+    branches:
+      - Development
+      - UAT
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create PR Development → UAT
+        if: github.ref == 'refs/heads/Development'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: auto-dev-to-uat
+          base: UAT
+          title: "Auto Promotion: Development → UAT"
+          body: "Automated promotion from Development to UAT"
+
+      - name: Create PR UAT → Master
+        if: github.ref == 'refs/heads/UAT'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: auto-uat-to-master
+          base: Master
+          title: "Auto Promotion: UAT → Master"
+          body: "Automated promotion from UAT to Master"

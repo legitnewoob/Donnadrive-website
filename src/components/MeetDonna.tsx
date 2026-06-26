@@ -1,89 +1,193 @@
 import { motion } from "framer-motion";
+import { CheckCircle2, ChevronDown } from "lucide-react";
 
-const donnaCharacter = "/donna-mascot.jpg?v=2";
+import donnaCharacter from "@/assets/donna-drive-mascot.png";
+
+const features = [
+  {
+    title: "Replies instantly",
+    description: "Answers learner enquiries naturally on WhatsApp.",
+  },
+  {
+    title: "Books lessons",
+    description: "Finds the best available slot automatically.",
+  },
+  {
+    title: "Keeps your diary organised",
+    description: "Never double-books or forgets an appointment.",
+  },
+  {
+    title: "Sends reminders",
+    description: "Reduces no-shows without lifting a finger.",
+  },
+  {
+    title: "Works around the clock",
+    description: "Available 24 hours a day, 7 days a week.",
+  },
+  {
+    title: "Learns your schedule",
+    description: "Adapts to your availability and teaching style.",
+  },
+];
 
 const MeetDonna = () => {
+  const scrollToDemo = () => {
+    document
+      .getElementById("whatsapp-demo")
+      ?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <section className="py-16 sm:py-20 lg:py-24 bg-secondary/30">
-      <div className="container mx-auto px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
-            {/* Donna Image */}
+    <section className="relative overflow-hidden py-28 lg:py-36 bg-background">
+
+      {/* Background */}
+
+      <div className="absolute left-0 top-32 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
+
+      <div className="absolute right-0 bottom-20 h-96 w-96 rounded-full bg-orange-200/20 blur-3xl" />
+
+      <div className="relative mx-auto max-w-5xl px-6">
+
+        {/* Heading */}
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: .6 }}
+          className="text-center"
+        >
+
+          <span className="inline-flex rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+
+            Meet Your New Employee
+
+          </span>
+
+          <h2 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
+
+            Meet Donna
+
+          </h2>
+
+          <p className="mx-auto mt-8 max-w-2xl text-lg leading-9 text-muted-foreground">
+
+            While you're teaching learners, Donna is replying to new ones.
+            She books lessons, rearranges cancellations, sends reminders and
+            keeps your diary organised — all without you touching your phone.
+
+          </p>
+
+        </motion.div>
+
+        {/* Mascot */}
+
+        <motion.div
+          initial={{ opacity: 0, scale: .9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: .8 }}
+          className="relative mt-16 flex justify-center"
+        >
+
+          <div className="absolute h-[420px] w-[420px] rounded-full bg-primary/10 blur-3xl" />
+
+          {/* <motion.img
+            src={donnaCharacter}
+            alt="Donna AI Receptionist"
+            className="relative w-[320px] sm:w-[420px] lg:w-[500px] object-contain drop-shadow-[0_35px_60px_rgba(0,0,0,.18)]"
+            animate={{
+              y: [0, -12, 0],
+              rotate: [0, 1, 0, -1, 0],
+            }}
+            transition={{
+              duration: 6,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          /> */}
+          <h1>DEMO HERE</h1>
+        </motion.div>
+
+        {/* Feature List */}
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: .2 }}
+          className="mt-20 grid gap-5 sm:grid-cols-2"
+        >
+
+          {features.map((feature, index) => (
+
             <motion.div
-              className="flex justify-center sm:justify-start order-1"
-              initial={{ opacity: 0, x: -30 }}
+              key={feature.title}
+              initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={{ delay: index * .08 }}
+              className="flex items-start gap-4 rounded-2xl border bg-card p-6 shadow-sm hover:shadow-lg transition-all"
             >
-              <div className="relative">
-                {/* Decorative background circle */}
-                <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-xl sm:blur-2xl" />
-                
-                {/* Image container with elegant styling */}
-                <motion.div
-                  className="relative"
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <img
-                    src={donnaCharacter}
-                    alt="Donna - Your AI Booking Assistant"
-                    className="w-40 h-40 sm:w-56 sm:h-56 lg:w-80 lg:h-80 object-cover rounded-2xl sm:rounded-[2rem] shadow-xl ring-2 sm:ring-4 ring-white/50"
-                  />
-                </motion.div>
-              </div>
-            </motion.div>
 
-            {/* Text Content */}
-            <motion.div
-              className="space-y-3 sm:space-y-6 text-center sm:text-left order-2"
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-            >
-              <div className="space-y-2 sm:space-y-3">
-                <span className="inline-block px-3 sm:px-4 py-1 sm:py-1.5 bg-primary/10 text-primary rounded-full text-xs sm:text-sm font-medium">
-                  Your AI Assistant
-                </span>
-                <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-foreground">
-                  Meet Donna
-                </h2>
+              <CheckCircle2 className="mt-1 h-6 w-6 text-primary flex-shrink-0" />
+
+              <div>
+
+                <h3 className="font-semibold text-lg">
+
+                  {feature.title}
+
+                </h3>
+
+                <p className="mt-1 text-muted-foreground">
+
+                  {feature.description}
+
+                </p>
+
               </div>
 
-              <p className="text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto sm:mx-0">
-                Donna isn't just software — she's your tireless assistant who works around the clock.
-              </p>
-
-              <ul className="space-y-1.5 sm:space-y-3 text-left max-w-lg mx-auto sm:mx-0">
-                {[
-                  "Responds in seconds",
-                  "Understands your availability",
-                  "Never double-books",
-                  "Works 24/7"
-                ].map((item, index) => (
-                  <motion.li
-                    key={index}
-                    className="flex items-start gap-1.5 sm:gap-3 justify-center sm:justify-start"
-                    initial={{ opacity: 0, x: 20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
-                  >
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent flex items-center justify-center mt-0.5">
-                      <svg className="w-3 h-3 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </span>
-                    <span className="text-sm sm:text-base text-muted-foreground">{item}</span>
-                  </motion.li>
-                ))}
-              </ul>
             </motion.div>
-          </div>
-        </div>
+
+          ))}
+
+        </motion.div>
+
+        {/* CTA */}
+
+        <motion.button
+          onClick={scrollToDemo}
+          className="mx-auto mt-20 flex flex-col items-center text-primary hover:opacity-80 transition-opacity"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+        >
+
+          <span className="text-lg font-semibold">
+
+            See Donna booking a lesson
+
+          </span>
+
+          <motion.div
+            animate={{
+              y: [0, 8, 0],
+            }}
+            transition={{
+              duration: 1.8,
+              repeat: Infinity,
+            }}
+          >
+
+            <ChevronDown className="mt-3 h-7 w-7" />
+
+          </motion.div>
+
+        </motion.button>
+
       </div>
+
     </section>
   );
 };

@@ -8,6 +8,12 @@ import FAQ from "../components/FAQ";
 import Contact from "../components/Contact";
 import ScrollProgress from "../components/ScrollProgress";
 import BeautyOfDonnaDrive from "@/components/BeautyOfDonnaDrive";
+import DonnaCapabilities from "@/components/DonnaCapabilities";
+import WhatsAppDemo from "@/components/WhatsappDemo";
+import Benefits from "@/components/Benefits";
+import BookingJourney from "@/components/BookingJourney";
+import FinalCTA from "@/components/FinalCTA";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
@@ -16,12 +22,14 @@ const Index = () => {
       <Header />
       <Hero />
       <MeetDonna />
-      <Features />
-      <BeautyOfDonnaDrive/>
-      <HowItWorks />
+      <WhatsAppDemo />
+      <Benefits />
+      <DonnaCapabilities />
+      <BookingJourney />
       <Pricing />
       <FAQ />
-      <Contact />
+      <FinalCTA />
+      <Footer />
     </div>
   );
 };

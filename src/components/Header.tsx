@@ -34,28 +34,28 @@ const Header = () => {
               <>
                 <a
                   href="#features"
-                  className="text-white/90 hover:text-white transition-colors font-medium"
+                  className="text-black/90 hover:text-black transition-colors font-medium"
                 >
                   Features
                 </a>
 
                 <a
                   href="#how-it-works"
-                  className="text-white/90 hover:text-white transition-colors font-medium"
+                  className="text-black/90 hover:text-black transition-colors font-medium"
                 >
                   How It Works
                 </a>
 
                 <a
                   href="#pricing"
-                  className="text-white/90 hover:text-white transition-colors font-medium"
+                  className="text-black/90 hover:text-black transition-colors font-medium"
                 >
                   Pricing
                 </a>
 
                 <a
                   href="#faq"
-                  className="text-white/90 hover:text-white transition-colors font-medium"
+                  className="text-black/90 hover:text-black transition-colors font-medium"
                 >
                   FAQ
                 </a>
@@ -63,7 +63,7 @@ const Header = () => {
             ) : (
               <Link
                 to="/"
-                className="text-white/90 hover:text-white transition-colors font-medium"
+                className="text-black/90 hover:text-black transition-colors font-medium"
               >
                 Home
               </Link>
@@ -73,18 +73,11 @@ const Header = () => {
               to="/blog"
               className={`transition-colors font-medium ${
                 pathname.startsWith("/blog")
-                  ? "text-white"
-                  : "text-white/90 hover:text-white"
+                  ? "text-black"
+                  : "text-black/90 hover:text-black"
               }`}
             >
               Blog
-            </Link>
-
-            <Link
-              to="/get-onboard"
-              className="text-white/90 hover:text-white transition-colors font-medium"
-            >
-              Get Onboard
             </Link>
           </nav>
 
@@ -103,7 +96,7 @@ const Header = () => {
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <button
-                  className="lg:hidden text-white p-2"
+                  className="lg:hidden text-black p-2"
                   aria-label="Open Menu"
                 >
                   <Menu className="w-7 h-7" />

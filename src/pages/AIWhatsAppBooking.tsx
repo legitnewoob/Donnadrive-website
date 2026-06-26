@@ -373,19 +373,19 @@ const AIWhatsAppBooking = () => {
             </p>
           </motion.div>
           
-          <motion.div 
-            className="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6 max-w-4xl mx-auto items-start"
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-4 lg:gap-6 max-w-4xl mx-auto items-start"
             {...staggerContainer}
           >
             {donnaPersonality.map((item, index) => (
               <motion.div
                 key={index}
-                className="bg-card border border-border rounded-xl p-2.5 sm:p-6"
+                className="bg-card border border-border rounded-xl p-4 sm:p-6"
                 {...staggerItem}
               >
-                <p className="text-[10px] sm:text-sm font-medium text-primary mb-1.5 sm:mb-3">{item.scenario}</p>
-                <div className="bg-muted/50 rounded-lg p-2 sm:p-4">
-                  <p className="text-[10px] sm:text-base text-foreground italic">"{item.response}"</p>
+                <p className="text-sm font-medium text-primary mb-2 sm:mb-3">{item.scenario}</p>
+                <div className="bg-muted/50 rounded-lg p-3 sm:p-4">
+                  <p className="text-sm sm:text-base text-foreground italic">"{item.response}"</p>
                 </div>
               </motion.div>
             ))}
@@ -408,21 +408,21 @@ const AIWhatsAppBooking = () => {
             </p>
           </motion.div>
           
-          <motion.div 
-            className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 max-w-4xl mx-auto items-start"
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-4 lg:gap-6 max-w-4xl mx-auto items-start"
             {...staggerContainer}
           >
             {whyWhatsApp.map((item, index) => (
               <motion.div
                 key={index}
-                className="bg-card border border-border rounded-xl p-2.5 sm:p-6 text-center"
+                className="bg-card border border-border rounded-xl p-5 sm:p-6 text-center"
                 {...staggerItem}
               >
-                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-[#25D366]/10 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-4">
-                  <item.icon className="w-4 h-4 sm:w-6 sm:h-6 text-[#25D366]" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#25D366]/10 rounded-xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <item.icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#25D366]" />
                 </div>
-                <h3 className="text-xs sm:text-lg font-semibold text-foreground mb-1 sm:mb-2">{item.title}</h3>
-                <p className="text-[10px] sm:text-sm text-muted-foreground">{item.description}</p>
+                <h3 className="text-base sm:text-lg font-semibold text-foreground mb-1 sm:mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">{item.description}</p>
               </motion.div>
             ))}
           </motion.div>

@@ -112,10 +112,10 @@ const BookDemo = () => {
               <Gift className="w-4 h-4" />
               Get 1 Month Free Before Launch
             </div>
-            <h1 className="text-4xl lg:text-6xl font-bold text-foreground mb-5">
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-foreground mb-5">
               Book a Demo with Donna Drive
             </h1>
-            <p className="text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Discover how Donna Drive can automate
               learner communication, save hours of
               admin every week, and help your driving

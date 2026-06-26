@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import BookDemo from "./pages/BookDemo";
 import RouteOptimization from "./pages/RouteOptimization";
 import SmartCalendar from "./pages/SmartCalendar";
+import Portal from "./pages/Portal";
 import VoiceFeedback from "./pages/VoiceFeedback";
 import AIWhatsAppBooking from "./pages/AIWhatsAppBooking";
 import ThankYou from "./pages/ThankYou";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/book-demo" element={<BookDemo />} />
           <Route path="/route-optimization" element={<RouteOptimization />} />
           <Route path="/smart-calendar" element={<SmartCalendar />} />
+          <Route path="/portal" element={<Portal />} />
           <Route path="/voice-feedback" element={<VoiceFeedback />} />
           <Route path="/ai-whatsapp-booking" element={<AIWhatsAppBooking />} />
           <Route path="/thank-you" element={<ThankYou />} />

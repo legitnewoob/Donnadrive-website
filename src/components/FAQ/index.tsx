@@ -1,4 +1,4 @@
-import {
+﻿import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -45,7 +45,7 @@ const FAQ = () => {
       id="faq"
       className="relative overflow-hidden py-32 bg-background"
     >
-      <div className="absolute left-0 top-40 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
+      <div className="absolute left-0 top-40 h-72 w-72 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
 
       <div className="mx-auto max-w-5xl px-6">
 

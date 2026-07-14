@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import donnaCharacter from "@/assets/donna-drive-mascot-hero_v2.png";
+import donnaCharacterSmall from "@/assets/donna-drive-mascot-hero.png";
 
 const Hero = () => {
   return (
@@ -16,8 +17,8 @@ const Hero = () => {
 
       {/* Background blobs */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute w-[500px] h-[500px] rounded-full bg-white/5 blur-3xl -top-32 -left-32" />
-        <div className="absolute w-[350px] h-[350px] rounded-full bg-white/5 blur-3xl bottom-0 right-0" />
+        <div className="absolute w-[300px] h-[300px] md:w-[500px] md:h-[500px] rounded-full bg-white/5 blur-2xl md:blur-3xl -top-32 -left-32" />
+        <div className="absolute w-[220px] h-[220px] md:w-[350px] md:h-[350px] rounded-full bg-white/5 blur-2xl md:blur-3xl bottom-0 right-0" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 pt-36 pb-20">
@@ -30,12 +31,12 @@ const Hero = () => {
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: .6 }}
-            className="text-center lg:text-left"
+            className="text-center lg:text-left will-change-transform"
           >
 
             {/* Badge */}
 
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-md border border-white/20 px-5 py-2 mb-8">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/20 md:bg-white/15 md:backdrop-blur-md border border-white/20 px-5 py-2 mb-8">
 
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
 
@@ -89,7 +90,7 @@ const Hero = () => {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="rounded-xl border-white/30 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 h-14 px-10"
+                  className="rounded-xl border-white/30 bg-white/15 md:bg-white/10 md:backdrop-blur-md text-white hover:bg-white/20 h-14 px-10"
                 >
 
                   See How It Works
@@ -108,14 +109,14 @@ const Hero = () => {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: .8 }}
-            className="flex justify-center lg:justify-end"
+            className="flex justify-center lg:justify-end will-change-transform"
           >
 
             <div className="relative">
 
               {/* Glow */}
 
-              <div className="absolute inset-0 rounded-full bg-white/20 blur-3xl scale-110" />
+              <div className="absolute inset-0 rounded-full bg-white/20 blur-2xl md:blur-3xl scale-110" />
 
               {/* Floating card */}
 
@@ -128,13 +129,17 @@ const Hero = () => {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="relative"
+                className="relative will-change-transform"
               >
 
                 <img
                   src={donnaCharacter}
+                  srcSet={`${donnaCharacterSmall} 566w, ${donnaCharacter} 1357w`}
+                  sizes="(max-width: 640px) 320px, (max-width: 1024px) 420px, (max-width: 1280px) 560px, 620px"
                   alt="Donna AI"
-                  className="w-full max-w-[320px] sm:max-w-[420px] lg:max-w-[560px] xl:max-w-[620px] object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)]"
+                  loading="eager"
+                  decoding="async"
+                  className="w-full max-w-[320px] sm:max-w-[420px] lg:max-w-[560px] xl:max-w-[620px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.2)] md:drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)] will-change-transform"
                 />
 
                 {/* Floating notification */}
@@ -147,14 +152,14 @@ const Hero = () => {
                     duration: 3,
                     repeat: Infinity
                   }}
-                  className="absolute left-2 top-8 sm:-left-8 sm:top-12 bg-white rounded-2xl shadow-xl p-3 sm:p-4 max-w-[140px] sm:max-w-none"
+                  className="absolute left-2 top-8 sm:-left-8 sm:top-12 bg-white rounded-2xl shadow-lg md:shadow-xl p-3 sm:p-4 max-w-[140px] sm:max-w-none"
                 >
 
                   <div className="flex items-center gap-3">
 
                     <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
 
-                      💬
+                      ðŸ’¬
 
                     </div>
 
@@ -188,7 +193,7 @@ const Hero = () => {
                     duration: 3,
                     repeat: Infinity
                   }}
-                  className="absolute right-2 bottom-4 sm:-right-8 sm:bottom-10 bg-white rounded-2xl shadow-xl p-3 sm:p-4 max-w-[140px] sm:max-w-none"
+                  className="absolute right-2 bottom-4 sm:-right-8 sm:bottom-10 bg-white rounded-2xl shadow-lg md:shadow-xl p-3 sm:p-4 max-w-[140px] sm:max-w-none"
                 >
 
                   <div className="flex items-center gap-3">
@@ -232,7 +237,7 @@ const Hero = () => {
 
             <Link
               to="/ai-whatsapp-booking"
-              className="group rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
+              className="group rounded-2xl bg-white/20 md:bg-white/10 md:backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
             >
               <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
                 <MessageCircle className="w-7 h-7" />
@@ -250,7 +255,7 @@ const Hero = () => {
 
             <Link
               to="/smart-calendar"
-              className="group rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
+              className="group rounded-2xl bg-white/20 md:bg-white/10 md:backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
             >
               <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
                 <Calendar className="w-7 h-7" />
@@ -268,7 +273,7 @@ const Hero = () => {
 
             <Link
               to="/route-optimization"
-              className="group rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
+              className="group rounded-2xl bg-white/20 md:bg-white/10 md:backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
             >
               <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
                 <Route className="w-7 h-7" />
@@ -286,7 +291,7 @@ const Hero = () => {
 
             <Link
               to="/portal"
-              className="group rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
+              className="group rounded-2xl bg-white/20 md:bg-white/10 md:backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
             >
               <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
                 <LayoutDashboard className="w-7 h-7" />

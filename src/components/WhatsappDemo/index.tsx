@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
 import Phone from "./Phone";
@@ -18,9 +18,9 @@ const WhatsAppDemo = () => {
     >
       {/* Background */}
 
-      <div className="absolute left-0 top-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+      <div className="absolute left-0 top-24 h-72 w-72 rounded-full bg-primary/10 blur-2xl md:blur-3xl" />
 
-      <div className="absolute right-0 bottom-20 h-96 w-96 rounded-full bg-orange-300/10 blur-3xl" />
+      <div className="absolute right-0 bottom-20 h-96 w-96 rounded-full bg-orange-300/10 blur-2xl md:blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-6">
 
@@ -50,7 +50,7 @@ const WhatsAppDemo = () => {
             A learner sends one WhatsApp message.
 
             Donna replies instantly, books the lesson,
-            updates your calendar and sends a confirmation—
+            updates your calendar and sends a confirmationâ€”
             all in seconds.
 
           </p>

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import {
     ArrowRight,
     Calendar,
@@ -35,7 +35,7 @@ const FinalCTA = () => {
     return (
         <section className="relative overflow-hidden bg-background py-32">
             {/* Background Glow */}
-            <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-primary/10 blur-[140px]" />
+            <div className="absolute left-1/2 top-0 h-[300px] w-[300px] md:h-[500px] md:w-[500px] -translate-x-1/2 rounded-full bg-primary/10 blur-[80px] md:blur-[140px]" />
 
             <div className="relative mx-auto max-w-6xl px-6">
                 <motion.div
@@ -43,7 +43,7 @@ const FinalCTA = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.7 }}
-                    className="relative overflow-visible rounded-[32px] md:rounded-[48px] border border-border/60 bg-white shadow-[0_30px_100px_rgba(0,0,0,.08)]"
+                    className="relative overflow-visible rounded-[32px] md:rounded-[48px] border border-border/60 bg-white shadow-[0_20px_60px_rgba(0,0,0,.08)] md:shadow-[0_30px_100px_rgba(0,0,0,.08)]"
                 >
                     {/* Hero Content */}
 
@@ -146,7 +146,7 @@ const FinalCTA = () => {
                     {/* Mascot */}
 
                     <motion.div
-                        className="relative flex justify-center -mt-4"
+                        className="relative flex justify-center -mt-4 will-change-transform"
                         animate={{ y: [0, -8, 0] }}
                         transition={{
                             duration: 5,
@@ -157,7 +157,9 @@ const FinalCTA = () => {
                         <img
                             src={donnaMascot}
                             alt="Donna"
-                            className="w-[160px] lg:w-[260px] drop-shadow-[0_40px_80px_rgba(0,0,0,.18)]"
+                            loading="lazy"
+                            decoding="async"
+                            className="w-[160px] lg:w-[260px] drop-shadow-[0_20px_40px_rgba(0,0,0,.18)] md:drop-shadow-[0_40px_80px_rgba(0,0,0,.18)]"
                         />
                     </motion.div>
 

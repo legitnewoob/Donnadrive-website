@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import {
   BarChart3,
   Calendar,
@@ -21,7 +21,7 @@ const stats = [
   {
     icon: PoundSterling,
     label: "Revenue",
-    value: "£426",
+    value: "Â£426",
   },
 ];
 
@@ -39,7 +39,7 @@ const DashboardPreview = () => {
     >
       {/* Glow */}
 
-      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-2xl md:blur-3xl" />
 
       {/* Header */}
 

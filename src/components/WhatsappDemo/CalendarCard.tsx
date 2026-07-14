@@ -19,7 +19,7 @@ const CalendarCard = () => {
         delay: 4.2,
         duration: 0.6,
       }}
-      className="w-full max-w-md rounded-3xl border border-border bg-white shadow-2xl overflow-hidden"
+      className="w-full max-w-md rounded-3xl border border-border bg-white shadow-xl md:shadow-2xl overflow-hidden"
     >
       {/* Header */}
 

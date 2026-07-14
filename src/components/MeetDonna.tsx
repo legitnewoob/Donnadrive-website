@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import { CheckCircle2, ChevronDown } from "lucide-react";
 
 import donnaCharacter from "@/assets/donna-bot-inspo.png";
@@ -42,9 +42,9 @@ const MeetDonna = () => {
 
       {/* Background */}
 
-      <div className="absolute left-0 top-32 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
+      <div className="absolute left-0 top-32 h-72 w-72 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
 
-      <div className="absolute right-0 bottom-20 h-96 w-96 rounded-full bg-orange-200/20 blur-3xl" />
+      <div className="absolute right-0 bottom-20 h-96 w-96 rounded-full bg-orange-200/20 blur-2xl md:blur-3xl" />
 
       <div className="relative mx-auto max-w-5xl px-6">
 
@@ -74,7 +74,7 @@ const MeetDonna = () => {
 
             While you're teaching learners, Donna is replying to new ones.
             She books lessons, rearranges cancellations, sends reminders and
-            keeps your diary organised — all without you touching your phone.
+            keeps your diary organised â€” all without you touching your phone.
 
           </p>
 
@@ -90,7 +90,7 @@ const MeetDonna = () => {
           className="relative mt-16 flex justify-center"
         >
 
-          <div className="absolute h-[300px] w-[300px] sm:h-[360px] sm:w-[360px] lg:h-[420px] lg:w-[420px] rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute h-[300px] w-[300px] sm:h-[360px] sm:w-[360px] lg:h-[420px] lg:w-[420px] rounded-full bg-primary/10 blur-2xl md:blur-3xl" />
 
           {/* <motion.img
             src={donnaCharacter}
@@ -109,7 +109,9 @@ const MeetDonna = () => {
           <motion.img
             src={donnaCharacter}
             alt="Donna AI Receptionist"
-            className="relative w-[260px] sm:w-[360px] lg:w-[440px] object-contain drop-shadow-[0_35px_60px_rgba(0,0,0,.18)]"
+            className="relative w-[260px] sm:w-[360px] lg:w-[440px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,.18)] md:drop-shadow-[0_35px_60px_rgba(0,0,0,.18)] will-change-transform"
+            loading="lazy"
+            decoding="async"
             animate={{
               y: [0, -12, 0],
               rotate: [0, 1, 0, -1, 0],

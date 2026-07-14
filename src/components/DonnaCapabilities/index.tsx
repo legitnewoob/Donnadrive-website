@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 
 import WhatsAppPreview from "./WhatsAppPreview";
 import CalendarPreview from "./CalendarPreview";
@@ -14,9 +14,9 @@ const DonnaCapabilities = () => {
         >
             {/* Background */}
 
-            <div className="absolute left-0 top-24 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
+            <div className="absolute left-0 top-24 h-80 w-80 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
 
-            <div className="absolute right-0 bottom-0 h-[28rem] w-[28rem] rounded-full bg-orange-300/10 blur-3xl" />
+            <div className="absolute right-0 bottom-0 h-[28rem] w-[28rem] rounded-full bg-orange-300/10 blur-2xl md:blur-3xl" />
 
             <div className="relative mx-auto max-w-7xl px-6">
 
@@ -45,7 +45,7 @@ const DonnaCapabilities = () => {
 
                     <p className="mt-6 text-lg leading-8 text-muted-foreground">
 
-                        Every booking, every reminder, every learner—
+                        Every booking, every reminder, every learnerâ€”
                         Donna keeps everything running automatically.
 
                     </p>

@@ -5,7 +5,7 @@ import TypingIndicator from "./TypingIndicator";
 const Phone = () => {
   return (
     <motion.div
-      className="relative w-full max-w-[340px] rounded-[42px] bg-[#121212] p-[10px] shadow-[0_40px_80px_rgba(0,0,0,.25)]"
+      className="relative w-full max-w-[340px] rounded-[42px] bg-[#121212] p-[10px] shadow-[0_20px_40px_rgba(0,0,0,.25)] md:shadow-[0_40px_80px_rgba(0,0,0,.25)]"
       initial={{ opacity: 0, scale: 0.9 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true }}

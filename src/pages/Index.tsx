@@ -24,7 +24,7 @@ const Index = () => {
       <BookingJourney />
       <Pricing />
       <FAQ />
-      <FinalCTA />
+      {/* <FinalCTA /> */}
       <Footer />
     </div>
   );

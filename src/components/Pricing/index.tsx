@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 
 import PricingCard from "./PricingCard";
 import { plans } from "./plans";
@@ -9,8 +9,8 @@ const Pricing = () => {
       id="pricing"
       className="relative overflow-hidden py-32 bg-gradient-to-b from-orange-50/20 to-background"
     >
-      <div className="absolute left-0 top-32 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-orange-200/10 blur-3xl" />
+      <div className="absolute left-0 top-32 h-80 w-80 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
+      <div className="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-orange-200/10 blur-2xl md:blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-6">
 
@@ -34,7 +34,7 @@ const Pricing = () => {
           </p>
 
           <div className="mt-8 inline-flex rounded-full bg-green-100 px-5 py-2 text-sm font-semibold text-green-700">
-            🎉 30-Day Free Trial • No Card Required
+            ðŸŽ‰ 30-Day Free Trial â€¢ No Card Required
           </div>
 
         </motion.div>

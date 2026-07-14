@@ -37,7 +37,7 @@ const Benefits = () => {
 
           </span>
 
-          <h2 className="mt-6 text-5xl lg:text-6xl font-black tracking-tight">
+          <h2 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
 
             Get Your Evenings Back.
 

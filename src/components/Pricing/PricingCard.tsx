@@ -31,7 +31,7 @@ const PricingCard = ({ plan, index }: Props) => {
           rounded-[36px]
           border
           bg-white
-          p-8
+          p-6 sm:p-8
           transition-all
           duration-300
 
@@ -60,7 +60,7 @@ const PricingCard = ({ plan, index }: Props) => {
         </p>
 
         <div className="mt-8 flex items-end gap-2">
-          <span className="text-5xl font-black">
+          <span className="text-4xl sm:text-5xl font-black">
             {plan.price}
           </span>
           <span className="pb-2 text-muted-foreground">

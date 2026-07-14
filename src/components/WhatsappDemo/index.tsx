@@ -39,7 +39,7 @@ const WhatsAppDemo = () => {
 
           </span>
 
-          <h2 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
+          <h2 className="mt-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
 
             Watch Donna Work
 

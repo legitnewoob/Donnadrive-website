@@ -35,7 +35,7 @@ const DonnaCapabilities = () => {
 
                     </span>
 
-                    <h2 className="mt-6 text-5xl lg:text-6xl font-black tracking-tight">
+                    <h2 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
 
                         One Assistant.
                         <br />
@@ -54,7 +54,7 @@ const DonnaCapabilities = () => {
 
                 {/* Grid */}
 
-                <div className="mt-24 grid grid-cols-12 auto-rows-[280px] gap-6">
+                <div className="mt-24 grid grid-cols-12 auto-rows-[minmax(220px,auto)] sm:auto-rows-[minmax(260px,auto)] lg:auto-rows-[minmax(280px,auto)] gap-6">
 
                     {/* WhatsApp */}
                     <div className="col-span-12 lg:col-span-7 row-span-2">

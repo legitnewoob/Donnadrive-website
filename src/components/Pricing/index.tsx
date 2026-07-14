@@ -24,7 +24,7 @@ const Pricing = () => {
             Simple Pricing
           </span>
 
-          <h2 className="mt-6 text-5xl font-black">
+          <h2 className="mt-6 text-4xl md:text-5xl font-black">
             Choose Your Donna
           </h2>
 
@@ -39,7 +39,7 @@ const Pricing = () => {
 
         </motion.div>
 
-        <div className="mt-20 grid gap-8 lg:grid-cols-3">
+        <div className="mt-20 grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 
           {plans.map((plan, index) => (
             <PricingCard

@@ -59,7 +59,7 @@ const FAQ = () => {
             Questions?
           </span>
 
-          <h2 className="mt-6 text-5xl font-black tracking-tight">
+          <h2 className="mt-6 text-4xl md:text-5xl font-black tracking-tight">
             Frequently Asked Questions
           </h2>
 

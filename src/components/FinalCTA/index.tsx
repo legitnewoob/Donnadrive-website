@@ -43,7 +43,7 @@ const FinalCTA = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.7 }}
-                    className="relative overflow-visible rounded-[48px] border border-border/60 bg-white shadow-[0_30px_100px_rgba(0,0,0,.08)]"
+                    className="relative overflow-visible rounded-[32px] md:rounded-[48px] border border-border/60 bg-white shadow-[0_30px_100px_rgba(0,0,0,.08)]"
                 >
                     {/* Hero Content */}
 
@@ -54,7 +54,7 @@ const FinalCTA = () => {
 
                         </span>
 
-                        <h2 className="mt-8 text-5xl lg:text-7xl font-black">
+                        <h2 className="mt-8 text-4xl md:text-5xl lg:text-7xl font-black">
 
                             Are you ready to
 
@@ -128,7 +128,7 @@ const FinalCTA = () => {
                                 return (
                                     <div
                                         key={feature.text}
-                                        className="flex items-center justify-center gap-3 border-r border-border px-6 py-7 last:border-r-0"
+                                        className="flex items-center justify-center gap-3 border-r border-b border-border px-6 py-7 last:border-r-0 lg:border-b-0 max-lg:[&:nth-child(2)]:border-r-0 max-lg:[&:nth-child(n+3)]:border-b-0"
                                     >
                                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
                                             <Icon className="h-5 w-5 text-primary" />

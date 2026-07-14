@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { CheckCircle2, ChevronDown } from "lucide-react";
 
-import donnaCharacter from "@/assets/donna-drive-mascot.png";
+import donnaCharacter from "@/assets/donna-bot-inspo.png";
 
 const features = [
   {
@@ -90,7 +90,7 @@ const MeetDonna = () => {
           className="relative mt-16 flex justify-center"
         >
 
-          <div className="absolute h-[420px] w-[420px] rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute h-[300px] w-[300px] sm:h-[360px] sm:w-[360px] lg:h-[420px] lg:w-[420px] rounded-full bg-primary/10 blur-3xl" />
 
           {/* <motion.img
             src={donnaCharacter}
@@ -106,7 +106,20 @@ const MeetDonna = () => {
               ease: "easeInOut",
             }}
           /> */}
-          <h1>DEMO HERE</h1>
+          <motion.img
+            src={donnaCharacter}
+            alt="Donna AI Receptionist"
+            className="relative w-[260px] sm:w-[360px] lg:w-[440px] object-contain drop-shadow-[0_35px_60px_rgba(0,0,0,.18)]"
+            animate={{
+              y: [0, -12, 0],
+              rotate: [0, 1, 0, -1, 0],
+            }}
+            transition={{
+              duration: 6,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
         </motion.div>
 
         {/* Feature List */}

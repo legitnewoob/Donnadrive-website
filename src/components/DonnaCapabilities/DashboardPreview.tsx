@@ -35,7 +35,7 @@ const DashboardPreview = () => {
         duration: 0.6,
         delay: 0.45,
       }}
-      className="group relative h-full overflow-hidden rounded-[32px] border bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+      className="group relative h-full overflow-hidden rounded-[32px] border bg-white p-6 sm:p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
     >
       {/* Glow */}
 
@@ -126,7 +126,7 @@ const DashboardPreview = () => {
                 transition={{
                   delay: 1 + index * 0.15,
                 }}
-                className="text-2xl font-black"
+                className="text-xl sm:text-2xl font-black"
               >
                 {stat.value}
               </motion.p>

@@ -134,7 +134,7 @@ const Hero = () => {
                 <img
                   src={donnaCharacter}
                   alt="Donna AI"
-                  className="w-[420px] lg:w-[560px] xl:w-[620px] object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)]"
+                  className="w-full max-w-[320px] sm:max-w-[420px] lg:max-w-[560px] xl:max-w-[620px] object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)]"
                 />
 
                 {/* Floating notification */}
@@ -147,7 +147,7 @@ const Hero = () => {
                     duration: 3,
                     repeat: Infinity
                   }}
-                  className="absolute -left-8 top-12 bg-white rounded-2xl shadow-xl p-4"
+                  className="absolute left-2 top-8 sm:-left-8 sm:top-12 bg-white rounded-2xl shadow-xl p-3 sm:p-4 max-w-[140px] sm:max-w-none"
                 >
 
                   <div className="flex items-center gap-3">
@@ -188,7 +188,7 @@ const Hero = () => {
                     duration: 3,
                     repeat: Infinity
                   }}
-                  className="absolute -right-8 bottom-10 bg-white rounded-2xl shadow-xl p-4"
+                  className="absolute right-2 bottom-4 sm:-right-8 sm:bottom-10 bg-white rounded-2xl shadow-xl p-3 sm:p-4 max-w-[140px] sm:max-w-none"
                 >
 
                   <div className="flex items-center gap-3">
@@ -228,7 +228,7 @@ const Hero = () => {
           transition={{ duration: 0.7, delay: 0.35 }}
           className="mt-10"
         >
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
             <Link
               to="/ai-whatsapp-booking"

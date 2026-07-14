@@ -19,6 +19,7 @@ import TermsOfServicePage from "./pages/TermsOfServicePage";
 import NotFound from "./pages/NotFound";
 // removed wrong import of Router icon which conflicted with react-router's Route
 import Onboarding from "./pages/Onboarding";
+import ConnectGoogle from "./pages/ConnectGoogle";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
           <Route path="/get-onboard" element={<Onboarding />} />
+          <Route path="/connect-google" element={<ConnectGoogle />}/>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

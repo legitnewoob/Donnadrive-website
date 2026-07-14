@@ -17,9 +17,13 @@ import BlogPost from "./pages/BlogPost";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import NotFound from "./pages/NotFound";
-// removed wrong import of Router icon which conflicted with react-router's Route
 import Onboarding from "./pages/Onboarding";
-import ConnectGoogle from "./pages/ConnectGoogle";
+import Dashboard from "./pages/Dashboard";
+import Calendar from "./pages/Calendar";
+import Students from "./pages/Students";
+import Messages from "./pages/Messages";
+import Reports from "./pages/Reports";
+import Payment from "./pages/Payment";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +32,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
@@ -44,7 +48,12 @@ const App = () => (
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
           <Route path="/get-onboard" element={<Onboarding />} />
-          <Route path="/connect-google" element={<ConnectGoogle />}/>
+          <Route path="/payment" element={<Payment/>}/>
+          <Route path="/dashboard" element={<Dashboard/>}/>
+          <Route path="/calendar" element={<Calendar/>}/>
+          <Route path="/students" element={<Students/>}/>
+          <Route path="/messages" element={<Messages/>}/>
+          <Route path="/reports" element={<Reports/>}/>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

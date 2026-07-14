@@ -71,11 +71,10 @@ const Header = () => {
 
             <Link
               to="/blog"
-              className={`transition-colors font-medium ${
-                pathname.startsWith("/blog")
+              className={`transition-colors font-medium ${pathname.startsWith("/blog")
                   ? "text-black"
                   : "text-black/90 hover:text-black"
-              }`}
+                }`}
             >
               Blog
             </Link>
@@ -83,12 +82,12 @@ const Header = () => {
 
           {/* Right Side */}
           <div className="flex items-center gap-3">
-            <Link to="/book-demo" className="hidden sm:block">
+           <Link to="/#pricing" className="hidden sm:block">
               <Button
                 size="lg"
                 className="rounded-xl bg-white text-primary hover:bg-white/90 px-7 shadow-lg"
               >
-                Book a Demo
+                Get Started
               </Button>
             </Link>
 

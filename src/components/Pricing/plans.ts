@@ -53,16 +53,12 @@ export const plans = [
     ctaRoute: "/get-started/driving-school",
 
     icon: Building2,
-    title: "Driving School",
-    subtitle: "For teams with multiple instructors",
-
-    price: "£6–£8",
-    period: "/instructor/month",
-
+    title: "Driving Schools",
+    subtitle: "Multiple instructors",
+    price: "£6-8",
+    period: "/month",
     popular: false,
-
-    button: "Get Started",
-
+    button: "Get started",
     features: [
       "Everything in ADI",
       "Team dashboard",
@@ -71,3 +67,4 @@ export const plans = [
     ],
   },
 ];
+

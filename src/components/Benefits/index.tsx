@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 
 import BenefitPanel from "./BenefitPanel";
@@ -16,9 +16,9 @@ const Benefits = () => {
 
       {/* Background */}
 
-      <div className="absolute left-0 top-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
+      <div className="absolute left-0 top-40 h-80 w-80 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
 
-      <div className="absolute right-0 bottom-0 h-[30rem] w-[30rem] rounded-full bg-orange-200/20 blur-3xl" />
+      <div className="absolute right-0 bottom-0 h-[30rem] w-[30rem] rounded-full bg-orange-200/20 blur-2xl md:blur-3xl" />
 
       <div className="relative mx-auto max-w-6xl px-6">
 
@@ -37,7 +37,7 @@ const Benefits = () => {
 
           </span>
 
-          <h2 className="mt-6 text-5xl lg:text-6xl font-black tracking-tight">
+          <h2 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
 
             Get Your Evenings Back.
 

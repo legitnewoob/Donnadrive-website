@@ -92,7 +92,7 @@ const VoiceFeedback = () => {
             </Link>
             
             <div className="pt-4 sm:pt-6 flex justify-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary-foreground/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary-foreground/20 rounded-full flex items-center justify-center">
                 <Mic className="w-8 h-8 sm:w-10 sm:h-10 text-primary-foreground" />
               </div>
             </div>

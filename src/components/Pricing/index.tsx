@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 
 import PricingCard from "./PricingCard";
 import { plans } from "./plans";
@@ -9,8 +9,8 @@ const Pricing = () => {
       id="pricing"
       className="relative overflow-hidden py-32 bg-gradient-to-b from-orange-50/20 to-background"
     >
-      <div className="absolute left-0 top-32 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-orange-200/10 blur-3xl" />
+      <div className="absolute left-0 top-32 h-80 w-80 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
+      <div className="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-orange-200/10 blur-2xl md:blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-6">
 
@@ -24,7 +24,7 @@ const Pricing = () => {
             Simple Pricing
           </span>
 
-          <h2 className="mt-6 text-5xl font-black">
+          <h2 className="mt-6 text-4xl md:text-5xl font-black">
             Choose Your Donna
           </h2>
 
@@ -34,12 +34,12 @@ const Pricing = () => {
           </p>
 
           <div className="mt-8 inline-flex rounded-full bg-green-100 px-5 py-2 text-sm font-semibold text-green-700">
-            🎉 30-Day Free Trial • No Card Required
+            ðŸŽ‰ 30-Day Free Trial â€¢ No Card Required
           </div>
 
         </motion.div>
 
-        <div className="mt-20 grid gap-8 lg:grid-cols-3">
+        <div className="mt-20 grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 
           {plans.map((plan, index) => (
             <PricingCard

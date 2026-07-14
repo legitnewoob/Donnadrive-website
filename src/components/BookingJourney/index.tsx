@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import { useState } from "react";
@@ -26,8 +26,8 @@ const BookingJourney = () => {
     >
       {/* Background */}
 
-      <div className="absolute left-0 top-24 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
-      <div className="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-orange-300/10 blur-3xl" />
+      <div className="absolute left-0 top-24 h-72 w-72 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
+      <div className="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-orange-300/10 blur-2xl md:blur-3xl" />
 
       <div className="relative mx-auto max-w-7xl px-6">
 
@@ -43,7 +43,7 @@ const BookingJourney = () => {
             How Donna Works
           </span>
 
-          <h2 className="mt-6 text-5xl font-black tracking-tight">
+          <h2 className="mt-6 text-4xl md:text-5xl font-black tracking-tight">
             One Message.
             <br />
             Zero Admin.
@@ -114,9 +114,9 @@ const BookingJourney = () => {
           ].map((item) => (
             <div
               key={item.title}
-              className="rounded-3xl border bg-white p-8 text-center shadow-sm"
+              className="rounded-3xl border bg-white p-6 sm:p-8 text-center shadow-sm"
             >
-              <h3 className="text-3xl font-black text-primary">
+              <h3 className="text-2xl sm:text-3xl font-black text-primary">
                 {item.title}
               </h3>
 

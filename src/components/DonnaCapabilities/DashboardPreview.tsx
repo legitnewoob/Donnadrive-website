@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 import {
   BarChart3,
   Calendar,
@@ -21,7 +21,7 @@ const stats = [
   {
     icon: PoundSterling,
     label: "Revenue",
-    value: "£426",
+    value: "Â£426",
   },
 ];
 
@@ -35,11 +35,11 @@ const DashboardPreview = () => {
         duration: 0.6,
         delay: 0.45,
       }}
-      className="group relative h-full overflow-hidden rounded-[32px] border bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+      className="group relative h-full overflow-hidden rounded-[32px] border bg-white p-6 sm:p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
     >
       {/* Glow */}
 
-      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-2xl md:blur-3xl" />
 
       {/* Header */}
 
@@ -126,7 +126,7 @@ const DashboardPreview = () => {
                 transition={{
                   delay: 1 + index * 0.15,
                 }}
-                className="text-2xl font-black"
+                className="text-xl sm:text-2xl font-black"
               >
                 {stat.value}
               </motion.p>

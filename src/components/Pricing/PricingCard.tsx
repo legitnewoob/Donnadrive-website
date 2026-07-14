@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   plan: any;
@@ -9,6 +10,7 @@ interface Props {
 
 const PricingCard = ({ plan, index }: Props) => {
   const Icon = plan.icon;
+  const navigate = useNavigate();
 
   return (
     <motion.div
@@ -31,10 +33,9 @@ const PricingCard = ({ plan, index }: Props) => {
         transition-all
         duration-300
 
-        ${
-          plan.popular
-            ? "border-primary shadow-2xl lg:scale-105"
-            : "border-border shadow-sm"
+        ${plan.popular
+          ? "border-primary shadow-2xl lg:scale-105"
+          : "border-border shadow-sm"
         }
       `}
     >
@@ -85,10 +86,17 @@ const PricingCard = ({ plan, index }: Props) => {
       </div>
 
       <Button
+
         className="mt-10 w-full h-12 rounded-xl"
+
         variant={plan.popular ? "default" : "outline"}
+
+        onClick={() => navigate(`/signup/${plan.slug}`)}
+
       >
+
         {plan.button}
+
       </Button>
     </motion.div>
   );

@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CreditCard, Lock, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { plans } from "../components/Pricing/plans";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -14,33 +14,36 @@ const Payment = () => {
   const planSlug = searchParams.get("plan") || "adi";
   
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    name: "",
-  });
+  const [user, setUser] = useState<{ email?: string; name?: string } | null>(null);
 
   const selectedPlan = plans.find(p => p.slug === planSlug);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  useEffect(() => {
+    const raw = localStorage.getItem("donna_user");
+    if (raw) {
+      try {
+        setUser(JSON.parse(raw));
+      } catch {
+        setUser(null);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!user?.email) {
+      toast.error("Please sign in before completing payment");
+      return;
+    }
 
-    // TODO: Integrate with Stripe or other payment processor
-    // For now, simulate payment processing
-    setTimeout(() => {
+    setLoading(true);
+    try {
+      const res = await api.post("/payment/create-checkout-session", { planSlug });
+      window.location.href = res.url;
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start checkout");
       setLoading(false);
-      // Redirect to dashboard after successful payment
-      navigate("/dashboard");
-    }, 2000);
+    }
   };
 
   if (!selectedPlan) {
@@ -137,63 +140,15 @@ const Payment = () => {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Cardholder Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    placeholder="John Doe"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cardNumber">Card Number</Label>
-                  <Input
-                    id="cardNumber"
-                    name="cardNumber"
-                    placeholder="1234 5678 9012 3456"
-                    value={formData.cardNumber}
-                    onChange={handleInputChange}
-                    required
-                    maxLength={19}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="expiryDate">Expiry Date</Label>
-                    <Input
-                      id="expiryDate"
-                      name="expiryDate"
-                      placeholder="MM/YY"
-                      value={formData.expiryDate}
-                      onChange={handleInputChange}
-                      required
-                      maxLength={5}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="cvv">CVV</Label>
-                    <Input
-                      id="cvv"
-                      name="cvv"
-                      placeholder="123"
-                      value={formData.cvv}
-                      onChange={handleInputChange}
-                      required
-                      maxLength={4}
-                      type="password"
-                    />
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    You are signed in as <span className="font-medium text-foreground">{user?.email || "Guest"}</span>
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 border">
                   <Lock className="h-4 w-4 text-green-600" />
                   <span className="text-xs text-muted-foreground">
-                    Your payment information is encrypted and secure
+                    You will be redirected to Stripe to complete your payment securely.
                   </span>
                 </div>
 
@@ -201,7 +156,7 @@ const Payment = () => {
                   type="submit"
                   size="lg"
                   className="w-full h-12 text-base"
-                  disabled={loading}
+                  disabled={loading || !user?.email}
                 >
                   {loading ? (
                     <span className="flex items-center gap-2">

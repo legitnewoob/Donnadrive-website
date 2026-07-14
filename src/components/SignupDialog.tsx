@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Calendar, Shield, Clock3, Check } from "lucide-react";
+import { useGoogleLogin } from "@react-oauth/google";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -35,36 +38,58 @@ export default function SignupDialog({ plan, open, onOpenChange }: Props) {
 
   const Icon = plan.icon;
 
-  const handleGoogleSignin = async () => {
-    setLoading(true);
+  const handleGoogleSignin = (useGoogleLogin as any)({
+    flow: "auth-code",
+    access_type: "offline",
+    prompt: "consent",
+    onSuccess: async (tokenResponse: any) => {
+      try {
+        const res = await api.post("/auth/google", { code: tokenResponse.code });
+        localStorage.setItem("donna_access_token", res.accessToken);
+        localStorage.setItem("donna_user", JSON.stringify(res.user));
 
-    // Simulate Google OAuth
-    await new Promise(resolve => setTimeout(resolve, 1500));
+        if (plan.slug === "pdi") {
+          setStep("connect");
+        } else {
+          onOpenChange(false);
+          navigate(`/payment?plan=${plan.slug}`);
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Google sign-in failed");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      setLoading(false);
+      toast.error("Google sign-in was cancelled or failed");
+    },
+  } as any);
 
-    setLoading(false);
-
-    if (plan.slug === "pdi") {
-      setStep("connect");
-    } else {
-      onOpenChange(false);
-      navigate(`/payment?plan=${plan.slug}`);
-    }
-  };
-
-  const handleConnectCalendar = async () => {
-    setLoading(true);
-
-    // Simulate Google Calendar OAuth
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    setLoading(false);
-    setStep("success");
-
-    setTimeout(() => {
-      onOpenChange(false);
-      navigate("/dashboard");
-    }, 1000);
-  };
+  const handleConnectCalendar = (useGoogleLogin as any)({
+    flow: "auth-code",
+    scope: "https://www.googleapis.com/auth/calendar",
+    access_type: "offline",
+    prompt: "consent",
+    onSuccess: async (tokenResponse: any) => {
+      try {
+        await api.post("/auth/google-calendar", { code: tokenResponse.code });
+        setStep("success");
+        setTimeout(() => {
+          onOpenChange(false);
+          navigate("/dashboard");
+        }, 1000);
+      } catch (err: any) {
+        toast.error(err.message || "Google Calendar connection failed");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      setLoading(false);
+      toast.error("Google Calendar connection was cancelled");
+    },
+  } as any);
 
   const handleClose = () => {
     setStep("signup");

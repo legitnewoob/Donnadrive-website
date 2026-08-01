@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Calendar,
@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Target,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import {
   BarChart,
@@ -34,42 +35,73 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import DashboardLayout from "@/components/DashboardLayout";
+import { drivingBotApi } from "@/lib/drivingBot";
+import { useToast } from "@/hooks/use-toast";
+
+const iconMap: Record<string, LucideIcon> = {
+  Calendar,
+  Users,
+  MessageSquare,
+  BarChart3,
+  Clock,
+  TrendingUp,
+  Phone,
+  Route,
+};
+
+interface DashboardStat {
+  icon: string;
+  title: string;
+  value: string;
+  change: string;
+  color: string;
+  bgColor: string;
+}
+
+interface DashboardActivity {
+  icon: string;
+  text: string;
+  time: string;
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [dateRange, setDateRange] = useState("This week");
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState({ name: "Alex", firstName: "Alex", initials: "AD" });
 
-  const stats = [
+  const [stats, setStats] = useState([
     { title: "Total Students", value: "24", change: "+12%", icon: Users, color: "text-blue-600", bgColor: "bg-blue-50" },
     { title: "Lessons", value: "89", change: "+8%", icon: Calendar, color: "text-green-600", bgColor: "bg-green-50" },
     { title: "Messages", value: "342", change: "+23%", icon: MessageSquare, color: "text-purple-600", bgColor: "bg-purple-50" },
     { title: "Revenue", value: "£2,450", change: "+15%", icon: TrendingUp, color: "text-orange-600", bgColor: "bg-orange-50" },
     { title: "Cancel Rate", value: "4.5%", change: "-1.2%", icon: Clock, color: "text-red-600", bgColor: "bg-red-50" },
     { title: "Avg. Value", value: "£52", change: "+3%", icon: BarChart3, color: "text-indigo-600", bgColor: "bg-indigo-50" },
-  ];
+  ]);
 
-  const todaySchedule = [
+  const [todaySchedule, setTodaySchedule] = useState([
     { student: "John Smith", time: "10:00 AM", duration: "1h", status: "confirmed" },
     { student: "Emma Davis", time: "2:00 PM", duration: "1.5h", status: "pending" },
     { student: "Michael Brown", time: "4:00 PM", duration: "1h", status: "confirmed" },
-  ];
+  ]);
 
-  const upcomingLessons = [
+  const [upcomingLessons, setUpcomingLessons] = useState([
     { student: "John Smith", time: "Today, 10:00 AM", status: "confirmed" },
     { student: "Emma Davis", time: "Today, 2:00 PM", status: "pending" },
     { student: "Michael Brown", time: "Tomorrow, 9:00 AM", status: "confirmed" },
     { student: "Sarah Wilson", time: "Tomorrow, 3:30 PM", status: "pending" },
-  ];
+  ]);
 
-  const activity = [
+  const [activity, setActivity] = useState([
     { text: "John Smith booked a lesson", time: "2 min ago", icon: Calendar },
     { text: "WhatsApp reminder sent to Emma Davis", time: "15 min ago", icon: Phone },
     { text: "Route optimized for tomorrow", time: "1 hour ago", icon: Route },
     { text: "New student signup: Tom Harris", time: "3 hours ago", icon: Users },
-  ];
+  ]);
 
-  const revenueData = [
+  const [revenueData, setRevenueData] = useState([
     { name: "Mon", revenue: 240 },
     { name: "Tue", revenue: 180 },
     { name: "Wed", revenue: 320 },
@@ -77,37 +109,82 @@ const Dashboard = () => {
     { name: "Fri", revenue: 390 },
     { name: "Sat", revenue: 450 },
     { name: "Sun", revenue: 120 },
-  ];
+  ]);
 
-  const lessonData = [
+  const [lessonData, setLessonData] = useState([
     { name: "Booked", value: 42, color: "#3b82f6" },
     { name: "Completed", value: 38, color: "#10b981" },
     { name: "Cancelled", value: 4, color: "#f59e0b" },
-  ];
+  ]);
 
-  const studentGrowth = [
+  const [studentGrowth, setStudentGrowth] = useState([
     { name: "Jan", students: 12 },
     { name: "Feb", students: 18 },
     { name: "Mar", students: 22 },
     { name: "Apr", students: 24 },
-  ];
+  ]);
 
-  const revenueGoal = { current: 2450, target: 3000 };
-  const revenueProgress = Math.round((revenueGoal.current / revenueGoal.target) * 100);
+  const [revenueGoal, setRevenueGoal] = useState({ current: 2450, target: 3000 });
+  const revenueProgress = Math.round((revenueGoal.current / revenueGoal.target) * 100) || 0;
+
+  useEffect(() => {
+    const token = localStorage.getItem("donna_access_token");
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+
+    drivingBotApi
+      .get(`/dashboard?range=${encodeURIComponent(dateRange)}`)
+      .then((res) => {
+        if (cancelled) return;
+        setUser((prev) => res.data.user || prev);
+        setStats((res.data.stats || []).map((s: DashboardStat) => ({ ...s, icon: iconMap[s.icon] || Users })));
+        setTodaySchedule(res.data.todaySchedule || []);
+        setUpcomingLessons(res.data.upcomingLessons || []);
+        setRevenueData(res.data.revenueData || []);
+        setLessonData(res.data.lessonData || []);
+        setStudentGrowth(res.data.studentGrowth || []);
+        setActivity((res.data.activity || []).map((a: DashboardActivity) => ({ ...a, icon: iconMap[a.icon] || Calendar })));
+        setRevenueGoal(res.data.revenueGoal || { current: 0, target: 3000 });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        toast({
+          title: "Dashboard error",
+          description: err.message,
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dateRange, toast]);
 
   return (
-    <DashboardLayout title="Dashboard" subtitle="Here’s what’s happening with your driving school today.">
+    <DashboardLayout title="Dashboard" subtitle="Here's what's happening with your driving school today." initials={user.initials}>
       {/* Welcome */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h3 className="text-2xl font-bold text-slate-900">Welcome back, Alex</h3>
+          <h3 className="text-2xl font-bold text-slate-900">Welcome back, {user.firstName}</h3>
           <p className="text-muted-foreground">Here’s what’s happening with your driving school today.</p>
         </div>
 
-        <div className="relative group">
-          <Button variant="outline" className="gap-2">
+        <div className={`relative ${isLoading ? "" : "group"}`}>
+          <Button variant="outline" className="gap-2" disabled={isLoading}>
             {dateRange}
-            <ChevronDown className="h-4 w-4" />
+            {isLoading ? (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
           </Button>
           <div className="absolute right-0 top-full mt-2 bg-white border rounded-xl shadow-lg p-2 hidden group-hover:block z-20">
             {["Today", "This week", "This month", "This year"].map((range) => (
@@ -262,7 +339,9 @@ const Dashboard = () => {
                   <div className={`h-10 w-10 sm:h-11 sm:w-11 rounded-xl ${stat.bgColor} flex items-center justify-center`}>
                     <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${stat.color}`} />
                   </div>
-                  <Badge variant="secondary" className="text-green-600 bg-green-50 text-xs">
+                  <Badge variant="secondary" className={`text-xs ${
+                    stat.change.startsWith("-") ? "text-red-600 bg-red-50" : "text-green-600 bg-green-50"
+                  }`}>
                     {stat.change}
                   </Badge>
                 </div>

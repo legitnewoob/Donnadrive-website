@@ -18,14 +18,18 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
   title: string;
   subtitle?: string;
+  initials?: string;
 }
 
-const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, title, subtitle, initials = "AD" }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleLogout = () => navigate("/");
+  const handleLogout = () => {
+    localStorage.removeItem("donna_access_token");
+    navigate("/");
+  };
 
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
@@ -137,7 +141,7 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
               <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
             </Button>
             <div className="h-9 w-9 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
-              AD
+              {initials}
             </div>
           </div>
         </header>

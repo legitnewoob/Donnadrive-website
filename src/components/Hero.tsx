@@ -1,15 +1,9 @@
 ﻿import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  Calendar,
-  MessageCircle,
-  Route,
-  LayoutDashboard,
-} from "lucide-react";
 
-import donnaCharacter from "@/assets/donna-drive-mascot-hero_v2.png";
-import donnaCharacterSmall from "@/assets/donna-drive-mascot-hero.png";
+import donnaCharacter from "@/assets/mascot-confident.png";
+import FeatureMarquee from "@/components/FeatureMarquee";
 
 const Hero = () => {
   return (
@@ -48,13 +42,13 @@ const Hero = () => {
 
             {/* Heading */}
 
-            <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black leading-tight tracking-tight">
+            <h1 className="text-6xl sm:text-7xl lg:text-8xl xl:text-9xl font-black leading-[0.95] tracking-tight drop-shadow-[0_4px_24px_rgba(0,0,0,0.15)]">
 
               Donna Drive
 
             </h1>
 
-            <p className="mt-6 text-xl sm:text-2xl font-semibold text-white/90">
+            <p className="mt-8 text-xl sm:text-2xl font-semibold text-white/90">
 
               Booking Assistant & Smart Calendar
 
@@ -134,91 +128,11 @@ const Hero = () => {
 
                 <img
                   src={donnaCharacter}
-                  srcSet={`${donnaCharacterSmall} 566w, ${donnaCharacter} 1357w`}
-                  sizes="(max-width: 640px) 320px, (max-width: 1024px) 420px, (max-width: 1280px) 560px, 620px"
                   alt="Donna AI"
                   loading="eager"
                   decoding="async"
                   className="w-full max-w-[320px] sm:max-w-[420px] lg:max-w-[560px] xl:max-w-[620px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.2)] md:drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)] will-change-transform"
                 />
-
-                {/* Floating notification */}
-
-                <motion.div
-                  animate={{
-                    y: [0, -8, 0]
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity
-                  }}
-                  className="absolute left-2 top-8 sm:-left-8 sm:top-12 bg-white rounded-2xl shadow-lg md:shadow-xl p-3 sm:p-4 max-w-[140px] sm:max-w-none"
-                >
-
-                  <div className="flex items-center gap-3">
-
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-
-                      ðŸ’¬
-
-                    </div>
-
-                    <div>
-
-                      <p className="font-semibold text-gray-800 text-sm">
-
-                        Lesson Booked
-
-                      </p>
-
-                      <p className="text-xs text-gray-500">
-
-                        via WhatsApp
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </motion.div>
-
-                {/* Floating calendar */}
-
-                <motion.div
-                  animate={{
-                    y: [0, 8, 0]
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity
-                  }}
-                  className="absolute right-2 bottom-4 sm:-right-8 sm:bottom-10 bg-white rounded-2xl shadow-lg md:shadow-xl p-3 sm:p-4 max-w-[140px] sm:max-w-none"
-                >
-
-                  <div className="flex items-center gap-3">
-
-                    <Calendar className="text-[#F86C4F]" />
-
-                    <div>
-
-                      <p className="font-semibold text-gray-800 text-sm">
-
-                        Calendar Updated
-
-                      </p>
-
-                      <p className="text-xs text-gray-500">
-
-                        No double bookings
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </motion.div>
 
               </motion.div>
 
@@ -226,88 +140,16 @@ const Hero = () => {
 
           </motion.div>
 
-        </div>        {/* Feature Cards */}
+        </div>
+
+        {/* Feature Cards — continuous marquee, pauses + expands on hover */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.35 }}
-          className="mt-10"
+          className="mt-4 relative left-1/2 right-1/2 -mx-[50vw] w-screen"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-
-            <Link
-              to="/ai-whatsapp-booking"
-              className="group rounded-2xl bg-white/20 md:bg-white/10 md:backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
-                <MessageCircle className="w-7 h-7" />
-              </div>
-
-              <h3 className="font-bold text-lg">
-                AI WhatsApp
-              </h3>
-
-              <p className="mt-2 text-sm text-white/75 leading-6">
-                Replies instantly, books lessons and answers learner
-                questions 24/7.
-              </p>
-            </Link>
-
-            <Link
-              to="/smart-calendar"
-              className="group rounded-2xl bg-white/20 md:bg-white/10 md:backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
-                <Calendar className="w-7 h-7" />
-              </div>
-
-              <h3 className="font-bold text-lg">
-                Smart Calendar
-              </h3>
-
-              <p className="mt-2 text-sm text-white/75 leading-6">
-                Automatic scheduling that prevents conflicts and keeps
-                your diary perfectly organised.
-              </p>
-            </Link>
-
-            <Link
-              to="/route-optimization"
-              className="group rounded-2xl bg-white/20 md:bg-white/10 md:backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
-                <Route className="w-7 h-7" />
-              </div>
-
-              <h3 className="font-bold text-lg">
-                Optimised Routes
-              </h3>
-
-              <p className="mt-2 text-sm text-white/75 leading-6">
-                Spend less time driving between learners and more time
-                teaching.
-              </p>
-            </Link>
-
-            <Link
-              to="/portal"
-              className="group rounded-2xl bg-white/20 md:bg-white/10 md:backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
-                <LayoutDashboard className="w-7 h-7" />
-              </div>
-
-              <h3 className="font-bold text-lg">
-                Student Portal
-              </h3>
-
-              <p className="mt-2 text-sm text-white/75 leading-6">
-                Learners can view bookings, payments and lesson progress
-                anytime.
-              </p>
-            </Link>
-
-          </div>
+          <FeatureMarquee />
         </motion.div>
 
       </div>

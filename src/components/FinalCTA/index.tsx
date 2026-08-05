@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Typewriter } from "react-simple-typewriter";
-import donnaMascot from "@/assets/donna-drive-mascot-hero.png";
+import donnaMascot from "@/assets/mascot-wink.png";
 
 const features = [
     {

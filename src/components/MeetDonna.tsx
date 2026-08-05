@@ -1,7 +1,7 @@
 ﻿import { motion } from "framer-motion";
 import { CheckCircle2, ChevronDown } from "lucide-react";
 
-import donnaCharacter from "@/assets/donna-bot-inspo.png";
+import donnaCharacter from "@/assets/mascot-smile.png";
 
 const features = [
   {

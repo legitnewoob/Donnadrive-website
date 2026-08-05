@@ -20,14 +20,16 @@ const chips = [
 ];
 
 const FRAME_COUNT = 120;
-const FRAME_WIDTH = 840;
-const FRAME_HEIGHT = 473;
+const FRAME_WIDTH = 1280;
+const FRAME_HEIGHT = 720;
 const framePath = (i: number) =>
   `/videos/frames/frame-${String(i + 1).padStart(3, "0")}.jpg`;
 
 /**
  * A scroll-scrubbed illustration built from a preloaded image sequence
- * drawn to a canvas. Two things matter for this to feel smooth:
+ * drawn to a canvas, used as the section's full-bleed background (not a
+ * boxed image) with content overlaid on top. Two things matter for the
+ * scrub itself to feel smooth:
  *
  * 1. Drawing an already-decoded bitmap to canvas costs a fraction of a
  *    millisecond, vs several ms per seek for native <video> decode.
@@ -69,26 +71,31 @@ const DrivingScene = () => {
   useEffect(() => {
     let cancelled = false;
 
-    // decode() (not just onload) is what guarantees the bitmap is fully
+    // decode() (not just onload) is what guarantees a bitmap is fully
     // decoded and ready for a zero-cost drawImage — without it, the first
-    // drawImage() of each frame can still pay decode cost on-demand, which
-    // is exactly the kind of per-frame cost we're trying to avoid.
+    // drawImage() of a frame can still pay decode cost on-demand, which is
+    // exactly the kind of per-frame cost we're trying to avoid during scroll.
+    // But at 1280x720 x 120 frames, decoding *all* of them before showing
+    // anything took several seconds — so frame 0 gets decoded and revealed
+    // on its own, and the rest decode in the background afterwards. Any
+    // frame drawFrame() reaches before its own decode finishes just holds
+    // on the last successfully-decoded frame (see the `img.complete` guard).
     const images: HTMLImageElement[] = [];
-    const decodePromises: Promise<void>[] = [];
     for (let i = 0; i < FRAME_COUNT; i++) {
       const img = new Image();
       img.src = framePath(i);
       images.push(img);
-      decodePromises.push(
-        img.decode ? img.decode().catch(() => {}) : Promise.resolve()
-      );
     }
     imagesRef.current = images;
 
-    Promise.all(decodePromises).then(() => {
+    const decode = (img: HTMLImageElement) =>
+      img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+
+    decode(images[0]).then(() => {
       if (cancelled) return;
       drawFrame(0);
       setFirstFrameReady(true);
+      Promise.all(images.slice(1).map(decode));
     });
 
     return () => {
@@ -151,82 +158,74 @@ const DrivingScene = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative bg-background py-24 lg:py-32"
+      className="relative overflow-hidden bg-[#F2EEE6] min-h-[620px] h-[78vh] max-h-[820px] flex items-center"
     >
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="grid lg:grid-cols-2 gap-14 items-center">
-          {/* LEFT: copy */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center lg:text-left"
-          >
-            <span className="inline-flex rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
-              Built for driving instructors
-            </span>
+      {/* Scroll-scrubbed background */}
+      <canvas
+        ref={canvasRef}
+        width={FRAME_WIDTH}
+        height={FRAME_HEIGHT}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+          firstFrameReady ? "opacity-100" : "opacity-0"
+        }`}
+      />
 
-            <h2 className="mt-6 text-4xl md:text-5xl font-black tracking-tight">
-              Every learner's journey
-              <br className="hidden lg:block" /> starts with one lesson.
-            </h2>
+      {/* Scrim: keeps the copy readable over the illustration. On mobile
+          the text column spans most of the width, so it stays mostly
+          opaque throughout; from md up it fades to fully transparent on
+          the right so the scene reads clearly. */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#F2EEE6] from-40% via-[#F2EEE6]/85 via-70% to-[#F2EEE6]/45 md:from-[#F2EEE6] md:from-0% md:via-[#F2EEE6]/60 md:via-60% md:to-transparent" />
 
-            <p className="mt-6 text-lg leading-8 text-muted-foreground max-w-md mx-auto lg:mx-0">
-              Donna keeps the diary moving between lessons — booking,
-              rescheduling and reminding — so every learner gets from their
-              first drive to test day without a gap in your calendar.
-            </p>
+      <div className="relative mx-auto max-w-6xl px-6 w-full">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="max-w-md"
+        >
+          <span className="inline-flex rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+            Built for driving instructors
+          </span>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link to="/book-demo">
-                <Button
-                  size="lg"
-                  className="rounded-xl h-14 px-10 text-base font-semibold shadow-lg"
-                >
-                  Book a Demo
-                </Button>
-              </Link>
-            </div>
+          <h2 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-[#1a1a2e]">
+            Every learner's journey starts with one lesson.
+          </h2>
 
-            {/* Feature chips */}
-            <div className="mt-10 flex flex-col gap-3 max-w-sm mx-auto lg:mx-0">
-              {chips.map(({ icon: Icon, label }) => (
-                <div
-                  key={label}
-                  className="flex items-center gap-3 rounded-xl bg-secondary/60 border border-border px-4 py-3"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">
-                    {label}
-                  </span>
+          <p className="mt-6 text-lg leading-8 text-[#3a3a4e]">
+            Donna keeps the diary moving between lessons — booking,
+            rescheduling and reminding — so every learner gets from their
+            first drive to test day without a gap in your calendar.
+          </p>
+
+          <div className="mt-8">
+            <Link to="/book-demo">
+              <Button
+                size="lg"
+                className="rounded-xl h-14 px-10 text-base font-semibold shadow-lg"
+              >
+                Book a Demo
+              </Button>
+            </Link>
+          </div>
+
+          {/* Feature chips */}
+          <div className="mt-10 flex flex-col gap-3">
+            {chips.map(({ icon: Icon, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-3 rounded-xl bg-white/70 backdrop-blur-sm border border-white/80 px-4 py-3 w-fit"
+              >
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Icon className="w-4 h-4 text-primary" />
                 </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* RIGHT: pinned, scroll-scrubbed canvas */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="relative"
-          >
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-border bg-secondary/40">
-              <canvas
-                ref={canvasRef}
-                width={FRAME_WIDTH}
-                height={FRAME_HEIGHT}
-                className={`w-full h-auto aspect-video transition-opacity duration-500 ${
-                  firstFrameReady ? "opacity-100" : "opacity-0"
-                }`}
-              />
-            </div>
-          </motion.div>
-        </div>
+                <span className="text-sm font-medium text-[#1a1a2e]">
+                  {label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -5,6 +5,7 @@
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { motion } from "framer-motion";
+import RoundaboutMapBackground from "@/components/RoundaboutMapBackground";
 
 const faqs = [
   {
@@ -45,6 +46,8 @@ const FAQ = () => {
       id="faq"
       className="relative overflow-hidden py-32 bg-background"
     >
+      <RoundaboutMapBackground />
+
       <div className="absolute left-0 top-40 h-72 w-72 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
 
       <div className="mx-auto max-w-5xl px-6">

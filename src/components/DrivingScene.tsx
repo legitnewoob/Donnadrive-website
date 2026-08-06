@@ -158,14 +158,14 @@ const DrivingScene = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden bg-[#F2EEE6] min-h-[620px] h-[78vh] max-h-[820px] flex items-center"
+      className="relative overflow-hidden bg-[#F2EEE6] min-h-[760px] h-[92vh] max-h-[980px] flex items-center"
     >
       {/* Scroll-scrubbed background */}
       <canvas
         ref={canvasRef}
         width={FRAME_WIDTH}
         height={FRAME_HEIGHT}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+        className={`absolute inset-0 w-full h-full object-cover object-right transition-opacity duration-700 ${
           firstFrameReady ? "opacity-100" : "opacity-0"
         }`}
       />
@@ -189,7 +189,10 @@ const DrivingScene = () => {
           </span>
 
           <h2 className="mt-6 text-4xl md:text-5xl font-black tracking-tight text-[#1a1a2e]">
-            Every learner's journey starts with one lesson.
+            Every learner's journey starts with{" "}
+            <span className="underline decoration-primary decoration-[6px] underline-offset-4">
+              one lesson.
+            </span>
           </h2>
 
           <p className="mt-6 text-lg leading-8 text-[#3a3a4e]">
@@ -226,6 +229,30 @@ const DrivingScene = () => {
             ))}
           </div>
         </motion.div>
+      </div>
+
+      {/* Coral wave — a clean, deliberate border separating this section from
+          the next. Filled with a gradient matching MeetDonna's own coral
+          gradient (not a flat fill-primary) so the wave's colour actually
+          blends into the section it's leading into. */}
+      <div className="absolute bottom-0 left-0 right-0 overflow-hidden leading-none">
+        <svg
+          viewBox="0 0 1440 120"
+          className="w-full h-16 lg:h-24"
+          preserveAspectRatio="none"
+        >
+          <defs>
+            <linearGradient id="drivingSceneWave" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#F86C4F" />
+              <stop offset="50%" stopColor="#F47B62" />
+              <stop offset="100%" stopColor="#F59678" />
+            </linearGradient>
+          </defs>
+          <path
+            fill="url(#drivingSceneWave)"
+            d="M0,32L80,42.7C160,53,320,75,480,90.7C640,107,800,117,960,101.3C1120,85,1280,43,1360,21.3L1440,0L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"
+          />
+        </svg>
       </div>
     </section>
   );

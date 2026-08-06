@@ -3,6 +3,7 @@
 import PricingCard from "./PricingCard";
 import { plans } from "./plans";
 import donnaSurprised from "@/assets/mascot-surprised.png";
+import RoundaboutMapBackground from "@/components/RoundaboutMapBackground";
 
 const Pricing = () => {
   return (
@@ -10,6 +11,8 @@ const Pricing = () => {
       id="pricing"
       className="relative overflow-hidden py-32 bg-gradient-to-b from-orange-50/20 to-background"
     >
+      <RoundaboutMapBackground />
+
       <div className="absolute left-0 top-32 h-80 w-80 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
       <div className="absolute right-0 bottom-0 h-96 w-96 rounded-full bg-orange-200/10 blur-2xl md:blur-3xl" />
 

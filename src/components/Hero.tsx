@@ -158,7 +158,7 @@ const Hero = () => {
       <div className="absolute bottom-0 left-0 right-0 overflow-hidden leading-none">
         <svg
           viewBox="0 0 1440 120"
-          className="w-full h-16 lg:h-24 fill-background"
+          className="w-full h-16 lg:h-24 fill-[#F2EEE6]"
           preserveAspectRatio="none"
         >
           <path d="M0,32L80,42.7C160,53,320,75,480,90.7C640,107,800,117,960,101.3C1120,85,1280,43,1360,21.3L1440,0L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z" />

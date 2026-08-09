@@ -102,7 +102,7 @@ const FinalCTA = () => {
                                     size="lg"
                                     className="h-14 rounded-xl px-10 text-base"
                                 >
-                                    Book Your Live Demo
+                                    Get Started
                                     <ArrowRight className="ml-2 h-5 w-5" />
                                 </Button>
                             </Link>

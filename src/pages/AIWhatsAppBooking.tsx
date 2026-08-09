@@ -150,7 +150,7 @@ const AIWhatsAppBooking = () => {
             <div className="flex flex-row gap-2 sm:gap-3 justify-center pt-4">
               <Link to="/book-demo">
                 <Button variant="accent" size="lg" className="text-xs sm:text-base px-4 sm:px-8 py-2 sm:py-3">
-                  Book a Demo
+                  Get Started
                 </Button>
               </Link>
             </div>
@@ -510,7 +510,7 @@ const AIWhatsAppBooking = () => {
             </p>
             <Link to="/book-demo">
               <Button variant="default" size="lg" className="text-base px-8 py-3">
-                Book Your Demo
+                Get Started
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>

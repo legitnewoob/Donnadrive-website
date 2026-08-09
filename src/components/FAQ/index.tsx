@@ -11,12 +11,12 @@ const faqs = [
   {
     question: "Can Donna really book lessons automatically?",
     answer:
-      "Yes. Donna chats with learners on WhatsApp, checks your availability, finds the best lesson slot, books it, and updates your Google Calendar automatically.",
+      "Yes. Donna chats with learners on WhatsApp, checks your availability, finds the best lesson slot, books it, and updates your portal automatically.",
   },
   {
     question: "Does Donna work with Google Calendar?",
     answer:
-      "Absolutely. Donna syncs directly with your Google Calendar to avoid clashes, respect your working hours, and instantly add confirmed lessons.",
+      "Absolutely. Your Google Calendar links straight to your portal, so the two always match. Donna works around what's already in your diary, respects your working hours, and adds confirmed lessons instantly — so you never miss a thing.",
   },
   {
     question: "What happens if a learner cancels?",
@@ -36,7 +36,7 @@ const faqs = [
   {
     question: "Is there a free trial?",
     answer:
-      "Yes. Every ADI gets a 30-day free trial with no credit card required.",
+      "Yes. Every instructor gets a 30-day free trial — PDI, ADI or driving school — with no credit card required.",
   },
 ];
 
@@ -44,7 +44,7 @@ const FAQ = () => {
   return (
     <section
       id="faq"
-      className="relative overflow-hidden py-32 bg-background"
+      className="relative overflow-hidden scroll-mt-28 py-32 bg-background"
     >
       <RoundaboutMapBackground />
 

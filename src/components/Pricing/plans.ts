@@ -37,7 +37,7 @@ export const plans = [
 
     popular: true,
 
-    button: "Start Free Trial",
+    button: "Get Started",
 
     features: [
       "Everything in PDI",
@@ -55,10 +55,10 @@ export const plans = [
     icon: Building2,
     title: "Driving Schools",
     subtitle: "Multiple instructors",
-    price: "£6-8",
+    price: "£8",
     period: "/month",
     popular: false,
-    button: "Get started",
+    button: "Get Started",
     features: [
       "Everything in ADI",
       "Team dashboard",

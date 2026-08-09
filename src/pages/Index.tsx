@@ -6,6 +6,7 @@ import Pricing from "../components/Pricing";
 import FAQ from "../components/FAQ";
 import ScrollProgress from "../components/ScrollProgress";
 import WhatsAppDemo from "@/components/WhatsappDemo";
+import HowDonnaWorks from "@/components/HowDonnaWorks";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -17,6 +18,7 @@ const Index = () => {
       <DrivingScene />
       <MeetDonna />
       <WhatsAppDemo />
+      <HowDonnaWorks />
       <Pricing />
       <FAQ />
       <Footer />

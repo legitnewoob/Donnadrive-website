@@ -23,7 +23,7 @@ const Contact = () => {
           
           <Link to="/book-demo">
             <Button variant="accent" size="lg" className="text-base px-8 py-3 mb-8">
-              Book a Demo
+              Get Started
             </Button>
           </Link>
 

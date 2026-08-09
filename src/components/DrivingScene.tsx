@@ -160,14 +160,26 @@ const DrivingScene = () => {
       ref={sectionRef}
       className="relative overflow-hidden bg-[#F2EEE6] min-h-[760px] h-[92vh] max-h-[980px] flex items-center"
     >
-      {/* Scroll-scrubbed background */}
+      {/* Scroll-scrubbed background. Scaled down and nudged right via
+          transform (on top of object-cover's own crop/anchor) so the car
+          reads as further away and sits further to the right. A radial
+          mask feathers the canvas's own rectangular edges to transparent
+          (revealing the section's matching flat background underneath)
+          instead of blurring the actual pixels — the centre/right, where
+          the car sits, stays fully sharp and opaque. */}
       <canvas
         ref={canvasRef}
         width={FRAME_WIDTH}
         height={FRAME_HEIGHT}
-        className={`absolute inset-0 w-full h-full object-cover object-right transition-opacity duration-700 ${
+        className={`absolute inset-0 w-full h-full object-cover object-right scale-[0.8] translate-x-[8%] transition-opacity duration-700 ${
           firstFrameReady ? "opacity-100" : "opacity-0"
         }`}
+        style={{
+          WebkitMaskImage:
+            "radial-gradient(ellipse 72% 72% at 58% 50%, black 58%, transparent 100%)",
+          maskImage:
+            "radial-gradient(ellipse 72% 72% at 58% 50%, black 58%, transparent 100%)",
+        }}
       />
 
       {/* Scrim: keeps the copy readable over the illustration. On mobile
@@ -176,7 +188,9 @@ const DrivingScene = () => {
           the right so the scene reads clearly. */}
       <div className="absolute inset-0 bg-gradient-to-r from-[#F2EEE6] from-40% via-[#F2EEE6]/85 via-70% to-[#F2EEE6]/45 md:from-[#F2EEE6] md:from-0% md:via-[#F2EEE6]/60 md:via-60% md:to-transparent" />
 
-      <div className="relative mx-auto max-w-6xl px-6 w-full">
+      {/* pl reduced below pr so the text column sits further left than a
+          uniform px-6 would place it. */}
+      <div className="relative mx-auto max-w-6xl pl-2 sm:pl-4 pr-6 w-full">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -207,7 +221,7 @@ const DrivingScene = () => {
                 size="lg"
                 className="rounded-xl h-14 px-10 text-base font-semibold shadow-lg"
               >
-                Book a Demo
+                Get Started
               </Button>
             </Link>
           </div>
@@ -231,29 +245,8 @@ const DrivingScene = () => {
         </motion.div>
       </div>
 
-      {/* Coral wave — a clean, deliberate border separating this section from
-          the next. Filled with a gradient matching MeetDonna's own coral
-          gradient (not a flat fill-primary) so the wave's colour actually
-          blends into the section it's leading into. */}
-      <div className="absolute bottom-0 left-0 right-0 overflow-hidden leading-none">
-        <svg
-          viewBox="0 0 1440 120"
-          className="w-full h-16 lg:h-24"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient id="drivingSceneWave" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#F86C4F" />
-              <stop offset="50%" stopColor="#F47B62" />
-              <stop offset="100%" stopColor="#F59678" />
-            </linearGradient>
-          </defs>
-          <path
-            fill="url(#drivingSceneWave)"
-            d="M0,32L80,42.7C160,53,320,75,480,90.7C640,107,800,117,960,101.3C1120,85,1280,43,1360,21.3L1440,0L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"
-          />
-        </svg>
-      </div>
+      {/* No border/wave here — MeetDonna (the next section) starts with a
+          flat edge straight into its own coral background. */}
     </section>
   );
 };

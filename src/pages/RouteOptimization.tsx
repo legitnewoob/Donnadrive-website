@@ -20,8 +20,8 @@ const RouteOptimization = () => {
         
         {/* Breadcrumb */}
         <div className="container mx-auto px-4 pt-20 pb-2">
-          <Link to="/#features" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            ← Back to Features
+          <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+            ← Back to home
           </Link>
         </div>
 
@@ -61,7 +61,7 @@ const RouteOptimization = () => {
 
                 <Link to="/book-demo">
                   <Button variant="accent" size="lg" className="w-full sm:w-auto">
-                    See Route Optimization — Book a Demo
+                    Get Started
                   </Button>
                 </Link>
               </motion.div>
@@ -304,7 +304,7 @@ const RouteOptimization = () => {
               </p>
               <Link to="/book-demo">
                 <Button variant="accent" size="lg">
-                  Book a Demo
+                  Get Started
                 </Button>
               </Link>
               <p className="text-xs sm:text-sm text-muted-foreground mt-3">
@@ -393,7 +393,7 @@ const RouteOptimization = () => {
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 border-t border-border lg:hidden z-40">
           <Link to="/book-demo" className="block">
             <Button variant="accent" size="lg" className="w-full">
-              Book a Demo
+              Get Started
             </Button>
           </Link>
         </div>

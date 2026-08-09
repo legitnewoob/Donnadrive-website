@@ -71,15 +71,18 @@ const Footer = () => {
 
             <div className="mt-6 space-y-4">
 
+              {/* Rooted at "/" rather than a bare "#id": the footer shows on
+                  every route, and a bare hash does nothing on /blog or any
+                  other page that has no such section. */}
               <a
-                href="#features"
+                href="/#how-donna-works"
                 className="block text-muted-foreground transition hover:text-primary"
               >
-                Features
+                How It Works
               </a>
 
               <a
-                href="#pricing"
+                href="/#pricing"
                 className="block text-muted-foreground transition hover:text-primary"
               >
                 Pricing
@@ -89,7 +92,7 @@ const Footer = () => {
                 to="/book-demo"
                 className="flex items-center gap-1 text-muted-foreground transition hover:text-primary"
               >
-                Book Demo
+                Get Started
 
                 <ArrowUpRight className="h-4 w-4" />
 

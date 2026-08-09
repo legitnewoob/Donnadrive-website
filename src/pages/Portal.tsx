@@ -207,7 +207,7 @@ const Portal = () => {
             <div className="pt-2">
               <Link to="/book-demo">
                 <Button variant="accent" size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-2.5 sm:py-3">
-                  Book a Demo
+                  Get Started
                 </Button>
               </Link>
             </div>
@@ -443,7 +443,7 @@ const Portal = () => {
             </p>
             <Link to="/book-demo">
               <Button variant="accent" size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-2.5 sm:py-3">
-                Book a Demo
+                Get Started
               </Button>
             </Link>
           </motion.div>

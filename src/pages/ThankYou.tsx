@@ -38,9 +38,9 @@ const ThankYou = () => {
                 Back to Home
               </Button>
             </Link>
-            <Link to="/#features" className="w-full sm:w-auto">
+            <Link to="/#how-donna-works" className="w-full sm:w-auto">
               <Button variant="outline" size="lg" className="w-full">
-                Explore Features
+                See How It Works
               </Button>
             </Link>
           </div>

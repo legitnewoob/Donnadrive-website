@@ -7,7 +7,7 @@ const WhatsAppDemo = () => {
   return (
     <section
       id="whatsapp-demo"
-      className="relative pt-12 lg:pt-16 pb-32 lg:pb-40 bg-gradient-to-b from-background to-orange-50/30"
+      className="relative scroll-mt-28 pt-12 lg:pt-16 pb-32 lg:pb-40 bg-gradient-to-b from-background to-orange-50/30"
     >
       {/* Note: no overflow-hidden on the section itself — that would break
           the portal showcase's scroll-pinned sticky positioning below. The

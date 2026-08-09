@@ -1,16 +1,31 @@
-﻿import { motion } from "framer-motion";
+import { motion } from "framer-motion";
 
 import donnaCharacter from "@/assets/mascot-smile.png";
 import roundaboutMap from "@/assets/roundabout-map.png";
 
 const MeetDonna = () => {
   return (
-    <section className="relative overflow-hidden pt-28 lg:pt-36 pb-12 lg:pb-16 bg-gradient-to-br from-[#F86C4F] via-[#F47B62] to-[#F59678] text-white">
+    // scroll-mt clears the fixed header when the nav anchors here.
+    <section
+      id="meet-donna"
+      className="relative overflow-hidden scroll-mt-28 pt-36 lg:pt-48 pb-24 lg:pb-32 bg-gradient-to-r from-[#F86C4F] via-[#F47B62] to-[#F59678] text-white"
+    >
 
-      {/* Roundabout map — full-bleed across the page, very faint, larger now.
-          The section is coral now (matching Hero), same as DrivingScene's
-          own bottom wave, so no separate top border is needed here — that
-          would just be coral-on-coral and invisible. */}
+      {/* Top wave — filled with DrivingScene's own flat background colour
+          (#F2EEE6, not a gradient), so it's a trivial, guaranteed-exact
+          match: a flat fill needs no angle/aspect-ratio math to get right,
+          unlike trying to recreate a gradient in a second element. Reads
+          as DrivingScene's grey dipping down into the coral section.
+          Deliberately a single asymmetric swoop, not the repeating 5-hump
+          curve used for every other wave on the site, so this border reads
+          as its own distinct shape rather than a copy-pasted pattern. */}
+      <div className="absolute top-0 left-0 right-0 overflow-hidden leading-none -scale-y-100 z-10">
+        <svg viewBox="0 0 1440 120" className="w-full h-16 lg:h-24" preserveAspectRatio="none">
+          <path fill="#F2EEE6" d="M0,15C480,100,960,-15,1440,55L1440,120L0,120Z" />
+        </svg>
+      </div>
+
+      {/* Roundabout map — full-bleed across the page, very faint, larger now. */}
       <img
         src={roundaboutMap}
         alt=""
@@ -38,12 +53,12 @@ const MeetDonna = () => {
             className="relative flex justify-center lg:justify-start order-2 lg:order-1"
           >
 
-            <div className="absolute h-[300px] w-[300px] sm:h-[360px] sm:w-[360px] lg:h-[420px] lg:w-[420px] rounded-full bg-white/20 blur-2xl md:blur-3xl" />
+            <div className="absolute h-[340px] w-[340px] sm:h-[420px] sm:w-[420px] lg:h-[500px] lg:w-[500px] rounded-full bg-white/20 blur-2xl md:blur-3xl" />
 
             <motion.img
               src={donnaCharacter}
               alt="Donna AI Receptionist"
-              className="relative w-[260px] sm:w-[360px] lg:w-[440px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,.18)] md:drop-shadow-[0_35px_60px_rgba(0,0,0,.18)] will-change-transform"
+              className="relative w-[300px] sm:w-[420px] lg:w-[520px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,.18)] md:drop-shadow-[0_35px_60px_rgba(0,0,0,.18)] will-change-transform"
               loading="lazy"
               decoding="async"
               animate={{
@@ -89,7 +104,7 @@ const MeetDonna = () => {
 
               While you're teaching learners, Donna is replying to new ones.
               She books lessons, rearranges cancellations, sends reminders and
-              keeps your diary organised â€” all without you touching your phone.
+              keeps your diary organised — all without you touching your phone.
 
             </p>
 

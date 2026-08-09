@@ -141,7 +141,7 @@ const SmartCalendar = () => {
             <div className="pt-4">
               <Link to="/book-demo">
                 <Button variant="accent" size="lg" className="text-base px-8 py-3">
-                  Book a Demo
+                  Get Started
                 </Button>
               </Link>
             </div>
@@ -300,7 +300,7 @@ const SmartCalendar = () => {
             </p>
             <Link to="/book-demo">
               <Button variant="accent" size="lg" className="text-base px-8 py-3">
-                Book a Demo
+                Get Started
               </Button>
             </Link>
           </motion.div>

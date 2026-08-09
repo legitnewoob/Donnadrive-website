@@ -22,13 +22,15 @@ import PhoneShell from "./PhoneShell";
 import InfoPhoneContent, { InfoPhoneTab } from "./InfoPhoneContent";
 
 const panels: {
+  tabNumber: number;
   title: string;
   oneLiner: string;
   activeTab: InfoPhoneTab;
   items: { icon: typeof Users; label: string }[];
 }[] = [
   {
-    title: "Learners",
+    tabNumber: 1,
+    title: "Students",
     oneLiner: "Everything about each learner, in one place.",
     activeTab: "students",
     items: [
@@ -40,6 +42,7 @@ const panels: {
     ],
   },
   {
+    tabNumber: 2,
     title: "Calendar",
     oneLiner: "Your whole diary, fully in your control.",
     activeTab: "calendar",
@@ -51,6 +54,7 @@ const panels: {
     ],
   },
   {
+    tabNumber: 3,
     title: "Activity",
     oneLiner: "Stay on top of everything Donna does.",
     activeTab: "donna",
@@ -109,8 +113,15 @@ const PinnedShowcase = () => {
       "through" anything) while its own content populates in two steps —
       title first, then the list — so it reads as distinct beats rather
       than one blur: pause → title → info → phone settles. Beat windows,
-      each with a ~0.04 gap of pause before the next one starts:
-        beat1  0.20–0.33   beat2  0.37–0.50   beat3  0.54–0.67 */}
+      each with a wide ~0.08 gap of pure pause (nothing moving) before the
+      next one starts, so the break between phones actually reads as a
+      break rather than a brief hitch:
+        pause  0.16–0.22
+        beat1  0.22–0.34
+        pause  0.34–0.42
+        beat2  0.42–0.54
+        pause  0.54–0.62
+        beat3  0.62–0.74 */}
   {/* useTransform clamps to its first output value for any progress before
       the input range starts — so without a container opacity, a panel would
       sit fully visible at its "behind" slot from progress 0, just with
@@ -120,26 +131,26 @@ const PinnedShowcase = () => {
       so the phone is invisible for the whole pause, then appears already
       positioned exactly behind its predecessor at the moment its beat
       begins. */}
-  const panel1X = useTransform(scrollYProgress, [0.2, 0.33], [SLOT_X[0], SLOT_X[1]], { ease: [easeInOut] });
-  const panel1Y = useTransform(scrollYProgress, [0.2, 0.33], [16, 0], { ease: [easeInOut] });
-  const panel1Scale = useTransform(scrollYProgress, [0.2, 0.33], [0.92, 1], { ease: [easeInOut] });
-  const panel1Opacity = useTransform(scrollYProgress, [0.195, 0.2], [0, 1]);
-  const panel1HeaderOpacity = useTransform(scrollYProgress, [0.2, 0.24], [0, 1]);
-  const panel1ListOpacity = useTransform(scrollYProgress, [0.24, 0.29], [0, 1]);
+  const panel1X = useTransform(scrollYProgress, [0.22, 0.34], [SLOT_X[0], SLOT_X[1]], { ease: [easeInOut] });
+  const panel1Y = useTransform(scrollYProgress, [0.22, 0.34], [16, 0], { ease: [easeInOut] });
+  const panel1Scale = useTransform(scrollYProgress, [0.22, 0.34], [0.92, 1], { ease: [easeInOut] });
+  const panel1Opacity = useTransform(scrollYProgress, [0.215, 0.22], [0, 1]);
+  const panel1HeaderOpacity = useTransform(scrollYProgress, [0.22, 0.26], [0, 1]);
+  const panel1ListOpacity = useTransform(scrollYProgress, [0.26, 0.31], [0, 1]);
 
-  const panel2X = useTransform(scrollYProgress, [0.37, 0.5], [SLOT_X[1], SLOT_X[2]], { ease: [easeInOut] });
-  const panel2Y = useTransform(scrollYProgress, [0.37, 0.5], [16, 0], { ease: [easeInOut] });
-  const panel2Scale = useTransform(scrollYProgress, [0.37, 0.5], [0.92, 1], { ease: [easeInOut] });
-  const panel2Opacity = useTransform(scrollYProgress, [0.365, 0.37], [0, 1]);
-  const panel2HeaderOpacity = useTransform(scrollYProgress, [0.37, 0.41], [0, 1]);
-  const panel2ListOpacity = useTransform(scrollYProgress, [0.41, 0.46], [0, 1]);
+  const panel2X = useTransform(scrollYProgress, [0.42, 0.54], [SLOT_X[1], SLOT_X[2]], { ease: [easeInOut] });
+  const panel2Y = useTransform(scrollYProgress, [0.42, 0.54], [16, 0], { ease: [easeInOut] });
+  const panel2Scale = useTransform(scrollYProgress, [0.42, 0.54], [0.92, 1], { ease: [easeInOut] });
+  const panel2Opacity = useTransform(scrollYProgress, [0.415, 0.42], [0, 1]);
+  const panel2HeaderOpacity = useTransform(scrollYProgress, [0.42, 0.46], [0, 1]);
+  const panel2ListOpacity = useTransform(scrollYProgress, [0.46, 0.51], [0, 1]);
 
-  const panel3X = useTransform(scrollYProgress, [0.54, 0.67], [SLOT_X[2], SLOT_X[3]], { ease: [easeInOut] });
-  const panel3Y = useTransform(scrollYProgress, [0.54, 0.67], [16, 0], { ease: [easeInOut] });
-  const panel3Scale = useTransform(scrollYProgress, [0.54, 0.67], [0.92, 1], { ease: [easeInOut] });
-  const panel3Opacity = useTransform(scrollYProgress, [0.535, 0.54], [0, 1]);
-  const panel3HeaderOpacity = useTransform(scrollYProgress, [0.54, 0.58], [0, 1]);
-  const panel3ListOpacity = useTransform(scrollYProgress, [0.58, 0.63], [0, 1]);
+  const panel3X = useTransform(scrollYProgress, [0.62, 0.74], [SLOT_X[2], SLOT_X[3]], { ease: [easeInOut] });
+  const panel3Y = useTransform(scrollYProgress, [0.62, 0.74], [16, 0], { ease: [easeInOut] });
+  const panel3Scale = useTransform(scrollYProgress, [0.62, 0.74], [0.92, 1], { ease: [easeInOut] });
+  const panel3Opacity = useTransform(scrollYProgress, [0.615, 0.62], [0, 1]);
+  const panel3HeaderOpacity = useTransform(scrollYProgress, [0.62, 0.66], [0, 1]);
+  const panel3ListOpacity = useTransform(scrollYProgress, [0.66, 0.71], [0, 1]);
 
   const panelPosition = [
     { x: panel1X, y: panel1Y, scale: panel1Scale, opacity: panel1Opacity },
@@ -187,7 +198,7 @@ const PinnedShowcase = () => {
             <DemoPhone />
           </motion.div>
 
-          {panels.map(({ title, oneLiner, items, activeTab }, i) => (
+          {panels.map(({ tabNumber, title, oneLiner, items, activeTab }, i) => (
             <motion.div
               key={title}
               className="absolute top-0 left-0"
@@ -195,6 +206,7 @@ const PinnedShowcase = () => {
             >
               <PhoneShell width={PHONE_W} screenHeight={SCREEN_H} decorative={false}>
                 <InfoPhoneContent
+                  tabNumber={tabNumber}
                   title={title}
                   oneLiner={oneLiner}
                   items={items}

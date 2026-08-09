@@ -1,4 +1,5 @@
 ﻿import { motion } from "framer-motion";
+import { Typewriter } from "react-simple-typewriter";
 
 import PricingCard from "./PricingCard";
 import { plans } from "./plans";
@@ -9,7 +10,7 @@ const Pricing = () => {
   return (
     <section
       id="pricing"
-      className="relative overflow-hidden py-32 bg-gradient-to-b from-orange-50/20 to-background"
+      className="relative overflow-hidden scroll-mt-28 py-32 bg-gradient-to-b from-orange-50/20 to-background"
     >
       <RoundaboutMapBackground />
 
@@ -37,7 +38,25 @@ const Pricing = () => {
             Simple Pricing
           </span>
 
-          <h2 className="mt-6 text-4xl md:text-5xl font-black">
+          <p className="mt-6 min-h-[1.4em] text-2xl md:text-3xl lg:text-4xl font-black text-primary">
+            <Typewriter
+              words={[
+                "Ready to take back your evenings?",
+                "Time to upgrade from the pad and paper?",
+                "Ready to level up your business?",
+                "Done chasing learners for replies?",
+                "Ready to let Donna handle the admin?",
+              ]}
+              loop={0}
+              cursor
+              cursorStyle="|"
+              typeSpeed={60}
+              deleteSpeed={35}
+              delaySpeed={2000}
+            />
+          </p>
+
+          <h2 className="mt-4 text-4xl md:text-5xl font-black">
             Choose Your Donna
           </h2>
 
@@ -46,9 +65,9 @@ const Pricing = () => {
             No contracts. Cancel anytime.
           </p>
 
-          <div className="mt-8 inline-flex rounded-full bg-green-100 px-5 py-2 text-sm font-semibold text-green-700">
-            ðŸŽ‰ 30-Day Free Trial â€¢ No Card Required
-          </div>
+          <p className="mt-6 text-sm font-semibold text-muted-foreground">
+            30 day free trial
+          </p>
 
         </motion.div>
 

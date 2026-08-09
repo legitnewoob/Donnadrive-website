@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Clock, ChevronRight } from 'lucide-react'
 import Header from '../components/Header'
+import Footer from '../components/Footer'
 import { blogPosts, BlogCategory } from '../data/blogPosts'
 
 const CATEGORIES: { value: BlogCategory | 'all'; label: string }[] = [
@@ -27,7 +28,9 @@ export default function Blog() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <div className="container mx-auto px-4 py-12 lg:py-20 max-w-5xl">
+      {/* pt clears the fixed header — py-12 alone left the breadcrumb
+          sitting underneath it. */}
+      <div className="container mx-auto px-4 pt-32 pb-12 lg:pb-20 max-w-5xl">
         {/* Page header */}
         <div className="mb-10 lg:mb-14">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
@@ -113,6 +116,8 @@ export default function Blog() {
           <div className="text-center py-20 text-muted-foreground">No posts in this category yet.</div>
         )}
       </div>
+
+      <Footer />
     </div>
   )
 }

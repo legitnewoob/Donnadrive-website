@@ -2,6 +2,7 @@ import { useParams, Link, Navigate } from 'react-router-dom'
 import { ArrowLeft, Clock, ChevronRight, ArrowRight } from 'lucide-react'
 import { Helmet } from 'react-helmet'
 import Header from '../components/Header'
+import Footer from '../components/Footer'
 import { Button } from '@/components/ui/button'
 import { getPostBySlug, getRelatedPosts, BlogCategory } from '../data/blogPosts'
 
@@ -47,7 +48,9 @@ export default function BlogPost() {
 
       <Header />
 
-      <div className="container mx-auto px-4 py-10 lg:py-16 max-w-3xl">
+      {/* pt clears the fixed header — py-10 alone left the breadcrumb
+          sitting underneath it. */}
+      <div className="container mx-auto px-4 pt-32 pb-10 lg:pb-16 max-w-3xl">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-primary transition-colors">Home</Link>
@@ -100,7 +103,7 @@ export default function BlogPost() {
           </p>
           <Link to="/book-demo">
             <Button variant="secondary" className="font-semibold">
-              Book a Free Demo <ArrowRight className="w-4 h-4 ml-2" />
+              Get Started <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
         </div>
@@ -138,6 +141,8 @@ export default function BlogPost() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   )
 }

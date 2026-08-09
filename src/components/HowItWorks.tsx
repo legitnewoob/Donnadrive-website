@@ -74,7 +74,7 @@ const HowItWorks = () => {
           >
             <Link to="/book-demo">
               <Button variant="accent" size="lg" className="text-base px-8 py-3">
-                Book a Demo
+                Get Started
               </Button>
             </Link>
           </motion.div>

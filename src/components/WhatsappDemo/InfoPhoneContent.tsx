@@ -15,6 +15,7 @@ const TABS: { id: InfoPhoneTab; label: string; icon: LucideIcon }[] = [
 ];
 
 interface InfoPhoneContentProps {
+  tabNumber: number;
   title: string;
   oneLiner: string;
   items: InfoPhoneItem[];
@@ -24,6 +25,7 @@ interface InfoPhoneContentProps {
 }
 
 const InfoPhoneContent = ({
+  tabNumber,
   title,
   oneLiner,
   items,
@@ -35,8 +37,9 @@ const InfoPhoneContent = ({
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-hidden px-5 py-6">
         <motion.div style={headerStyle}>
-          <h4 className="text-xl font-black tracking-tight text-[#1A1A1A]">
-            {title}
+          <h4 className="text-xl font-black tracking-tight">
+            <span className="text-primary">TAB {tabNumber}</span>{" "}
+            <span className="text-[#1A1A1A] uppercase">{title}</span>
           </h4>
 
           <p className="mt-2 text-sm leading-5 text-[#1A1A1A]/60">
@@ -44,13 +47,19 @@ const InfoPhoneContent = ({
           </p>
         </motion.div>
 
-        <motion.div style={listStyle} className="mt-6 space-y-3.5">
+        {/* Card-style rows instead of plain bullets — each a soft tinted
+            pill with the icon in its own rounded square, closer to a real
+            settings/feature list than a bare icon + text line. */}
+        <motion.div style={listStyle} className="mt-5 space-y-2">
           {items.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={1.75} />
+            <div
+              key={label}
+              className="flex items-center gap-3 rounded-xl bg-black/[0.035] px-3 py-2.5"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
+                <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} />
               </div>
-              <span className="text-sm leading-5 text-[#1A1A1A]/75">
+              <span className="text-[13px] leading-[1.35] font-medium text-[#1A1A1A]/80">
                 {label}
               </span>
             </div>
@@ -59,13 +68,18 @@ const InfoPhoneContent = ({
       </div>
 
       {/* Bottom tab bar, matching the live demo phone's own nav — the
-          matching tab stays highlighted so this reads as "the same app,
-          on a different tab" rather than an unrelated info card. */}
-      <div className="flex items-center justify-around border-t border-black/5 px-2 py-2.5">
+          matching tab stays highlighted, with a coral indicator bar ABOVE
+          it (mirroring the live demo phone's own active-tab treatment),
+          so this reads as "the same app, on a different tab" rather than
+          an unrelated info card. */}
+      <div className="flex items-center justify-around border-t border-black/5 px-2 pt-2 pb-2">
         {TABS.map(({ id, label, icon: Icon }) => {
           const active = id === activeTab;
           return (
             <div key={id} className="flex flex-col items-center gap-1">
+              <span
+                className={`mb-1 h-[3px] w-6 rounded-full ${active ? "bg-primary" : "bg-transparent"}`}
+              />
               <Icon
                 className={`h-4 w-4 ${active ? "text-primary" : "text-[#1A1A1A]/35"}`}
                 strokeWidth={1.75}

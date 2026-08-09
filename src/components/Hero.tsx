@@ -28,37 +28,43 @@ const Hero = () => {
             className="text-center lg:text-left will-change-transform"
           >
 
-            {/* Badge */}
+            {/* Badge — names the audience and the category before anything
+                else, so a first-time visitor knows if this is for them. */}
 
             <div className="inline-flex items-center gap-2 rounded-full bg-white/20 md:bg-white/15 md:backdrop-blur-md border border-white/20 px-5 py-2 mb-8">
 
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
 
               <span className="text-sm font-medium">
-                AI Assistant for Driving Schools
+                AI booking assistant for driving instructors
               </span>
 
             </div>
 
-            {/* Heading */}
+            {/* Heading. The brand name isn't the headline: it means nothing
+                to someone who's never heard of it, and the wordmark in the
+                fixed header is on screen the whole time anyway. Sized for a
+                full sentence rather than a single word. */}
 
-            <h1 className="text-6xl sm:text-7xl lg:text-8xl xl:text-9xl font-black leading-[0.95] tracking-tight drop-shadow-[0_4px_24px_rgba(0,0,0,0.15)]">
+            {/* text-balance evens the line lengths — without it the first
+                sentence breaks as "lessons on / WhatsApp." */}
+            <h1 className="text-4xl sm:text-5xl font-black leading-[1.05] tracking-tight text-balance drop-shadow-[0_4px_24px_rgba(0,0,0,0.15)]">
 
-              Donna Drive
+              Your learners book lessons on WhatsApp.{" "}
+
+              {/* White, not coral — a coral underline is invisible on this
+                  background (same reason as MeetDonna's heading). */}
+              <span className="block mt-2 underline decoration-white decoration-[6px] underline-offset-4">
+                Donna does the rest.
+              </span>
 
             </h1>
 
-            <p className="mt-8 text-xl sm:text-2xl font-semibold text-white/90">
-
-              Booking Assistant & Smart Calendar
-
-            </p>
-
             <p className="mt-8 text-lg leading-8 text-white/80 max-w-xl mx-auto lg:mx-0">
 
-              Donna books lessons through WhatsApp, manages your
-              calendar, handles cancellations and keeps your driving
-              school running 24/7 while you stay focused on teaching.
+              She answers in seconds, finds a time that suits you both,
+              books it, and updates your diary automatically. No
+              back-and-forth, no evening admin.
 
             </p>
 
@@ -73,13 +79,15 @@ const Hero = () => {
                   className="rounded-xl bg-white text-[#F86C4F] hover:bg-white/90 h-14 px-10 text-base font-semibold shadow-xl"
                 >
 
-                  Book a Demo
+                  Get Started
 
                 </Button>
 
               </Link>
 
-              <a href="#how-it-works">
+              {/* #how-it-works only exists in HowItWorks.tsx, which isn't
+                  rendered — this pointed at nothing. */}
+              <a href="#how-donna-works">
 
                 <Button
                   variant="outline"
@@ -87,13 +95,20 @@ const Hero = () => {
                   className="rounded-xl border-white/30 bg-white/15 md:bg-white/10 md:backdrop-blur-md text-white hover:bg-white/20 h-14 px-10"
                 >
 
-                  See How It Works
+                  See how it works
 
                 </Button>
 
               </a>
 
             </div>
+
+            {/* Answers the "what's the catch" question that follows straight
+                after "what is it". Every claim matches Pricing/plans.ts and
+                the FAQ. */}
+            <p className="mt-6 text-sm text-white/70">
+              30-day free trial · No card required · Free while you're a PDI
+            </p>
 
           </motion.div>
 

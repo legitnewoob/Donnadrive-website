@@ -45,7 +45,7 @@ const DonnaCapabilities = () => {
 
                     <p className="mt-6 text-lg leading-8 text-muted-foreground">
 
-                        Every booking, every reminder, every learnerâ€”
+                        Every booking, every reminder, every learner—
                         Donna keeps everything running automatically.
 
                     </p>

@@ -51,11 +51,7 @@ const Header = () => {
     <>
       <header className="fixed top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-5">
-          <div className={`flex items-center justify-between rounded-2xl border shadow-lg px-6 py-3 will-change-transform ${
-            isHome
-              ? "border-white/15 bg-white/90 md:bg-white/10 md:backdrop-blur-xl"
-              : "border-slate-200/60 bg-white"
-          }`}>
+          <div className="flex items-center justify-between rounded-2xl border border-white/15 bg-white/90 md:bg-white/10 md:backdrop-blur-xl shadow-lg px-6 py-3 will-change-transform">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3">
               <img
@@ -121,9 +117,7 @@ const Header = () => {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className={`hidden sm:inline-flex rounded-xl text-black/90 hover:text-black ${
-                      isHome ? "hover:bg-white/20" : "hover:bg-slate-100"
-                    }`}
+                    className="hidden sm:inline-flex rounded-xl text-black/90 hover:text-black hover:bg-white/20"
                     onClick={() => navigate("/get-onboard")}
                   >
                     <LayoutDashboard className="h-4 w-4 mr-2" />
@@ -131,11 +125,7 @@ const Header = () => {
                   </Button>
                   <Button
                     size="sm"
-                    className={`hidden sm:inline-flex rounded-xl shadow-lg ${
-                      isHome
-                        ? "bg-white text-primary hover:bg-white/90"
-                        : "bg-primary text-white hover:bg-primary/90"
-                    }`}
+                    className="hidden sm:inline-flex rounded-xl bg-white text-primary hover:bg-white/90 shadow-lg"
                     asChild
                   >
                     <a href={getPortalUrl()}>
@@ -147,11 +137,7 @@ const Header = () => {
               ) : (
                 <Button
                   size="lg"
-                  className={`hidden sm:inline-flex rounded-xl px-7 shadow-lg ${
-                    isHome
-                      ? "bg-white text-primary hover:bg-white/90"
-                      : "bg-primary text-white hover:bg-primary/90"
-                  }`}
+                  className="hidden sm:inline-flex rounded-xl bg-white text-primary hover:bg-white/90 px-7 shadow-lg"
                   onClick={() => setSignupOpen(true)}
                 >
                   Get Started

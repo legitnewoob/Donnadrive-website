@@ -72,11 +72,6 @@ const Header = () => {
                 </Link>
               )}
               {isHome ? (
-                <a href="#features" className="text-black/90 hover:text-black transition-colors font-medium">Features</a>
-              ) : (
-                <Link to="/#features" className="text-black/90 hover:text-black transition-colors font-medium">Features</Link>
-              )}
-              {isHome ? (
                 <a href="#how-it-works" className="text-black/90 hover:text-black transition-colors font-medium">How It Works</a>
               ) : (
                 <Link to="/#how-it-works" className="text-black/90 hover:text-black transition-colors font-medium">How It Works</Link>
@@ -158,13 +153,6 @@ const Header = () => {
                         </Link>
                       </SheetClose>
                     )}
-                    <SheetClose asChild>
-                      {isHome ? (
-                        <a href="#features" className="text-lg font-medium hover:text-primary">Features</a>
-                      ) : (
-                        <Link to="/#features" className="text-lg font-medium hover:text-primary">Features</Link>
-                      )}
-                    </SheetClose>
                     <SheetClose asChild>
                       {isHome ? (
                         <a href="#how-it-works" className="text-lg font-medium hover:text-primary">How It Works</a>

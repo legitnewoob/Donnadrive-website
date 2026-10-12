@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   Calendar,
   Users,
+  UserCircle,
   MessageSquare,
   BarChart3,
   LogOut,
@@ -48,6 +49,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD" }: Dashboa
 
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/get-onboard" },
+    { label: "Account", icon: UserCircle, path: "/account" },
   ];
 
   const NavContent = ({ mobile = false }: { mobile?: boolean }) => (

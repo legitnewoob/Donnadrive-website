@@ -80,6 +80,56 @@ export async function requestPhoneNumber(token: string) {
   return data as { success: boolean; phoneNumber: string; phoneNumberId: string };
 }
 
+export async function updateProfile(token: string, data: { name?: string; timezone?: string }) {
+  const res = await fetch(`${API_BASE}/api/auth/profile`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || "Failed to update profile");
+  return json;
+}
+
+export async function deleteAccount(token: string) {
+  const res = await fetch(`${API_BASE}/api/auth/delete-account`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ confirmation: "DELETE" }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || "Failed to delete account");
+  return json;
+}
+
+export async function getInvoices(token: string, limit = 10) {
+  const res = await fetch(`${API_BASE}/api/stripe/invoices?limit=${limit}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || "Failed to fetch invoices");
+  return json as { invoices: Array<{ id: string; amount: number; status: string; date: string; description: string; pdfUrl: string | null }> };
+}
+
+export async function createPortalSession(token: string) {
+  const res = await fetch(`${API_BASE}/api/stripe/create-portal-session`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || "Failed to create portal session");
+  return json as { url: string };
+}
+
 export async function getDashboard(token: string, range = "This week") {
   const res = await fetch(`${API_BASE}/api/dashboard?range=${encodeURIComponent(range)}`, {
     headers: { Authorization: `Bearer ${token}` },

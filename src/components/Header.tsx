@@ -5,189 +5,268 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-import { Link, useLocation } from "react-router-dom";
-import { Menu } from "lucide-react";
-import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, LayoutDashboard, Smartphone } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
+import SignupDialog from "@/components/SignupDialog";
+
+const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
 
 const Header = () => {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const isHome = pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signupOpen, setSignupOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const checkAuth = useCallback(() => {
+    setIsLoggedIn(!!localStorage.getItem("dd_token"));
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "dd_token") checkAuth();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("dd_auth_change", checkAuth);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("dd_auth_change", checkAuth);
+    };
+  }, [checkAuth]);
+
+  function getPortalUrl() {
+    const params = new URLSearchParams();
+    const token = localStorage.getItem("dd_token");
+    const apiKey = localStorage.getItem("dd_apiKey");
+    if (token) params.set("token", token);
+    if (apiKey) params.set("apiKey", apiKey);
+    return `${PORTAL_URL}?${params.toString()}`;
+  }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-5">
-        <div className="flex items-center justify-between rounded-2xl border border-white/15 bg-white/90 md:bg-white/10 md:backdrop-blur-xl shadow-lg px-6 py-3 will-change-transform">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
-            <img
-              src={donnaDriveLogo}
-              alt="Donna Drive"
-              className="h-11 w-auto rounded-xl"
-            />
-          </Link>
+    <>
+      <header className="fixed top-0 left-0 right-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-5">
+          <div className="flex items-center justify-between rounded-2xl border border-white/15 bg-white/90 md:bg-white/10 md:backdrop-blur-xl shadow-lg px-6 py-3 will-change-transform">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-3">
+              <img
+                src={donnaDriveLogo}
+                alt="Donna Drive"
+                className="h-11 w-auto rounded-xl"
+              />
+            </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {isHome ? (
-              <>
-                <a
-                  href="#features"
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center gap-8">
+              {isHome ? (
+                <>
+                  <a
+                    href="#features"
+                    className="text-black/90 hover:text-black transition-colors font-medium"
+                  >
+                    Features
+                  </a>
+                  <a
+                    href="#how-it-works"
+                    className="text-black/90 hover:text-black transition-colors font-medium"
+                  >
+                    How It Works
+                  </a>
+                  <a
+                    href="#pricing"
+                    className="text-black/90 hover:text-black transition-colors font-medium"
+                  >
+                    Pricing
+                  </a>
+                  <a
+                    href="#faq"
+                    className="text-black/90 hover:text-black transition-colors font-medium"
+                  >
+                    FAQ
+                  </a>
+                </>
+              ) : (
+                <Link
+                  to="/"
                   className="text-black/90 hover:text-black transition-colors font-medium"
                 >
-                  Features
-                </a>
+                  Home
+                </Link>
+              )}
 
-                <a
-                  href="#how-it-works"
-                  className="text-black/90 hover:text-black transition-colors font-medium"
-                >
-                  How It Works
-                </a>
-
-                <a
-                  href="#pricing"
-                  className="text-black/90 hover:text-black transition-colors font-medium"
-                >
-                  Pricing
-                </a>
-
-                <a
-                  href="#faq"
-                  className="text-black/90 hover:text-black transition-colors font-medium"
-                >
-                  FAQ
-                </a>
-              </>
-            ) : (
               <Link
-                to="/"
-                className="text-black/90 hover:text-black transition-colors font-medium"
+                to="/blog"
+                className={`transition-colors font-medium ${pathname.startsWith("/blog")
+                    ? "text-black"
+                    : "text-black/90 hover:text-black"
+                  }`}
               >
-                Home
+                Blog
               </Link>
-            )}
+            </nav>
 
-            <Link
-              to="/blog"
-              className={`transition-colors font-medium ${pathname.startsWith("/blog")
-                  ? "text-black"
-                  : "text-black/90 hover:text-black"
-                }`}
-            >
-              Blog
-            </Link>
-          </nav>
-
-          {/* Right Side */}
-          <div className="flex items-center gap-3">
-           <Link to="/#pricing" className="hidden sm:block">
-              <Button
-                size="lg"
-                className="rounded-xl bg-white text-primary hover:bg-white/90 px-7 shadow-lg"
-              >
-                Get Started
-              </Button>
-            </Link>
-
-            {/* Mobile Menu */}
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <button
-                  className="lg:hidden text-black p-2"
-                  aria-label="Open Menu"
+            {/* Right Side */}
+            <div className="flex items-center gap-3">
+              {isLoggedIn ? (
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="hidden sm:inline-flex rounded-xl text-black/90 hover:text-black hover:bg-white/20"
+                    onClick={() => navigate("/get-onboard")}
+                  >
+                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="hidden sm:inline-flex rounded-xl bg-white text-primary hover:bg-white/90 shadow-lg"
+                    asChild
+                  >
+                    <a href={getPortalUrl()}>
+                      <Smartphone className="h-4 w-4 mr-2" />
+                      Portal
+                    </a>
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  size="lg"
+                  className="hidden sm:inline-flex rounded-xl bg-white text-primary hover:bg-white/90 px-7 shadow-lg"
+                  onClick={() => setSignupOpen(true)}
                 >
-                  <Menu className="w-7 h-7" />
-                </button>
-              </SheetTrigger>
+                  Get Started
+                </Button>
+              )}
 
-              <SheetContent
-                side="right"
-                className="bg-background w-80 border-l"
-              >
-                <nav className="flex flex-col gap-6 mt-12">
-                  {isHome ? (
-                    <>
+              {/* Mobile Menu */}
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger asChild>
+                  <button
+                    className="lg:hidden text-black p-2"
+                    aria-label="Open Menu"
+                  >
+                    <Menu className="w-7 h-7" />
+                  </button>
+                </SheetTrigger>
+
+                <SheetContent
+                  side="right"
+                  className="bg-background w-80 border-l"
+                >
+                  <nav className="flex flex-col gap-6 mt-12">
+                    {isHome ? (
+                      <>
+                        <SheetClose asChild>
+                          <a
+                            href="#features"
+                            className="text-lg font-medium hover:text-primary"
+                          >
+                            Features
+                          </a>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <a
+                            href="#how-it-works"
+                            className="text-lg font-medium hover:text-primary"
+                          >
+                            How It Works
+                          </a>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <a
+                            href="#pricing"
+                            className="text-lg font-medium hover:text-primary"
+                          >
+                            Pricing
+                          </a>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <a
+                            href="#faq"
+                            className="text-lg font-medium hover:text-primary"
+                          >
+                            FAQ
+                          </a>
+                        </SheetClose>
+                      </>
+                    ) : (
                       <SheetClose asChild>
-                        <a
-                          href="#features"
+                        <Link
+                          to="/"
                           className="text-lg font-medium hover:text-primary"
                         >
-                          Features
-                        </a>
+                          Home
+                        </Link>
                       </SheetClose>
+                    )}
 
-                      <SheetClose asChild>
-                        <a
-                          href="#how-it-works"
-                          className="text-lg font-medium hover:text-primary"
-                        >
-                          How It Works
-                        </a>
-                      </SheetClose>
-
-                      <SheetClose asChild>
-                        <a
-                          href="#pricing"
-                          className="text-lg font-medium hover:text-primary"
-                        >
-                          Pricing
-                        </a>
-                      </SheetClose>
-
-                      <SheetClose asChild>
-                        <a
-                          href="#faq"
-                          className="text-lg font-medium hover:text-primary"
-                        >
-                          FAQ
-                        </a>
-                      </SheetClose>
-                    </>
-                  ) : (
                     <SheetClose asChild>
                       <Link
-                        to="/"
+                        to="/blog"
                         className="text-lg font-medium hover:text-primary"
                       >
-                        Home
+                        Blog
                       </Link>
                     </SheetClose>
-                  )}
 
-                  <SheetClose asChild>
-                    <Link
-                      to="/blog"
-                      className="text-lg font-medium hover:text-primary"
-                    >
-                      Blog
-                    </Link>
-                  </SheetClose>
+                    {isLoggedIn ? (
+                      <>
+                        <SheetClose asChild>
+                          <Link
+                            to="/get-onboard"
+                            className="text-lg font-medium hover:text-primary flex items-center gap-2"
+                          >
+                            <LayoutDashboard className="h-5 w-5" />
+                            Dashboard
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <a
+                            href={getPortalUrl()}
+                            className="text-lg font-medium hover:text-primary flex items-center gap-2"
+                          >
+                            <Smartphone className="h-5 w-5" />
+                            Portal
+                          </a>
+                        </SheetClose>
+                      </>
+                    ) : (
+                      <SheetClose asChild>
+                        <button
+                          onClick={() => setSignupOpen(true)}
+                          className="text-lg font-medium hover:text-primary text-left"
+                        >
+                          Get Started
+                        </button>
+                      </SheetClose>
+                    )}
 
-                  <SheetClose asChild>
-                    <Link
-                      to="/get-onboard"
-                      className="text-lg font-medium hover:text-primary"
-                    >
-                      Get Onboard
-                    </Link>
-                  </SheetClose>
-
-                  <SheetClose asChild>
-                    <Link to="/book-demo">
-                      <Button className="w-full mt-4 rounded-xl">
-                        Book a Demo
-                      </Button>
-                    </Link>
-                  </SheetClose>
-                </nav>
-              </SheetContent>
-            </Sheet>
+                    <SheetClose asChild>
+                      <Link to="/book-demo">
+                        <Button className="w-full mt-4 rounded-xl">
+                          Book a Demo
+                        </Button>
+                      </Link>
+                    </SheetClose>
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <SignupDialog
+        open={signupOpen}
+        onOpenChange={setSignupOpen}
+      />
+    </>
   );
 };
 

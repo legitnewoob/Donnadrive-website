@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 import ScrollToTop from "./components/ScrollToTop";
 import Index from "./pages/Index";
 import BookDemo from "./pages/BookDemo";
@@ -18,14 +19,21 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
-import Dashboard from "./pages/Dashboard";
-import Calendar from "./pages/Calendar";
-import Students from "./pages/Students";
-import Messages from "./pages/Messages";
-import Reports from "./pages/Reports";
-import Payment from "./pages/Payment";
 
 const queryClient = new QueryClient();
+
+function LogoutHandler() {
+  const [params, setParams] = useSearchParams();
+  useEffect(() => {
+    if (params.get("action") === "logout") {
+      localStorage.removeItem("dd_token");
+      localStorage.removeItem("dd_apiKey");
+      window.dispatchEvent(new Event("dd_auth_change"));
+      setParams({}, { replace: true });
+    }
+  }, [params, setParams]);
+  return null;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -34,6 +42,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
+        <LogoutHandler />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/book-demo" element={<BookDemo />} />
@@ -48,12 +57,6 @@ const App = () => (
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
           <Route path="/get-onboard" element={<Onboarding />} />
-          <Route path="/payment" element={<Payment/>}/>
-          <Route path="/dashboard" element={<Dashboard/>}/>
-          <Route path="/calendar" element={<Calendar/>}/>
-          <Route path="/students" element={<Students/>}/>
-          <Route path="/messages" element={<Messages/>}/>
-          <Route path="/reports" element={<Reports/>}/>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

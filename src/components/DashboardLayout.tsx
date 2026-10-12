@@ -10,37 +10,50 @@ import {
   Bell,
   Menu,
   X,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
+
+const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
   title: string;
   subtitle?: string;
+  initials?: string;
 }
 
-const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, title, subtitle, initials = "AD" }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleLogout = () => navigate("/");
+  const handleLogout = () => {
+    localStorage.removeItem("dd_token");
+    localStorage.removeItem("dd_apiKey");
+    window.dispatchEvent(new Event("dd_auth_change"));
+    navigate("/");
+  };
+
+  function getPortalUrl() {
+    const params = new URLSearchParams();
+    const token = localStorage.getItem("dd_token");
+    const apiKey = localStorage.getItem("dd_apiKey");
+    if (token) params.set("token", token);
+    if (apiKey) params.set("apiKey", apiKey);
+    return `${PORTAL_URL}?${params.toString()}`;
+  }
 
   const navItems = [
-    { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-    { label: "Calendar", icon: Calendar, path: "/calendar" },
-    { label: "Students", icon: Users, path: "/students" },
-    { label: "Messages", icon: MessageSquare, path: "/messages" },
-    { label: "Reports", icon: BarChart3, path: "/reports" },
+    { label: "Dashboard", icon: LayoutDashboard, path: "/get-onboard" },
   ];
 
   const NavContent = ({ mobile = false }: { mobile?: boolean }) => (
     <>
       <div className="p-6 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center">
-          <span className="text-white font-bold text-lg">D</span>
-        </div>
+        <img src={donnaDriveLogo} alt="Donna Drive" className="h-10 w-auto rounded-lg" />
         <div>
           <h1 className="font-bold text-slate-900">Donna Drive</h1>
           <p className="text-xs text-muted-foreground">{title}</p>
@@ -67,6 +80,15 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
             </button>
           );
         })}
+
+        <a
+          href={getPortalUrl()}
+          data-tour="portal-link"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+        >
+          <Smartphone className="h-5 w-5" />
+          Open Portal
+        </a>
       </nav>
 
       <div className="p-4 border-t">
@@ -89,26 +111,32 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile Header */}
         <header className="lg:hidden bg-white border-b sticky top-0 z-10">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">D</span>
-              </div>
-              <div>
-                <h2 className="font-bold text-slate-900 text-sm">Donna Drive</h2>
-                <p className="text-xs text-muted-foreground">{title}</p>
-              </div>
-            </div>
+          <div className="flex items-center justify-between px-4 h-14">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
-              </Button>
+              <img src={donnaDriveLogo} alt="Donna Drive" className="h-[34px] w-auto rounded-lg" />
+              <span className="font-bold text-slate-900 text-[17px] tracking-tight">Donna Drive</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <a
+                href={getPortalUrl()}
+                data-tour="portal-link-mobile"
+                title="Open Portal"
+                className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              >
+                <Smartphone className="h-5 w-5" />
+              </a>
+              <button
+                onClick={handleLogout}
+                title="Sign out"
+                className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <button className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors">
                     <Menu className="h-5 w-5" />
-                  </Button>
+                  </button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-64 p-0 flex flex-col">
                   <div className="flex justify-end p-4">
@@ -126,18 +154,29 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
         </header>
 
         {/* Desktop Header */}
-        <header className="hidden lg:flex bg-white border-b sticky top-0 z-10 items-center justify-between px-6 py-4">
+        <header className="hidden lg:flex bg-white border-b sticky top-0 z-10 items-center justify-between px-6 h-14">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">{title}</h2>
-            {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+            <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
-            </Button>
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
-              AD
+          <div className="flex items-center gap-1">
+            <a
+              href={getPortalUrl()}
+              title="Open Portal"
+              className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-2"
+            >
+              <Smartphone className="h-5 w-5" />
+              <span className="text-sm font-medium">Portal</span>
+            </a>
+            <button
+              onClick={handleLogout}
+              title="Sign out"
+              className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold ml-1">
+              {initials}
             </div>
           </div>
         </header>

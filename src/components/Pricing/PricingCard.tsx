@@ -90,7 +90,6 @@ const PricingCard = ({ plan, index }: Props) => {
       </motion.div>
 
       <SignupDialog
-        plan={plan}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
       />

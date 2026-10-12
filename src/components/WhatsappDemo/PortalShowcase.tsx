@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform, easeInOut } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValue, easeInOut } from "framer-motion";
 import {
   Sparkles,
   Users,
@@ -95,14 +95,42 @@ const PinnedShowcase = () => {
     offset: ["start start", "end end"],
   });
 
+  // One-way progress — only ever advances, never reverses on scroll-up.
+  const progress = useMotionValue(scrollYProgress.get());
+  const [animDone, setAnimDone] = useState(false);
+  const animDoneRef = useRef(false);
+  useEffect(() => {
+    const cur = scrollYProgress.get();
+    if (cur > progress.get()) progress.set(cur);
+    return scrollYProgress.on("change", (v) => {
+      if (v > progress.get()) {
+        progress.set(v);
+        if (v >= 0.98 && !animDoneRef.current) {
+          animDoneRef.current = true;
+          setAnimDone(true);
+        }
+      }
+    });
+  }, [scrollYProgress, progress]);
+
+  // When the wrapper collapses from 340vh → 100vh, the document shrinks by
+  // 240vh. Without compensation the browser keeps scrollY the same, which
+  // makes everything below jump up. useLayoutEffect fires synchronously after
+  // the DOM update but before paint, so scrollBy here is invisible to the user.
+  useLayoutEffect(() => {
+    if (!animDone) return;
+    const reduction = Math.round(2.4 * window.innerHeight); // 340vh - 100vh
+    window.scrollBy(0, -reduction);
+  }, [animDone]);
+
   const ease = [easeInOut, easeInOut];
 
-  const mainX = useTransform(scrollYProgress, [0, 0.05, 0.16], [MAIN_CENTERED_X, MAIN_CENTERED_X, 0], { ease });
+  const mainX = useTransform(progress, [0, 0.05, 0.16], [MAIN_CENTERED_X, MAIN_CENTERED_X, 0], { ease });
 
   // The heading sits beside the phone and disappears over the same window
   // the phone slides left in, so it's gone by the time the phone would
   // otherwise slide into its space.
-  const textOpacity = useTransform(scrollYProgress, [0, 0.05, 0.16], [1, 1, 0]);
+  const textOpacity = useTransform(progress, [0, 0.05, 0.16], [1, 1, 0]);
 
   {/* Each beat: a clear pause first, then the phone slides out from directly
       behind the PREVIOUS phone's resting slot (never the main phone, never
@@ -120,26 +148,26 @@ const PinnedShowcase = () => {
       so the phone is invisible for the whole pause, then appears already
       positioned exactly behind its predecessor at the moment its beat
       begins. */}
-  const panel1X = useTransform(scrollYProgress, [0.2, 0.33], [SLOT_X[0], SLOT_X[1]], { ease: [easeInOut] });
-  const panel1Y = useTransform(scrollYProgress, [0.2, 0.33], [16, 0], { ease: [easeInOut] });
-  const panel1Scale = useTransform(scrollYProgress, [0.2, 0.33], [0.92, 1], { ease: [easeInOut] });
-  const panel1Opacity = useTransform(scrollYProgress, [0.195, 0.2], [0, 1]);
-  const panel1HeaderOpacity = useTransform(scrollYProgress, [0.2, 0.24], [0, 1]);
-  const panel1ListOpacity = useTransform(scrollYProgress, [0.24, 0.29], [0, 1]);
+  const panel1X = useTransform(progress, [0.2, 0.33], [SLOT_X[0], SLOT_X[1]], { ease: [easeInOut] });
+  const panel1Y = useTransform(progress, [0.2, 0.33], [16, 0], { ease: [easeInOut] });
+  const panel1Scale = useTransform(progress, [0.2, 0.33], [0.92, 1], { ease: [easeInOut] });
+  const panel1Opacity = useTransform(progress, [0.195, 0.2], [0, 1]);
+  const panel1HeaderOpacity = useTransform(progress, [0.2, 0.24], [0, 1]);
+  const panel1ListOpacity = useTransform(progress, [0.24, 0.29], [0, 1]);
 
-  const panel2X = useTransform(scrollYProgress, [0.37, 0.5], [SLOT_X[1], SLOT_X[2]], { ease: [easeInOut] });
-  const panel2Y = useTransform(scrollYProgress, [0.37, 0.5], [16, 0], { ease: [easeInOut] });
-  const panel2Scale = useTransform(scrollYProgress, [0.37, 0.5], [0.92, 1], { ease: [easeInOut] });
-  const panel2Opacity = useTransform(scrollYProgress, [0.365, 0.37], [0, 1]);
-  const panel2HeaderOpacity = useTransform(scrollYProgress, [0.37, 0.41], [0, 1]);
-  const panel2ListOpacity = useTransform(scrollYProgress, [0.41, 0.46], [0, 1]);
+  const panel2X = useTransform(progress, [0.37, 0.5], [SLOT_X[1], SLOT_X[2]], { ease: [easeInOut] });
+  const panel2Y = useTransform(progress, [0.37, 0.5], [16, 0], { ease: [easeInOut] });
+  const panel2Scale = useTransform(progress, [0.37, 0.5], [0.92, 1], { ease: [easeInOut] });
+  const panel2Opacity = useTransform(progress, [0.365, 0.37], [0, 1]);
+  const panel2HeaderOpacity = useTransform(progress, [0.37, 0.41], [0, 1]);
+  const panel2ListOpacity = useTransform(progress, [0.41, 0.46], [0, 1]);
 
-  const panel3X = useTransform(scrollYProgress, [0.54, 0.67], [SLOT_X[2], SLOT_X[3]], { ease: [easeInOut] });
-  const panel3Y = useTransform(scrollYProgress, [0.54, 0.67], [16, 0], { ease: [easeInOut] });
-  const panel3Scale = useTransform(scrollYProgress, [0.54, 0.67], [0.92, 1], { ease: [easeInOut] });
-  const panel3Opacity = useTransform(scrollYProgress, [0.535, 0.54], [0, 1]);
-  const panel3HeaderOpacity = useTransform(scrollYProgress, [0.54, 0.58], [0, 1]);
-  const panel3ListOpacity = useTransform(scrollYProgress, [0.58, 0.63], [0, 1]);
+  const panel3X = useTransform(progress, [0.54, 0.67], [SLOT_X[2], SLOT_X[3]], { ease: [easeInOut] });
+  const panel3Y = useTransform(progress, [0.54, 0.67], [16, 0], { ease: [easeInOut] });
+  const panel3Scale = useTransform(progress, [0.54, 0.67], [0.92, 1], { ease: [easeInOut] });
+  const panel3Opacity = useTransform(progress, [0.535, 0.54], [0, 1]);
+  const panel3HeaderOpacity = useTransform(progress, [0.54, 0.58], [0, 1]);
+  const panel3ListOpacity = useTransform(progress, [0.58, 0.63], [0, 1]);
 
   const panelPosition = [
     { x: panel1X, y: panel1Y, scale: panel1Scale, opacity: panel1Opacity },
@@ -154,7 +182,7 @@ const PinnedShowcase = () => {
   ];
 
   return (
-    <div ref={wrapperRef} className="relative h-[340vh]">
+    <div ref={wrapperRef} className={`relative ${animDone ? "h-screen" : "h-[340vh]"}`}>
       <div className="sticky top-0 flex h-screen items-center justify-center">
 
         {/* Heading — sits to the left of the phone, fades out as the phone

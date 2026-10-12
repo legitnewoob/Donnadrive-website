@@ -95,6 +95,16 @@ const Footer = () => {
 
               </Link>
 
+              <a
+                href="https://portal.donnadrive.co.uk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-muted-foreground transition hover:text-primary"
+              >
+                Manage Account
+                <ArrowUpRight className="h-4 w-4" />
+              </a>
+
             </div>
 
           </div>

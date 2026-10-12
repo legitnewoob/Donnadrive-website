@@ -71,30 +71,26 @@ const Header = () => {
                   Home
                 </Link>
               )}
-              <a
-                href={isHome ? "#features" : "/#features"}
-                className="text-black/90 hover:text-black transition-colors font-medium"
-              >
-                Features
-              </a>
-              <a
-                href={isHome ? "#how-it-works" : "/#how-it-works"}
-                className="text-black/90 hover:text-black transition-colors font-medium"
-              >
-                How It Works
-              </a>
-              <a
-                href={isHome ? "#pricing" : "/#pricing"}
-                className="text-black/90 hover:text-black transition-colors font-medium"
-              >
-                Pricing
-              </a>
-              <a
-                href={isHome ? "#faq" : "/#faq"}
-                className="text-black/90 hover:text-black transition-colors font-medium"
-              >
-                FAQ
-              </a>
+              {isHome ? (
+                <a href="#features" className="text-black/90 hover:text-black transition-colors font-medium">Features</a>
+              ) : (
+                <Link to="/#features" className="text-black/90 hover:text-black transition-colors font-medium">Features</Link>
+              )}
+              {isHome ? (
+                <a href="#how-it-works" className="text-black/90 hover:text-black transition-colors font-medium">How It Works</a>
+              ) : (
+                <Link to="/#how-it-works" className="text-black/90 hover:text-black transition-colors font-medium">How It Works</Link>
+              )}
+              {isHome ? (
+                <a href="#pricing" className="text-black/90 hover:text-black transition-colors font-medium">Pricing</a>
+              ) : (
+                <Link to="/#pricing" className="text-black/90 hover:text-black transition-colors font-medium">Pricing</Link>
+              )}
+              {isHome ? (
+                <a href="#faq" className="text-black/90 hover:text-black transition-colors font-medium">FAQ</a>
+              ) : (
+                <Link to="/#faq" className="text-black/90 hover:text-black transition-colors font-medium">FAQ</Link>
+              )}
               <Link
                 to="/blog"
                 className={`transition-colors font-medium ${pathname.startsWith("/blog")
@@ -167,36 +163,32 @@ const Header = () => {
                       </SheetClose>
                     )}
                     <SheetClose asChild>
-                      <a
-                        href={isHome ? "#features" : "/#features"}
-                        className="text-lg font-medium hover:text-primary"
-                      >
-                        Features
-                      </a>
+                      {isHome ? (
+                        <a href="#features" className="text-lg font-medium hover:text-primary">Features</a>
+                      ) : (
+                        <Link to="/#features" className="text-lg font-medium hover:text-primary">Features</Link>
+                      )}
                     </SheetClose>
                     <SheetClose asChild>
-                      <a
-                        href={isHome ? "#how-it-works" : "/#how-it-works"}
-                        className="text-lg font-medium hover:text-primary"
-                      >
-                        How It Works
-                      </a>
+                      {isHome ? (
+                        <a href="#how-it-works" className="text-lg font-medium hover:text-primary">How It Works</a>
+                      ) : (
+                        <Link to="/#how-it-works" className="text-lg font-medium hover:text-primary">How It Works</Link>
+                      )}
                     </SheetClose>
                     <SheetClose asChild>
-                      <a
-                        href={isHome ? "#pricing" : "/#pricing"}
-                        className="text-lg font-medium hover:text-primary"
-                      >
-                        Pricing
-                      </a>
+                      {isHome ? (
+                        <a href="#pricing" className="text-lg font-medium hover:text-primary">Pricing</a>
+                      ) : (
+                        <Link to="/#pricing" className="text-lg font-medium hover:text-primary">Pricing</Link>
+                      )}
                     </SheetClose>
                     <SheetClose asChild>
-                      <a
-                        href={isHome ? "#faq" : "/#faq"}
-                        className="text-lg font-medium hover:text-primary"
-                      >
-                        FAQ
-                      </a>
+                      {isHome ? (
+                        <a href="#faq" className="text-lg font-medium hover:text-primary">FAQ</a>
+                      ) : (
+                        <Link to="/#faq" className="text-lg font-medium hover:text-primary">FAQ</Link>
+                      )}
                     </SheetClose>
                     <SheetClose asChild>
                       <Link

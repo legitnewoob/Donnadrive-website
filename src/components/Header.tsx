@@ -63,34 +63,7 @@ const Header = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-8">
-              {isHome ? (
-                <>
-                  <a
-                    href="#features"
-                    className="text-black/90 hover:text-black transition-colors font-medium"
-                  >
-                    Features
-                  </a>
-                  <a
-                    href="#how-it-works"
-                    className="text-black/90 hover:text-black transition-colors font-medium"
-                  >
-                    How It Works
-                  </a>
-                  <a
-                    href="#pricing"
-                    className="text-black/90 hover:text-black transition-colors font-medium"
-                  >
-                    Pricing
-                  </a>
-                  <a
-                    href="#faq"
-                    className="text-black/90 hover:text-black transition-colors font-medium"
-                  >
-                    FAQ
-                  </a>
-                </>
-              ) : (
+              {!isHome && (
                 <Link
                   to="/"
                   className="text-black/90 hover:text-black transition-colors font-medium"
@@ -98,7 +71,30 @@ const Header = () => {
                   Home
                 </Link>
               )}
-
+              <a
+                href={isHome ? "#features" : "/#features"}
+                className="text-black/90 hover:text-black transition-colors font-medium"
+              >
+                Features
+              </a>
+              <a
+                href={isHome ? "#how-it-works" : "/#how-it-works"}
+                className="text-black/90 hover:text-black transition-colors font-medium"
+              >
+                How It Works
+              </a>
+              <a
+                href={isHome ? "#pricing" : "/#pricing"}
+                className="text-black/90 hover:text-black transition-colors font-medium"
+              >
+                Pricing
+              </a>
+              <a
+                href={isHome ? "#faq" : "/#faq"}
+                className="text-black/90 hover:text-black transition-colors font-medium"
+              >
+                FAQ
+              </a>
               <Link
                 to="/blog"
                 className={`transition-colors font-medium ${pathname.startsWith("/blog")
@@ -160,42 +156,7 @@ const Header = () => {
                   className="bg-background w-80 border-l"
                 >
                   <nav className="flex flex-col gap-6 mt-12">
-                    {isHome ? (
-                      <>
-                        <SheetClose asChild>
-                          <a
-                            href="#features"
-                            className="text-lg font-medium hover:text-primary"
-                          >
-                            Features
-                          </a>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <a
-                            href="#how-it-works"
-                            className="text-lg font-medium hover:text-primary"
-                          >
-                            How It Works
-                          </a>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <a
-                            href="#pricing"
-                            className="text-lg font-medium hover:text-primary"
-                          >
-                            Pricing
-                          </a>
-                        </SheetClose>
-                        <SheetClose asChild>
-                          <a
-                            href="#faq"
-                            className="text-lg font-medium hover:text-primary"
-                          >
-                            FAQ
-                          </a>
-                        </SheetClose>
-                      </>
-                    ) : (
+                    {!isHome && (
                       <SheetClose asChild>
                         <Link
                           to="/"
@@ -205,7 +166,38 @@ const Header = () => {
                         </Link>
                       </SheetClose>
                     )}
-
+                    <SheetClose asChild>
+                      <a
+                        href={isHome ? "#features" : "/#features"}
+                        className="text-lg font-medium hover:text-primary"
+                      >
+                        Features
+                      </a>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <a
+                        href={isHome ? "#how-it-works" : "/#how-it-works"}
+                        className="text-lg font-medium hover:text-primary"
+                      >
+                        How It Works
+                      </a>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <a
+                        href={isHome ? "#pricing" : "/#pricing"}
+                        className="text-lg font-medium hover:text-primary"
+                      >
+                        Pricing
+                      </a>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <a
+                        href={isHome ? "#faq" : "/#faq"}
+                        className="text-lg font-medium hover:text-primary"
+                      >
+                        FAQ
+                      </a>
+                    </SheetClose>
                     <SheetClose asChild>
                       <Link
                         to="/blog"

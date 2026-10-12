@@ -105,27 +105,23 @@ const Header = () => {
             {/* Right Side */}
             <div className="flex items-center gap-3">
               {isLoggedIn ? (
-                <>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="hidden sm:inline-flex rounded-xl text-black/90 hover:text-black hover:bg-white/20"
+                <div className="hidden sm:flex items-center bg-white rounded-xl shadow-lg overflow-hidden">
+                  <button
                     onClick={() => navigate("/get-onboard")}
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
                   >
-                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                    <LayoutDashboard className="h-4 w-4" />
                     Dashboard
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="hidden sm:inline-flex rounded-xl bg-white text-primary hover:bg-white/90 shadow-lg"
-                    asChild
+                  </button>
+                  <div className="w-px h-6 bg-primary/15" />
+                  <a
+                    href={getPortalUrl()}
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
                   >
-                    <a href={getPortalUrl()}>
-                      <Smartphone className="h-4 w-4 mr-2" />
-                      Portal
-                    </a>
-                  </Button>
-                </>
+                    <Smartphone className="h-4 w-4" />
+                    Portal
+                  </a>
+                </div>
               ) : (
                 <Button
                   size="lg"

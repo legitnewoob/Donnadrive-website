@@ -4,8 +4,6 @@ import {
   CheckCircle2,
   Phone,
   Loader2,
-  Smartphone,
-  ArrowRight,
   AlertCircle,
   Users,
   Calendar,
@@ -15,6 +13,8 @@ import {
   BarChart3,
   Activity,
   Target,
+  RefreshCw,
+  XCircle,
 } from "lucide-react";
 import {
   BarChart,
@@ -47,6 +47,8 @@ import {
   getProfile,
   getDashboard,
   requestPhoneNumber,
+  getCalendarConnectUrl,
+  disconnectCalendar,
 } from "@/lib/api";
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -78,6 +80,7 @@ interface Profile {
     phoneAssigned: boolean;
     subscriptionActive: boolean;
     calendarConnected: boolean;
+    calendarTokenExpired: boolean;
   };
 }
 
@@ -95,6 +98,9 @@ export default function Onboarding() {
   const [requestingNumber, setRequestingNumber] = useState(false);
   const [numberError, setNumberError] = useState("");
   const [range, setRange] = useState("This week");
+  const [calendarConnecting, setCalendarConnecting] = useState(false);
+  const [calendarDisconnecting, setCalendarDisconnecting] = useState(false);
+  const [calendarMsg, setCalendarMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,6 +108,7 @@ export default function Onboarding() {
     async function init() {
       try {
         const authCode = searchParams.get("auth_code");
+        const calendarParam = searchParams.get("calendar");
         let currentToken: string | null = null;
         let currentApiKey: string | null = null;
 
@@ -138,6 +145,19 @@ export default function Onboarding() {
         if (!cancelled) {
           setProfile(profileData);
           setDashboard(dashboardData);
+
+          // Handle OAuth callback result
+          if (calendarParam === "connected") {
+            setCalendarMsg({ type: "success", text: "Google Calendar connected successfully!" });
+            window.history.replaceState({}, "", "/get-onboard");
+          } else if (calendarParam === "error") {
+            const reason = searchParams.get("reason");
+            const text = reason === "not_found"
+              ? "Could not find your account. Please try again."
+              : "Failed to connect Google Calendar. Please try again.";
+            setCalendarMsg({ type: "error", text });
+            window.history.replaceState({}, "", "/get-onboard");
+          }
         }
       } catch (err) {
         console.error("Dashboard init error:", err);
@@ -185,6 +205,51 @@ export default function Onboarding() {
     }
   }
 
+  async function handleConnectCalendar() {
+    if (!token) return;
+    setCalendarConnecting(true);
+    setCalendarMsg(null);
+    try {
+      const { url } = await getCalendarConnectUrl(token);
+      window.location.href = url;
+    } catch (err) {
+      setCalendarMsg({
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to start calendar connection",
+      });
+      setCalendarConnecting(false);
+    }
+  }
+
+  async function handleDisconnectCalendar() {
+    if (!token) return;
+    setCalendarDisconnecting(true);
+    setCalendarMsg(null);
+    try {
+      await disconnectCalendar(token);
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              onboardingStatus: {
+                ...prev.onboardingStatus,
+                calendarConnected: false,
+                calendarTokenExpired: false,
+              },
+            }
+          : prev
+      );
+      setCalendarMsg({ type: "success", text: "Google Calendar disconnected." });
+    } catch (err) {
+      setCalendarMsg({
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to disconnect calendar",
+      });
+    } finally {
+      setCalendarDisconnecting(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -213,6 +278,8 @@ export default function Onboarding() {
   if (!profile) return null;
 
   const hasPhone = !!profile.phoneNumber;
+  const calendarConnected = profile.onboardingStatus.calendarConnected;
+  const calendarTokenExpired = profile.onboardingStatus.calendarTokenExpired;
   const firstName = profile.name.split(" ")[0];
   const initials = profile.name
     .split(" ")
@@ -236,7 +303,7 @@ export default function Onboarding() {
 
       {/* Phone number setup banner */}
       {!hasPhone && (
-        <Card data-tour="phone-setup" className="mb-6 border-sky-200 bg-sky-50/50">
+        <Card data-tour="phone-setup" className="mb-4 border-sky-200 bg-sky-50/50">
           <CardContent className="py-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex items-center gap-3 flex-1">
@@ -276,7 +343,7 @@ export default function Onboarding() {
       )}
 
       {hasPhone && (
-        <Card data-tour="phone-setup" className="mb-6 border-green-200 bg-green-50/50">
+        <Card data-tour="phone-setup" className="mb-4 border-green-200 bg-green-50/50">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
@@ -284,6 +351,133 @@ export default function Onboarding() {
                 <span className="font-semibold">WhatsApp number active:</span>{" "}
                 {profile.phoneNumber}
               </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Calendar message (success/error from OAuth callback) */}
+      {calendarMsg && (
+        <Card className={`mb-4 ${calendarMsg.type === "success" ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50"}`}>
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {calendarMsg.type === "success" ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                )}
+                <p className="text-sm">{calendarMsg.text}</p>
+              </div>
+              <button
+                onClick={() => setCalendarMsg(null)}
+                className="text-muted-foreground hover:text-foreground shrink-0"
+              >
+                <XCircle className="h-4 w-4" />
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Google Calendar banner */}
+      {calendarConnected && calendarTokenExpired && (
+        <Card className="mb-4 border-amber-300 bg-amber-50/50">
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-800">Google Calendar connection expired</p>
+                  <p className="text-sm text-amber-700">
+                    Donna AI can't create calendar events until you reconnect.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleConnectCalendar}
+                disabled={calendarConnecting}
+                className="rounded-xl shrink-0 bg-amber-600 hover:bg-amber-700"
+              >
+                {calendarConnecting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Redirecting...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Reconnect Calendar
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {calendarConnected && !calendarTokenExpired && (
+        <Card className="mb-4 border-green-200 bg-green-50/50">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                <p className="text-sm">
+                  <span className="font-semibold">Google Calendar connected</span> — lessons are synced automatically.
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDisconnectCalendar}
+                disabled={calendarDisconnecting}
+                className="text-muted-foreground hover:text-red-600 shrink-0"
+              >
+                {calendarDisconnecting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Disconnect"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!calendarConnected && (
+        <Card data-tour="calendar-setup" className="mb-6 border-sky-200 bg-sky-50/50">
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
+                  <Calendar className="h-5 w-5 text-sky-600" />
+                </div>
+                <div>
+                  <p className="font-semibold">Connect Google Calendar</p>
+                  <p className="text-sm text-muted-foreground">
+                    Donna AI will automatically add lessons to your calendar
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleConnectCalendar}
+                disabled={calendarConnecting}
+                className="rounded-xl shrink-0"
+              >
+                {calendarConnecting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Redirecting...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Connect Calendar
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>

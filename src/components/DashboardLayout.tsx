@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Calendar,
   Users,
   UserCircle,
-  MessageSquare,
-  BarChart3,
   LogOut,
   LayoutDashboard,
-  Bell,
+  BookOpen,
   Menu,
   X,
   Smartphone,
@@ -49,6 +46,8 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD" }: Dashboa
 
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/get-onboard" },
+    { label: "Learners", icon: Users, path: "/learners" },
+    { label: "Lesson Types", icon: BookOpen, path: "/lesson-types" },
     { label: "Account", icon: UserCircle, path: "/account" },
   ];
 

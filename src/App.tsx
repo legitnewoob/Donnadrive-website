@@ -20,6 +20,8 @@ import TermsOfServicePage from "./pages/TermsOfServicePage";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
+import Learners from "./pages/Learners";
+import LessonTypes from "./pages/LessonTypes";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +60,8 @@ const App = () => (
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
           <Route path="/get-onboard" element={<Onboarding />} />
+          <Route path="/learners" element={<Learners />} />
+          <Route path="/lesson-types" element={<LessonTypes />} />
           <Route path="/account" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

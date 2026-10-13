@@ -80,7 +80,7 @@ interface Profile {
     phoneAssigned: boolean;
     subscriptionActive: boolean;
     calendarConnected: boolean;
-    calendarTokenExpired: boolean;
+    calendarTokenExpired?: boolean;
   };
 }
 
@@ -425,7 +425,8 @@ export default function Onboarding() {
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
                 <p className="text-sm">
-                  <span className="font-semibold">Google Calendar connected</span> — lessons are synced automatically.
+                  <span className="font-semibold">Google Calendar connected</span>
+                  <span className="hidden sm:inline"> — lessons are synced automatically.</span>
                 </p>
               </div>
               <Button
@@ -484,7 +485,8 @@ export default function Onboarding() {
       )}
 
       {dashboard && (
-        <>
+        // On phones, today's schedule and activity come before the charts.
+        <div className="flex flex-col">
           {/* Date range selector */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Overview</h2>
@@ -538,7 +540,7 @@ export default function Onboarding() {
           </div>
 
           {/* Charts row */}
-          <div data-tour="charts" className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+          <div data-tour="charts" className="order-last lg:order-none grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
             {/* Revenue Bar Chart */}
             <Card>
               <CardHeader className="pb-2">
@@ -673,7 +675,7 @@ export default function Onboarding() {
             </Card>
 
             {/* Today's Schedule */}
-            <Card data-tour="schedule">
+            <Card data-tour="schedule" className="order-first lg:order-none">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-sky-600" />
@@ -809,7 +811,7 @@ export default function Onboarding() {
               </CardContent>
             </Card>
           </div>
-        </>
+        </div>
       )}
     </DashboardLayout>
   );

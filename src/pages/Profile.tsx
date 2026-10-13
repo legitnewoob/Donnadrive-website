@@ -299,7 +299,7 @@ export default function ProfilePage() {
                 {(profile as any).createdAt && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Member since</span>
-                    <span className="font-medium">{new Date((profile as any).createdAt).toLocaleDateString()}</span>
+                    <span className="font-medium">{new Date((profile as any).createdAt).toLocaleDateString("en-GB")}</span>
                   </div>
                 )}
               </div>
@@ -410,7 +410,7 @@ export default function ProfilePage() {
                 {invoices.map((inv) => (
                   <div key={inv.id} className="flex items-center justify-between py-2 border-b last:border-0">
                     <div>
-                      <p className="text-sm font-medium">{new Date(inv.date).toLocaleDateString()}</p>
+                      <p className="text-sm font-medium">{new Date(inv.date).toLocaleDateString("en-GB")}</p>
                       <p className="text-xs text-muted-foreground">{inv.description}</p>
                     </div>
                     <div className="flex items-center gap-2">

@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
-import { getLearners, getLearnerDetail, updateLearnerNotes } from "@/lib/api";
+import { getLearners, getLearnerDetail, updateLearnerNotes, getLessonTypes } from "@/lib/api";
+import LearnerScheduling from "@/components/LearnerScheduling";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,10 @@ import {
   Star,
   Loader2,
   Users,
+  Copy,
+  Check,
 } from "lucide-react";
+import { toast } from "sonner";
 
 type Learner = Awaited<ReturnType<typeof getLearners>>[number];
 type LearnerDetail = Awaited<ReturnType<typeof getLearnerDetail>>;
@@ -32,6 +36,73 @@ const progressLabels: Record<string, string> = {
   "test-ready": "Test Ready",
 };
 
+// Learner numbers are stored without "+", e.g. 447712345678
+function dialable(phone: string) {
+  return phone.startsWith("+") ? phone : `+${phone}`;
+}
+
+function formatPhone(phone: string) {
+  const m = /^\+?44(\d{4})(\d{6})$/.exec(phone);
+  return m ? `+44 ${m[1]} ${m[2]}` : dialable(phone);
+}
+
+function CopyPhoneButton({ phone }: { phone: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(dialable(phone));
+      setCopied(true);
+      toast.success("Number copied");
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Couldn't copy — long-press the number instead");
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      aria-label="Copy phone number"
+      title="Copy phone number"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-white hover:text-slate-900 transition-colors"
+    >
+      {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+    </button>
+  );
+}
+
+function money(n: number) {
+  return `£${Number.isInteger(n) ? n : n.toFixed(2)}`;
+}
+
+function formatLessonDate(next: { date: string; time: string }) {
+  const d = new Date(`${next.date}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return `${next.date} ${next.time}`;
+  const day = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  return `${day}, ${next.time}`;
+}
+
+function LearnerBadges({ learner: l }: { learner: Learner }) {
+  return (
+    <>
+      {l.donnaPaused && (
+        <Badge variant="outline" className="border-amber-300 text-amber-700 whitespace-nowrap">Donna paused</Badge>
+      )}
+      {l.priority && (
+        <Badge variant="outline" className="border-sky-300 text-sky-700">Priority</Badge>
+      )}
+      <Badge className={`${progressColors[l.progressLevel]} whitespace-nowrap`} variant="secondary">
+        {progressLabels[l.progressLevel]}
+      </Badge>
+      <Badge variant={l.paymentStatus === "paid" ? "secondary" : "destructive"} className="whitespace-nowrap">
+        {l.paymentStatus === "owes" ? `Owes ${money(l.outstanding)}` : l.credit > 0 ? `${money(l.credit)} credit` : "Paid"}
+      </Badge>
+    </>
+  );
+}
+
 export default function Learners() {
   const navigate = useNavigate();
   const token = localStorage.getItem("dd_token");
@@ -46,10 +117,12 @@ export default function Learners() {
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const notesTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [lessonTypes, setLessonTypes] = useState<Awaited<ReturnType<typeof getLessonTypes>>>([]);
 
   useEffect(() => {
     if (!token) { navigate("/"); return; }
     getLearners(token).then(setLearners).catch(console.error).finally(() => setLoading(false));
+    getLessonTypes(token).then(setLessonTypes).catch(console.error);
   }, [token, navigate]);
 
   const filtered = learners.filter((l) => {
@@ -121,11 +194,12 @@ export default function Learners() {
                 className="pl-9"
               />
             </div>
-            <div className="flex gap-2 flex-wrap">
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 [scrollbar-width:none]">
               {(["all", "new", "active", "test-ready"] as const).map((v) => (
                 <Button
                   key={v}
                   size="sm"
+                  className="shrink-0"
                   variant={progressFilter === v ? "default" : "outline"}
                   onClick={() => setProgressFilter(v)}
                 >
@@ -134,6 +208,7 @@ export default function Learners() {
               ))}
               <Button
                 size="sm"
+                className="shrink-0"
                 variant={paymentFilter === "owes" ? "destructive" : "outline"}
                 onClick={() => setPaymentFilter(paymentFilter === "owes" ? "all" : "owes")}
               >
@@ -164,28 +239,30 @@ export default function Learners() {
                     {/* Summary row */}
                     <button
                       onClick={() => toggleExpand(l.phone)}
+                      aria-expanded={isExpanded}
                       className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 transition-colors"
                     >
                       <div className="h-10 w-10 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
                         {initials(l.name)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-slate-900 truncate">{l.name || l.phone}</span>
-                          {l.name && <span className="text-xs text-slate-400">{l.phone}</span>}
+                        <div className="flex items-baseline gap-x-2 flex-wrap">
+                          <span className="font-medium text-slate-900 truncate max-w-full">{l.name || formatPhone(l.phone)}</span>
+                          {l.name && <span className="text-xs text-slate-400">{formatPhone(l.phone)}</span>}
                         </div>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 flex-wrap">
+                        <div className="flex items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-slate-500 flex-wrap">
                           <span>{l.lessonsCompleted} lesson{l.lessonsCompleted !== 1 ? "s" : ""}</span>
-                          <span>{l.nextLesson ? `Next: ${l.nextLesson.date}` : "No upcoming"}</span>
+                          <span>{l.nextLesson ? `Next: ${formatLessonDate(l.nextLesson)}` : "No upcoming"}</span>
+                        </div>
+                        {/* Badges sit under the name on phones so they never squeeze it */}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2 sm:hidden">
+                          <LearnerBadges learner={l} />
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <Badge className={progressColors[l.progressLevel]} variant="secondary">
-                          {progressLabels[l.progressLevel]}
-                        </Badge>
-                        <Badge variant={l.paymentStatus === "paid" ? "secondary" : "destructive"}>
-                          {l.paymentStatus === "paid" ? "Paid" : `Owes £${l.outstanding}`}
-                        </Badge>
+                        <div className="hidden sm:flex items-center gap-2">
+                          <LearnerBadges learner={l} />
+                        </div>
                         {isExpanded ? (
                           <ChevronDown className="h-4 w-4 text-slate-400" />
                         ) : (
@@ -209,10 +286,15 @@ export default function Learners() {
                               <div>
                                 <h4 className="text-sm font-semibold text-slate-700 mb-2">Profile</h4>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
+                                  <div className="col-span-2 flex items-center gap-1.5">
+                                    <span className="text-slate-400">Phone:</span>
+                                    <span>{formatPhone(detail.phone)}</span>
+                                    <CopyPhoneButton phone={detail.phone} />
+                                  </div>
                                   <div><span className="text-slate-400">Age:</span> {detail.age ?? "—"}</div>
                                   <div><span className="text-slate-400">DOB:</span> {detail.dob ?? "—"}</div>
                                   <div><span className="text-slate-400">Postal:</span> {detail.postalCode ?? "—"}</div>
-                                  <div><span className="text-slate-400">Joined:</span> {detail.createdAt ? new Date(detail.createdAt).toLocaleDateString() : "—"}</div>
+                                  <div><span className="text-slate-400">Joined:</span> {detail.createdAt ? new Date(detail.createdAt).toLocaleDateString("en-GB") : "—"}</div>
                                 </div>
                               </div>
 
@@ -231,24 +313,50 @@ export default function Learners() {
                                 />
                               </div>
 
+                              {/* Scheduling */}
+                              <div>
+                                <h4 className="text-sm font-semibold text-slate-700 mb-2">Scheduling</h4>
+                                <LearnerScheduling
+                                  key={detail.phone}
+                                  token={token!}
+                                  phone={detail.phone}
+                                  initial={detail.schedulingPrefs}
+                                  lessonTypes={lessonTypes}
+                                  onSaved={(prefs) =>
+                                    setLearners((prev) =>
+                                      prev.map((x) =>
+                                        x.phone === detail.phone ? { ...x, priority: prefs.priority, donnaPaused: prefs.donnaPaused } : x
+                                      )
+                                    )
+                                  }
+                                />
+                              </div>
+
                               {/* Financial summary */}
                               <div>
                                 <h4 className="text-sm font-semibold text-slate-700 mb-2">Payments</h4>
                                 <div className="grid grid-cols-3 gap-2 text-sm text-center">
                                   <div className="bg-white rounded-lg p-2">
-                                    <div className="font-semibold text-slate-900">&pound;{detail.totalPaid}</div>
+                                    <div className="font-semibold text-slate-900">{money(detail.totalPaid)}</div>
                                     <div className="text-xs text-slate-400">Paid</div>
                                   </div>
                                   <div className="bg-white rounded-lg p-2">
-                                    <div className="font-semibold text-slate-900">&pound;{detail.totalCharged}</div>
+                                    <div className="font-semibold text-slate-900">{money(detail.totalCharged)}</div>
                                     <div className="text-xs text-slate-400">Charged</div>
                                   </div>
-                                  <div className="bg-white rounded-lg p-2">
-                                    <div className={`font-semibold ${detail.outstanding > 0 ? "text-red-600" : "text-green-600"}`}>
-                                      &pound;{detail.outstanding}
+                                  {detail.credit > 0 ? (
+                                    <div className="bg-white rounded-lg p-2">
+                                      <div className="font-semibold text-green-600">{money(detail.credit)}</div>
+                                      <div className="text-xs text-slate-400">In credit</div>
                                     </div>
-                                    <div className="text-xs text-slate-400">Outstanding</div>
-                                  </div>
+                                  ) : (
+                                    <div className="bg-white rounded-lg p-2">
+                                      <div className={`font-semibold ${detail.outstanding > 0 ? "text-red-600" : "text-green-600"}`}>
+                                        {money(detail.outstanding)}
+                                      </div>
+                                      <div className="text-xs text-slate-400">Outstanding</div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 
@@ -257,6 +365,7 @@ export default function Learners() {
                                 href={`https://wa.me/${l.phone}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                className="block w-fit"
                               >
                                 <Button variant="outline" size="sm" className="gap-2">
                                   <MessageCircle className="h-4 w-4" />
@@ -272,16 +381,26 @@ export default function Learners() {
                                 <h4 className="text-sm font-semibold text-slate-700 mb-2">
                                   Lesson History ({detail.lessons.length})
                                 </h4>
-                                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                <div className="space-y-2 sm:max-h-64 sm:overflow-y-auto sm:pr-1">
                                   {detail.lessons.length === 0 ? (
                                     <p className="text-sm text-slate-400">No lessons yet</p>
                                   ) : (
                                     detail.lessons.map((lesson) => (
                                       <div key={lesson.bookingId} className="bg-white rounded-lg p-3 text-sm">
-                                        <div className="flex items-center justify-between">
-                                          <span className="font-medium">{lesson.date} {lesson.time}</span>
-                                          <Badge variant="secondary" className="text-xs capitalize">{lesson.status}</Badge>
+                                        <div className="flex items-start justify-between gap-2">
+                                          <span className="font-medium">{formatLessonDate(lesson)}</span>
+                                          <div className="flex flex-wrap items-center justify-end gap-1">
+                                            {lesson.lateCancellation && (
+                                              <Badge variant="outline" className="text-xs border-red-300 text-red-700">Late cancel</Badge>
+                                            )}
+                                            <Badge variant="secondary" className="text-xs capitalize">{lesson.status}</Badge>
+                                          </div>
                                         </div>
+                                        {lesson.lessonTypeName && (
+                                          <p className="text-xs text-slate-500 mt-0.5">
+                                            {lesson.lessonTypeName}{lesson.price != null ? ` · £${lesson.price}` : ""}
+                                          </p>
+                                        )}
                                         {lesson.topicsCovered.length > 0 && (
                                           <div className="flex gap-1 flex-wrap mt-1">
                                             {lesson.topicsCovered.map((t) => (
@@ -313,7 +432,7 @@ export default function Learners() {
                                 <h4 className="text-sm font-semibold text-slate-700 mb-2">
                                   Payment History ({detail.payments.length})
                                 </h4>
-                                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                <div className="space-y-2 sm:max-h-48 sm:overflow-y-auto sm:pr-1">
                                   {detail.payments.length === 0 ? (
                                     <p className="text-sm text-slate-400">No payments yet</p>
                                   ) : (

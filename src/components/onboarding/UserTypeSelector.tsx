@@ -28,7 +28,7 @@ const options = [
     title: "Driving School",
     short: "School",
     description: "Multi-instructor pricing and onboarding.",
-    price: "From £6/seat",
+    price: "£8/seat",
     icon: Building2,
   },
 ];
@@ -60,15 +60,15 @@ export default function UserTypeSelector({
               key={option.type}
               type="button"
               onClick={() => onChange(option.type)}
-              className={`w-full rounded-2xl border p-5 transition-all duration-200 text-left ${
+              className={`w-full rounded-2xl border p-4 sm:p-5 transition-all duration-200 text-left ${
                 selected
                   ? "border-sky-500 bg-sky-50 ring-2 ring-sky-100"
                   : "hover:border-sky-300 hover:bg-slate-50"
               }`}
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-start gap-3 sm:items-center sm:gap-4">
                 <div
-                  className={`rounded-xl p-3 ${
+                  className={`shrink-0 rounded-xl p-3 ${
                     selected
                       ? "bg-sky-100"
                       : "bg-slate-100"
@@ -77,26 +77,26 @@ export default function UserTypeSelector({
                   <Icon className="h-5 w-5 text-sky-600" />
                 </div>
 
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold">
-                      {option.short}
-                    </h4>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <h4 className="font-semibold">
+                        {option.short}
+                      </h4>
 
-                    <span className="text-xs rounded-full bg-slate-100 px-2 py-1">
-                      {option.title}
-                    </span>
+                      <span className="text-xs text-muted-foreground sm:rounded-full sm:bg-slate-100 sm:px-2 sm:py-1 sm:text-foreground">
+                        {option.title}
+                      </span>
+                    </div>
+
+                    <div className="shrink-0 font-bold text-sky-600">
+                      {option.price}
+                    </div>
                   </div>
 
                   <p className="text-sm text-muted-foreground mt-1">
                     {option.description}
                   </p>
-                </div>
-
-                <div className="text-right">
-                  <div className="font-bold text-sky-600">
-                    {option.price}
-                  </div>
                 </div>
               </div>
             </button>

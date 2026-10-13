@@ -4,6 +4,7 @@ import { ArrowRight, ArrowLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const TOUR_KEY = "dd_tour_completed";
+export const START_TOUR_EVENT = "dd:start-dashboard-tour";
 
 interface TourStep {
   selector: string;
@@ -44,6 +45,12 @@ const STEPS: TourStep[] = [
     position: "bottom",
   },
   {
+    selector: "[data-tour='settings-link']",
+    title: "Donna Settings",
+    description: "Choose your working hours, how tightly Donna packs your day around your routes, and how she talks to learners. Try any change before you save it.",
+    position: "right",
+  },
+  {
     selector: "[data-tour='portal-link']",
     title: "Your Mobile Portal",
     description: "For day-to-day management — students, calendar, Donna AI chat — open the Portal from here. It works great on your phone!",
@@ -58,18 +65,38 @@ export default function DashboardTour() {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem(TOUR_KEY)) {
-        const timer = setTimeout(() => setActive(true), 1200);
-        return () => clearTimeout(timer);
-      }
-    } catch {}
+    const start = () => {
+      setStep(0);
+      setActive(true);
+    };
+    window.addEventListener(START_TOUR_EVENT, start);
+
+    let forced = false;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tour") === "1") {
+      forced = true;
+      params.delete("tour");
+      const qs = params.toString();
+      window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+    }
+
+    let seen = false;
+    try { seen = !!localStorage.getItem(TOUR_KEY); } catch {}
+
+    const timer = forced || !seen ? setTimeout(start, forced ? 400 : 1200) : undefined;
+    return () => {
+      window.removeEventListener(START_TOUR_EVENT, start);
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   const measureTarget = useCallback(() => {
     if (!active) return;
-    const el = document.querySelector(STEPS[step].selector);
-    if (el && el.offsetParent !== null) {
+    // The same target can exist in both the desktop sidebar and the mobile
+    // bottom bar; use whichever one is actually showing.
+    const el = Array.from(document.querySelectorAll<HTMLElement>(STEPS[step].selector))
+      .find((node) => node.offsetParent !== null);
+    if (el) {
       const r = el.getBoundingClientRect();
       setRect(r);
       el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -143,7 +170,6 @@ export default function DashboardTour() {
           x="0" y="0" width="100%" height="100%" fill="rgba(0,0,0,0.5)"
           mask="url(#tour-mask)"
           style={{ pointerEvents: "auto" }}
-          onClick={close}
         />
       </svg>
 

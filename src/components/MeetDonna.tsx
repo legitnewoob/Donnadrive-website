@@ -5,7 +5,7 @@ import roundaboutMap from "@/assets/roundabout-map.png";
 
 const MeetDonna = () => {
   return (
-    <section className="relative overflow-hidden pt-28 lg:pt-36 pb-12 lg:pb-16 bg-gradient-to-br from-[#F86C4F] via-[#F47B62] to-[#F59678] text-white">
+    <section id="how-it-works" className="relative scroll-mt-20 overflow-hidden pt-20 md:pt-28 lg:pt-36 pb-16 lg:pb-16 bg-gradient-to-br from-[#F86C4F] via-[#F47B62] to-[#F59678] text-white">
 
       {/* Roundabout map — full-bleed across the page, very faint, larger now.
           The section is coral now (matching Hero), same as DrivingScene's
@@ -35,7 +35,7 @@ const MeetDonna = () => {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: .8 }}
-            className="relative flex justify-center lg:justify-start order-2 lg:order-1"
+            className="relative hidden md:flex justify-center lg:justify-start order-2 lg:order-1"
           >
 
             <div className="absolute h-[300px] w-[300px] sm:h-[360px] sm:w-[360px] lg:h-[420px] lg:w-[420px] rounded-full bg-white/20 blur-2xl md:blur-3xl" />
@@ -89,7 +89,7 @@ const MeetDonna = () => {
 
               While you're teaching learners, Donna is replying to new ones.
               She books lessons, rearranges cancellations, sends reminders and
-              keeps your diary organised â€” all without you touching your phone.
+              keeps your diary organised — all without you touching your phone.
 
             </p>
 

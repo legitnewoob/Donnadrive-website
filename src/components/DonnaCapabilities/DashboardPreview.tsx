@@ -21,7 +21,7 @@ const stats = [
   {
     icon: PoundSterling,
     label: "Revenue",
-    value: "Â£426",
+    value: "£426",
   },
 ];
 

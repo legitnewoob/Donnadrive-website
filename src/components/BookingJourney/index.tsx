@@ -22,7 +22,7 @@ const BookingJourney = () => {
   return (
     <section
       id="how-it-works"
-      className="relative overflow-hidden py-32 bg-gradient-to-b from-background to-orange-50/20"
+      className="relative overflow-hidden py-16 md:py-32 bg-gradient-to-b from-background to-orange-50/20"
     >
       {/* Background */}
 

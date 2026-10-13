@@ -61,7 +61,7 @@ const VoiceFeedback = () => {
       <Header />
       
       {/* Back Button */}
-      <div className="container mx-auto px-4 pt-4">
+      <div className="container mx-auto px-4 pt-28">
         <Link to="/">
           <Button variant="ghost" size="sm" className="text-sm">
             <ArrowLeft className="w-4 h-4 mr-2" />

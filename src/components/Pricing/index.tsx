@@ -1,4 +1,5 @@
-﻿import { motion } from "framer-motion";
+﻿import { useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 
 import PricingCard from "./PricingCard";
 import { plans } from "./plans";
@@ -6,10 +7,20 @@ import donnaSurprised from "@/assets/mascot-surprised.png";
 import RoundaboutMapBackground from "@/components/RoundaboutMapBackground";
 
 const Pricing = () => {
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  // On phones, start the swipeable row on the "Most Popular" plan
+  useEffect(() => {
+    const row = rowRef.current;
+    const popular = row?.querySelector<HTMLElement>("[data-popular]");
+    if (!row || !popular || row.scrollWidth <= row.clientWidth) return;
+    row.scrollLeft = popular.offsetLeft - (row.clientWidth - popular.offsetWidth) / 2;
+  }, []);
+
   return (
     <section
       id="pricing"
-      className="relative overflow-hidden py-32 bg-gradient-to-b from-orange-50/20 to-background"
+      className="relative overflow-hidden py-16 md:py-32 bg-gradient-to-b from-orange-50/20 to-background"
     >
       <RoundaboutMapBackground />
 
@@ -37,7 +48,7 @@ const Pricing = () => {
             Simple Pricing
           </span>
 
-          <h2 className="mt-6 text-4xl md:text-5xl font-black">
+          <h2 className="mt-6 text-3xl md:text-5xl font-black">
             Choose Your Donna
           </h2>
 
@@ -47,22 +58,33 @@ const Pricing = () => {
           </p>
 
           <div className="mt-8 inline-flex rounded-full bg-green-100 px-5 py-2 text-sm font-semibold text-green-700">
-            ðŸŽ‰ 30-Day Free Trial â€¢ No Card Required
+            🎉 30-Day Free Trial • No Card Required
           </div>
 
         </motion.div>
 
-        <div className="mt-20 grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {/* Phones: one swipeable row that opens on the popular plan; grid from md up */}
+        <div
+          ref={rowRef}
+          className="relative -mx-6 mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 pt-5 [scrollbar-width:none] md:mx-0 md:mt-20 md:grid md:gap-8 md:overflow-visible md:p-0 md:grid-cols-2 lg:grid-cols-3"
+        >
 
           {plans.map((plan, index) => (
-            <PricingCard
+            <div
               key={plan.title}
-              plan={plan}
-              index={index}
-            />
+              data-popular={plan.popular || undefined}
+              className="w-[85%] shrink-0 snap-center md:w-auto"
+            >
+              <PricingCard
+                plan={plan}
+                index={index}
+              />
+            </div>
           ))}
 
         </div>
+
+        <p className="mt-2 text-center text-xs text-muted-foreground md:hidden">Swipe to compare plans</p>
 
       </div>
     </section>

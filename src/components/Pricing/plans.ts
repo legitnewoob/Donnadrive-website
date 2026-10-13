@@ -55,8 +55,8 @@ export const plans = [
     icon: Building2,
     title: "Driving Schools",
     subtitle: "Multiple instructors",
-    price: "£6-8",
-    period: "/month",
+    price: "£8",
+    period: "/seat/month",
     popular: false,
     button: "Get started",
     features: [

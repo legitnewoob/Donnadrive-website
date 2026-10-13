@@ -64,13 +64,13 @@ const Hero = () => {
 
             {/* Buttons */}
 
-            <div className="flex flex-col sm:flex-row gap-5 mt-10 justify-center lg:justify-start">
+            <div className="mx-auto flex w-full max-w-xs flex-col gap-3 mt-10 sm:mx-0 sm:max-w-none sm:flex-row sm:gap-5 justify-center lg:justify-start">
 
-              <Link to="/book-demo">
+              <Link to="/book-demo" className="w-full sm:w-auto">
 
                 <Button
                   size="lg"
-                  className="rounded-xl bg-white text-[#F86C4F] hover:bg-white/90 h-14 px-10 text-base font-semibold shadow-xl"
+                  className="w-full sm:w-auto rounded-xl bg-white text-[#F86C4F] hover:bg-white/90 h-14 px-10 text-base font-semibold shadow-xl"
                 >
 
                   Book a Demo
@@ -79,12 +79,12 @@ const Hero = () => {
 
               </Link>
 
-              <a href="#how-it-works">
+              <a href="#how-it-works" className="w-full sm:w-auto">
 
                 <Button
                   variant="outline"
                   size="lg"
-                  className="rounded-xl border-white/30 bg-white/15 md:bg-white/10 md:backdrop-blur-md text-white hover:bg-white/20 h-14 px-10"
+                  className="w-full sm:w-auto rounded-xl border-white/30 bg-white/15 md:bg-white/10 md:backdrop-blur-md text-white hover:bg-white/20 h-14 px-10"
                 >
 
                   See How It Works
@@ -131,7 +131,7 @@ const Hero = () => {
                   alt="Donna AI"
                   loading="eager"
                   decoding="async"
-                  className="w-full max-w-[320px] sm:max-w-[420px] lg:max-w-[560px] xl:max-w-[620px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.2)] md:drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)] will-change-transform"
+                  className="w-full max-w-[240px] sm:max-w-[420px] lg:max-w-[560px] xl:max-w-[620px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.2)] md:drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)] will-change-transform"
                 />
 
               </motion.div>
@@ -147,7 +147,7 @@ const Hero = () => {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.35 }}
-          className="mt-4 relative left-1/2 right-1/2 -mx-[50vw] w-screen"
+          className="mt-4 relative left-1/2 right-1/2 -mx-[50vw] w-screen hidden md:block"
         >
           <FeatureMarquee />
         </motion.div>

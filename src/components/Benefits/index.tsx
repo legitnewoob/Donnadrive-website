@@ -12,7 +12,7 @@ const Benefits = () => {
   };
 
   return (
-    <section className="relative overflow-hidden py-32 lg:py-40 bg-background">
+    <section className="relative overflow-hidden py-16 md:py-32 lg:py-40 bg-background">
 
       {/* Background */}
 

@@ -10,7 +10,7 @@ const DonnaCapabilities = () => {
     return (
         <section
             id="capabilities"
-            className="relative overflow-hidden py-32 bg-gradient-to-b from-background via-orange-50/30 to-background"
+            className="relative overflow-hidden py-16 md:py-32 bg-gradient-to-b from-background via-orange-50/30 to-background"
         >
             {/* Background */}
 
@@ -45,7 +45,7 @@ const DonnaCapabilities = () => {
 
                     <p className="mt-6 text-lg leading-8 text-muted-foreground">
 
-                        Every booking, every reminder, every learnerâ€”
+                        Every booking, every reminder, every learner—
                         Donna keeps everything running automatically.
 
                     </p>

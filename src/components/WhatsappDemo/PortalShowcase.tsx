@@ -273,7 +273,7 @@ const StaticShowcase = () => (
       </p>
     </div>
 
-    <div className="mt-14 grid gap-6 sm:grid-cols-3 max-w-4xl mx-auto">
+    <div className="mt-14 hidden sm:grid gap-6 sm:grid-cols-3 max-w-4xl mx-auto">
       {panels.map((panel, index) => (
         <motion.div
           key={panel.title}

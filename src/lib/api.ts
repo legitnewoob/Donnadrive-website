@@ -63,7 +63,7 @@ export async function getProfile(token: string) {
     phoneNumber: string | null;
     phoneNumberId: string | null;
     onboardingComplete: boolean;
-    onboardingStatus: { phoneAssigned: boolean; subscriptionActive: boolean; calendarConnected: boolean };
+    onboardingStatus: { phoneAssigned: boolean; subscriptionActive: boolean; calendarConnected: boolean; calendarTokenExpired?: boolean };
   };
 }
 
@@ -164,8 +164,9 @@ export async function getLearners(token: string, search?: string) {
     phone: string; name: string | null; age: number | null; postalCode: string | null;
     instructorNotes: string; createdAt: string | null;
     lessonsCompleted: number; nextLesson: { date: string; time: string } | null;
-    totalPaid: number; totalCharged: number; outstanding: number;
+    totalPaid: number; totalCharged: number; outstanding: number; credit: number;
     paymentStatus: "paid" | "owes"; progressLevel: "new" | "active" | "test-ready";
+    priority: boolean; donnaPaused: boolean;
   }>;
 }
 
@@ -178,11 +179,13 @@ export async function getLearnerDetail(token: string, phone: string) {
   return data.data as {
     phone: string; name: string | null; age: number | null; dob: string | null;
     postalCode: string | null; instructorNotes: string; createdAt: string | null;
-    lessonsCompleted: number; totalPaid: number; totalCharged: number; outstanding: number;
+    schedulingPrefs: SchedulingPrefs;
+    lessonsCompleted: number; totalPaid: number; totalCharged: number; outstanding: number; credit: number;
     lessons: Array<{
       bookingId: string; date: string; time: string; status: string;
       topicsCovered: string[]; rating: number | null; progressNotes: string;
       paymentReceived: boolean; paymentAmount: number;
+      lessonTypeName: string; price: number | null; lateCancellation: boolean;
     }>;
     payments: Array<{ paymentId: string; amount: number; method: string; date: string; note: string }>;
   };
@@ -197,6 +200,124 @@ export async function updateLearnerNotes(token: string, phone: string, notes: st
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to update notes");
   return data;
+}
+
+export interface SchedulingPrefs {
+  priority: boolean;
+  maxAddedDriveMin: number | null;
+  savedPlaces: Array<{ label: string; address: string; located?: boolean }>;
+  preferredDays: number[];
+  preferredTimes: string[];
+  unavailable: Array<{ days: number[]; from: string; to: string }>;
+  defaultLessonTypeId: string | null;
+  maxLessonsPerWeek: number | null;
+  donnaPaused: boolean;
+}
+
+export async function updateLearnerPreferences(token: string, phone: string, prefs: Partial<SchedulingPrefs>) {
+  const res = await fetch(`${API_BASE}/api/dashboard/learners/${encodeURIComponent(phone)}/preferences`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(prefs),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to save preferences");
+  return data.data as SchedulingPrefs;
+}
+
+// ─── Donna Settings ─────────────────────────────────────────────────────────
+
+export type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+export type RoutePreset = "off" | "relaxed" | "balanced" | "tight" | "custom";
+
+export interface RouteSettings {
+  preset: RoutePreset;
+  lessonDurationMin: number;
+  travelGraceMin: number;
+  maxAddedDriveMin: number;
+  homeLegWeight: "off" | "half" | "full";
+  fragmentationPenalty: "off" | "low" | "medium" | "high";
+  serviceArea: { radius: number | null; unit: "miles" | "km"; postcodeDistricts: string[] };
+  suggestOtherDays: boolean;
+  lookAheadDays: number;
+}
+
+export interface BotSettings {
+  workingHours: Record<DayKey, string[]>;
+  breaks: Array<{ from: string; to: string }>;
+  maxLessonsPerDay: number | null;
+  minNoticeHours: number;
+  bookingWindowDays: number;
+  holiday: { enabled: boolean; from: string | null; to: string | null; message: string };
+  acceptingNewLearners: boolean;
+  allowCancel: boolean;
+  allowReschedule: boolean;
+  tone: "friendly" | "professional" | "brief";
+  emojis: boolean;
+  customGreeting: string;
+  aboutLessons: string;
+  cancellationNoticeHours: number;
+  lateCancellationFee: number | null;
+  reminders: "off" | "24h" | "24h+2h";
+  notifications: { booked: boolean; cancelled: boolean; rescheduled: boolean; email: boolean };
+  handover: boolean;
+}
+
+export interface DonnaSettings {
+  baseAddress: string;
+  hasBaseLocation: boolean;
+  routeSettings: RouteSettings;
+  botSettings: BotSettings;
+  presets: Record<string, { enabled?: boolean; maxAddedDriveMin?: number; travelGraceMin?: number; fragmentationPenalty?: string }>;
+}
+
+export async function getSettings(token: string) {
+  const res = await fetch(`${API_BASE}/api/dashboard/settings`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to load settings");
+  return data.data as DonnaSettings;
+}
+
+export async function updateSettings(
+  token: string,
+  body: { baseAddress?: string; routeSettings?: Partial<RouteSettings>; botSettings?: Partial<BotSettings> }
+) {
+  const res = await fetch(`${API_BASE}/api/dashboard/settings`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to save settings");
+  return data.data as DonnaSettings;
+}
+
+export interface RoutePreview {
+  date: string;
+  location: string;
+  hasBaseLocation: boolean;
+  serviceArea: { inside: boolean; reason?: string };
+  closedReason: "not_working_day" | "holiday" | "day_full" | null;
+  freeSlots: string[];
+  offered: string[];
+  usedFallback?: boolean;
+  slots: Array<{ slot: string; feasible: boolean; addedDriveMin: number | null; reason: string; offered: boolean }>;
+}
+
+export async function previewRoute(
+  token: string,
+  body: { date: string; address: string; routeSettings?: Partial<RouteSettings> }
+) {
+  const res = await fetch(`${API_BASE}/api/dashboard/route-preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to preview");
+  return data.data as RoutePreview;
 }
 
 // ─── Lesson Types ───────────────────────────────────────────────────────────

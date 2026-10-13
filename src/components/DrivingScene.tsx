@@ -158,7 +158,7 @@ const DrivingScene = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden bg-[#F2EEE6] min-h-[760px] h-[92vh] max-h-[980px] flex items-center"
+      className="relative overflow-hidden bg-[#F2EEE6] pt-16 pb-24 md:py-0 md:min-h-[760px] md:h-[92vh] md:max-h-[980px] flex items-center"
     >
       {/* Scroll-scrubbed background */}
       <canvas
@@ -201,7 +201,7 @@ const DrivingScene = () => {
             first drive to test day without a gap in your calendar.
           </p>
 
-          <div className="mt-8">
+          <div className="mt-8 hidden md:block">
             <Link to="/book-demo">
               <Button
                 size="lg"
@@ -213,7 +213,7 @@ const DrivingScene = () => {
           </div>
 
           {/* Feature chips */}
-          <div className="mt-10 flex flex-col gap-3">
+          <div className="mt-10 hidden md:flex flex-col gap-3">
             {chips.map(({ icon: Icon, label }) => (
               <div
                 key={label}

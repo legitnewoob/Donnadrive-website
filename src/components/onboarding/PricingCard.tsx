@@ -90,28 +90,19 @@ export default function PricingCard({ userType }: Props) {
         DRIVING SCHOOL
       </p>
 
-      <h2 className="mt-2 text-3xl font-bold">
-        Seat Pricing
-      </h2>
+      <div className="mt-2 flex items-end gap-1">
+        <span className="text-5xl font-bold">
+          £8
+        </span>
 
-      <div className="mt-8 space-y-4">
-
-        <div className="flex justify-between">
-          <span>1–5 instructors</span>
-          <strong>£8 / seat</strong>
-        </div>
-
-        <div className="flex justify-between">
-          <span>6–15 instructors</span>
-          <strong>£7 / seat</strong>
-        </div>
-
-        <div className="flex justify-between">
-          <span>16+</span>
-          <strong>£6 / seat</strong>
-        </div>
-
+        <span className="pb-2 text-muted-foreground">
+          /seat/month
+        </span>
       </div>
+
+      <p className="mt-2 text-muted-foreground">
+        One seat per instructor.
+      </p>
 
       <p className="mt-8 text-sm text-muted-foreground">
         Final pricing is confirmed during your callback with Josh.

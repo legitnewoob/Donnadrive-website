@@ -27,8 +27,8 @@ const options = [
     type: "SCHOOL" as const,
     title: "Driving School",
     short: "School",
-    description: "Multi-instructor pricing and onboarding.",
-    price: "£8/seat",
+    description: "3 instructors included, +£10/month each after.",
+    price: "£20/mo",
     icon: Building2,
   },
 ];

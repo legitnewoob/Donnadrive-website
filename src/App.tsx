@@ -23,6 +23,8 @@ import Profile from "./pages/Profile";
 import Learners from "./pages/Learners";
 import LessonTypes from "./pages/LessonTypes";
 import DonnaSettings from "./pages/DonnaSettings";
+import Team from "./pages/Team";
+import JoinSchool from "./pages/JoinSchool";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +66,8 @@ const App = () => (
           <Route path="/learners" element={<Learners />} />
           <Route path="/lesson-types" element={<LessonTypes />} />
           <Route path="/settings" element={<DonnaSettings />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/join/:token" element={<JoinSchool />} />
           <Route path="/account" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

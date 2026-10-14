@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ArrowRight, ArrowLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getProfile } from "@/lib/api";
+import { needsPlan } from "@/lib/access";
 
 const TOUR_KEY = "dd_tour_completed";
 export const START_TOUR_EVENT = "dd:start-dashboard-tour";
@@ -65,7 +67,10 @@ export default function DashboardTour() {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Never over the plan/payment modal: the tour waits until they've picked a plan (and paid)
+    const locked = () => needsPlan() || new URLSearchParams(window.location.search).has("auth_code");
     const start = () => {
+      if (locked()) return;
       setStep(0);
       setActive(true);
     };
@@ -83,9 +88,25 @@ export default function DashboardTour() {
     let seen = false;
     try { seen = !!localStorage.getItem(TOUR_KEY); } catch {}
 
-    const timer = forced || !seen ? setTimeout(start, forced ? 400 : 1200) : undefined;
+    if (!forced && seen) {
+      return () => window.removeEventListener(START_TOUR_EVENT, start);
+    }
+
+    // First visit: ask the server whether they've picked a plan (the stored flag can be
+    // stale), then start once they have. Paying or picking Free signals dd_auth_change.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let done = false;
+    const tryStart = () => {
+      if (done || locked()) return;
+      done = true;
+      timer = setTimeout(start, forced ? 400 : 1200);
+    };
+    const token = localStorage.getItem("dd_token");
+    if (token) getProfile(token).then(tryStart).catch(() => {});
+    window.addEventListener("dd_auth_change", tryStart);
     return () => {
       window.removeEventListener(START_TOUR_EVENT, start);
+      window.removeEventListener("dd_auth_change", tryStart);
       if (timer) clearTimeout(timer);
     };
   }, []);

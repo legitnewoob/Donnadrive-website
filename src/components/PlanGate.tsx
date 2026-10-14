@@ -29,8 +29,9 @@ export default function PlanGate() {
   const [resumed, setResumed] = useState(false);
 
   const params = new URLSearchParams(search);
-  // Back from checkout: the dashboard is finishing sign-in, so stay out of the way
-  const returningFromCheckout = params.has("auth_code");
+  // Back from checkout: the dashboard is finishing sign-in, so stay out of the way. Read
+  // the live URL: the dashboard strips auth_code with replaceState, which the router doesn't see.
+  const returningFromCheckout = new URLSearchParams(window.location.search).has("auth_code");
   const onInstructorPage = isInstructorPage(pathname, search);
 
   const refresh = useCallback(() => {

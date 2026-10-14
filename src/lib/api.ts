@@ -64,6 +64,7 @@ export async function getProfile(token: string) {
     phoneNumberId: string | null;
     onboardingComplete: boolean;
     onboardingStatus: { phoneAssigned: boolean; subscriptionActive: boolean; calendarConnected: boolean; calendarTokenExpired?: boolean };
+    school?: { role: "owner" | "member"; name: string | null } | null;
   };
 }
 
@@ -153,8 +154,11 @@ export async function disconnectCalendar(token: string) {
 
 // ─── Learners ───────────────────────────────────────────────────────────────
 
-export async function getLearners(token: string, search?: string) {
-  const q = search ? `?search=${encodeURIComponent(search)}` : "";
+export async function getLearners(token: string, search?: string, instructor?: string) {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (instructor) params.set("instructor", instructor);
+  const q = params.toString() ? `?${params}` : "";
   const res = await fetch(`${API_BASE}/api/dashboard/learners${q}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -170,8 +174,9 @@ export async function getLearners(token: string, search?: string) {
   }>;
 }
 
-export async function getLearnerDetail(token: string, phone: string) {
-  const res = await fetch(`${API_BASE}/api/dashboard/learners/${encodeURIComponent(phone)}`, {
+export async function getLearnerDetail(token: string, phone: string, instructor?: string) {
+  const q = instructor ? `?instructor=${encodeURIComponent(instructor)}` : "";
+  const res = await fetch(`${API_BASE}/api/dashboard/learners/${encodeURIComponent(phone)}${q}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await res.json();
@@ -408,3 +413,61 @@ export async function getDashboard(token: string, range = "This week") {
     revenueGoal: { current: number; target: number };
   };
 }
+
+// ─── Driving school ─────────────────────────────────────────────────────────
+
+export interface SchoolMember {
+  id: string;
+  name: string;
+  email: string;
+  role: "member";
+  phoneNumber: string | null;
+  calendarConnected: boolean;
+  donnaEnabled: boolean;
+  setup: SetupStatus;
+  learners: number;
+  lessonsThisWeek: number;
+  upcomingLessons: number;
+  joinedAt: string | null;
+}
+
+export interface SchoolOverview {
+  school: { id: string; name: string; seatLimit: number; includedSeats: number; extraSeats: number; canBuySeats: boolean };
+  role: "owner" | "member";
+  owner: { name: string; email: string } | null;
+  seats: { members: number; invites: number; used: number; limit: number };
+  members: SchoolMember[];
+  invites: Array<{ id: string; email: string; sentAt: string; expiresAt: string; link: string }>;
+}
+
+async function schoolRequest<T>(token: string | null, path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API_BASE}/api/school${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(data.error || "Something went wrong"), { code: data.code, status: res.status });
+  return data.data as T;
+}
+
+export const getSchool = (token: string) => schoolRequest<SchoolOverview>(token, "");
+export const renameSchool = (token: string, name: string) =>
+  schoolRequest<SchoolOverview>(token, "", { method: "PATCH", body: JSON.stringify({ name }) });
+export const inviteInstructor = (token: string, email: string) =>
+  schoolRequest<{ email: string; link: string; emailed: boolean; alreadySent: boolean }>(token, "/invites", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+export const cancelSchoolInvite = (token: string, id: string) => schoolRequest<void>(token, `/invites/${id}`, { method: "DELETE" });
+// Extra instructor seats on top of the 3 included (£10/month each, prorated)
+export const setSchoolSeats = (token: string, extraSeats: number) =>
+  schoolRequest<SchoolOverview>(token, "/seats", { method: "PUT", body: JSON.stringify({ extraSeats }) });
+export const removeSchoolMember = (token: string, id: string) => schoolRequest<{ id: string; name: string }>(token, `/members/${id}`, { method: "DELETE" });
+export const getSchoolInvite = (inviteToken: string) =>
+  schoolRequest<{ schoolName: string; ownerName: string | null; email: string; expiresAt: string }>(null, `/invites/${inviteToken}`);
+export const acceptSchoolInvite = (token: string, inviteToken: string) =>
+  schoolRequest<{ schoolName: string; hadOwnSubscription: boolean }>(token, `/invites/${inviteToken}/accept`, { method: "POST" });

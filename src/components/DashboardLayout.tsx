@@ -11,12 +11,13 @@ import {
   SlidersHorizontal,
   MoreHorizontal,
   ArrowUpRight,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
 import { START_TOUR_EVENT } from "@/components/DashboardTour";
-import { getSetupStatus, SETUP_CHANGED_EVENT } from "@/lib/api";
+import { getSetupStatus, getProfile, SETUP_CHANGED_EVENT } from "@/lib/api";
 
 const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
 
@@ -56,6 +57,16 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
   const [mobileOpen, setMobileOpen] = useState(false);
   // Red dot on Donna Settings until the required setup is done
   const [setupIncomplete, setSetupIncomplete] = useState(false);
+  // Driving school owners get a Team page
+  const [isSchoolOwner, setIsSchoolOwner] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("dd_token");
+    if (!token) return;
+    getProfile(token)
+      .then((p) => setIsSchoolOwner(p.school?.role === "owner"))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("dd_token");
@@ -98,6 +109,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
     { label: "Dashboard", short: "Home", icon: LayoutDashboard, path: "/get-onboard", inBottomBar: true },
     { label: "Learners", short: "Learners", icon: Users, path: "/learners", inBottomBar: true },
     { label: "Lesson Types", short: "Lessons", icon: BookOpen, path: "/lesson-types" },
+    ...(isSchoolOwner ? [{ label: "Team", short: "Team", icon: Building2, path: "/team" }] : []),
     { label: "Donna Settings", short: "Settings", icon: SlidersHorizontal, path: "/settings", tour: "settings-link", inBottomBar: true },
     { label: "Account", short: "Account", icon: UserCircle, path: "/account", inBottomBar: true },
   ];
@@ -105,7 +117,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
   const email = signedInEmail();
   const byPath = (path: string) => navItems.find((item) => item.path === path)!;
   // Everyday pages on top; settings and help pinned at the bottom; account last
-  const mainItems = ["/get-onboard", "/learners", "/lesson-types"].map(byPath);
+  const mainItems = ["/get-onboard", "/learners", ...(isSchoolOwner ? ["/team"] : []), "/lesson-types"].map(byPath);
   const settingsItem = byPath("/settings");
 
   const itemClass = (active: boolean) =>
@@ -296,7 +308,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
               <SheetTrigger asChild>
                 <button
                   className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors ${
-                    pathname === "/lesson-types" ? "text-slate-900" : "text-slate-500"
+                    ["/lesson-types", "/team"].includes(pathname) ? "text-slate-900" : "text-slate-500"
                   }`}
                 >
                   <MoreHorizontal className="h-5 w-5" />

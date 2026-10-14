@@ -65,7 +65,9 @@ import {
   getSettings,
   updateSettings,
   notifySetupChanged,
+  getSchool,
   type SetupStatus,
+  type SchoolOverview,
 } from "@/lib/api";
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -99,6 +101,7 @@ interface Profile {
     calendarConnected: boolean;
     calendarTokenExpired?: boolean;
   };
+  school?: { role: "owner" | "member"; name: string | null } | null;
 }
 
 type DashboardData = Awaited<ReturnType<typeof getDashboard>>;
@@ -122,6 +125,7 @@ export default function Onboarding() {
   const [donnaEnabled, setDonnaEnabled] = useState(true);
   const [savingSwitch, setSavingSwitch] = useState(false);
   const [missingOpen, setMissingOpen] = useState(false);
+  const [school, setSchool] = useState<SchoolOverview | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,6 +171,9 @@ export default function Onboarding() {
         if (!cancelled) {
           setProfile(profileData);
           setDashboard(dashboardData);
+          if (profileData.school?.role === "owner") {
+            getSchool(currentToken).then((sc) => !cancelled && setSchool(sc)).catch(() => {});
+          }
           if (settingsData) {
             setSetup(settingsData.setup ?? null);
             setDonnaEnabled(settingsData.botSettings.donnaEnabled !== false);
@@ -360,6 +367,25 @@ export default function Onboarding() {
       initials={initials}
     >
       <DashboardTour />
+
+      {/* Driving school owner: team at a glance */}
+      {school && (
+        <Card className="mb-4 border-sky-200">
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100">
+              <Users className="h-5 w-5 text-sky-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold">{school.school.name}</p>
+              <p className="text-sm text-muted-foreground">
+                {school.seats.members} instructor{school.seats.members === 1 ? "" : "s"}
+                {school.seats.invites ? ` · ${school.seats.invites} invited` : ""} · {school.seats.used} of {school.seats.limit} seats used
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => navigate("/team")}>Manage team</Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Donna on/off */}
       <DonnaSwitchCard enabled={donnaEnabled} saving={savingSwitch} hasPhone={hasPhone} onChange={handleToggleDonna} />

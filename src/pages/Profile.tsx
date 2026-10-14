@@ -67,6 +67,7 @@ interface Profile {
   };
   timezone?: string;
   createdAt?: string;
+  school?: { role: "owner" | "member"; name: string | null } | null;
 }
 
 interface Invoice {
@@ -363,7 +364,23 @@ export default function ProfilePage() {
                   </Badge>
                 </div>
               )}
-              {profile.plan !== "pdi" && (
+              {profile.school && (
+                <div className="flex justify-between text-sm items-center">
+                  <span className="text-muted-foreground">School</span>
+                  <span className="font-medium">{profile.school.name || "Your driving school"}</span>
+                </div>
+              )}
+              {profile.school?.role === "member" && (
+                <p className="rounded-lg bg-slate-50 p-3 text-sm text-muted-foreground">
+                  Your school covers your Donna Drive subscription, so there's nothing for you to pay.
+                </p>
+              )}
+              {profile.school?.role === "owner" && (
+                <Button variant="outline" size="sm" className="mt-2 mr-2" onClick={() => navigate("/team")}>
+                  Manage instructors
+                </Button>
+              )}
+              {profile.plan !== "pdi" && profile.school?.role !== "member" && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -388,7 +405,7 @@ export default function ProfilePage() {
                 <FileText className="h-4 w-4 text-sky-600" />
                 Billing
               </CardTitle>
-              {profile.subscriptionStatus && (
+              {profile.subscriptionStatus && profile.school?.role !== "member" && (
                 <Button
                   variant="ghost"
                   size="sm"

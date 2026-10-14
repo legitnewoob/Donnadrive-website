@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
-import { getLearners, getLearnerDetail, updateLearnerNotes, getLessonTypes } from "@/lib/api";
+import { getLearners, getLearnerDetail, updateLearnerNotes, getLessonTypes, getProfile, getSchool, type SchoolMember } from "@/lib/api";
 import LearnerScheduling from "@/components/LearnerScheduling";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -118,12 +118,28 @@ export default function Learners() {
   const [savingNotes, setSavingNotes] = useState(false);
   const notesTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [lessonTypes, setLessonTypes] = useState<Awaited<ReturnType<typeof getLessonTypes>>>([]);
+  // School owners can switch to an instructor's learners (?instructor=<id>), read-only
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewing = searchParams.get("instructor") || "";
+  const [team, setTeam] = useState<SchoolMember[]>([]);
+  const readOnly = !!viewing;
+  const viewingName = team.find((m) => m.id === viewing)?.name;
 
   useEffect(() => {
     if (!token) { navigate("/"); return; }
-    getLearners(token).then(setLearners).catch(console.error).finally(() => setLoading(false));
-    getLessonTypes(token).then(setLessonTypes).catch(console.error);
+    getProfile(token)
+      .then((p) => (p.school?.role === "owner" ? getSchool(token).then((s) => setTeam(s.members)) : undefined))
+      .catch(() => {});
   }, [token, navigate]);
+
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+    setExpanded(null);
+    setDetail(null);
+    getLearners(token, undefined, viewing || undefined).then(setLearners).catch(console.error).finally(() => setLoading(false));
+    if (!viewing) getLessonTypes(token).then(setLessonTypes).catch(console.error);
+  }, [token, viewing]);
 
   const filtered = learners.filter((l) => {
     if (progressFilter !== "all" && l.progressLevel !== progressFilter) return false;
@@ -145,7 +161,7 @@ export default function Learners() {
     setDetail(null);
     setDetailLoading(true);
     try {
-      const d = await getLearnerDetail(token!, phone);
+      const d = await getLearnerDetail(token!, phone, viewing || undefined);
       setDetail(d);
       setNotes(d.instructorNotes || "");
     } catch (e) {
@@ -156,6 +172,7 @@ export default function Learners() {
   }
 
   function handleNotesChange(value: string) {
+    if (readOnly) return;
     setNotes(value);
     if (notesTimeout.current) clearTimeout(notesTimeout.current);
     notesTimeout.current = setTimeout(async () => {
@@ -176,7 +193,27 @@ export default function Learners() {
   }
 
   return (
-    <DashboardLayout title="Learners">
+    <DashboardLayout title="Learners" subtitle={viewingName ? `Viewing ${viewingName}'s learners` : undefined}>
+      {team.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">Viewing:</span>
+          {[{ id: "", name: "My learners" }, ...team].map((m) => (
+            <Button
+              key={m.id || "me"}
+              size="sm"
+              variant={viewing === m.id ? "default" : "outline"}
+              onClick={() => setSearchParams(m.id ? { instructor: m.id } : {})}
+            >
+              {m.name}
+            </Button>
+          ))}
+        </div>
+      )}
+      {readOnly && (
+        <p className="mb-4 rounded-lg bg-sky-50 p-3 text-sm text-sky-800">
+          You're viewing {viewingName || "an instructor"}'s learners. Notes and scheduling can only be changed by them.
+        </p>
+      )}
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
@@ -310,10 +347,12 @@ export default function Learners() {
                                   onChange={(e) => handleNotesChange(e.target.value)}
                                   rows={3}
                                   className="bg-white"
+                                  readOnly={readOnly}
                                 />
                               </div>
 
-                              {/* Scheduling */}
+                              {/* Scheduling (the instructor's own controls) */}
+                              {!readOnly && (
                               <div>
                                 <h4 className="text-sm font-semibold text-slate-700 mb-2">Scheduling</h4>
                                 <LearnerScheduling
@@ -331,6 +370,7 @@ export default function Learners() {
                                   }
                                 />
                               </div>
+                              )}
 
                               {/* Financial summary */}
                               <div>

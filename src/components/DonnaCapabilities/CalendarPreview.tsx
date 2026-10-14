@@ -12,7 +12,7 @@ const CalendarPreview = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: .6, delay: .15 }}
-      className="group h-full rounded-[32px] border bg-white p-8 shadow-sm hover:shadow-2xl transition-all duration-300"
+      className="group h-full rounded-[32px] border bg-white p-6 sm:p-8 shadow-sm hover:shadow-2xl transition-all duration-300"
     >
       {/* Header */}
 

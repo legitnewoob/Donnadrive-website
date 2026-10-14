@@ -40,7 +40,7 @@ const BenefitPanel = ({
         border
         border-border
         bg-card
-        p-10
+        p-6 sm:p-8 lg:p-10
         transition-all
         duration-300
         hover:border-primary/30
@@ -51,8 +51,8 @@ const BenefitPanel = ({
 
         <div className="
           flex
-          h-20
-          w-20
+          h-16 sm:h-20
+          w-16 sm:w-20
           items-center
           justify-center
           rounded-3xl
@@ -70,13 +70,13 @@ const BenefitPanel = ({
 
         <div className="flex-1">
 
-          <h3 className="text-3xl font-black tracking-tight">
+          <h3 className="text-2xl sm:text-3xl font-black tracking-tight">
 
             {title}
 
           </h3>
 
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-muted-foreground">
+          <p className="mt-4 max-w-3xl text-base sm:text-lg leading-7 sm:leading-8 text-muted-foreground">
 
             {description}
 

@@ -1,14 +1,9 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  Calendar,
-  MessageCircle,
-  Route,
-  LayoutDashboard,
-} from "lucide-react";
 
-import donnaCharacter from "@/assets/donna-drive-mascot-hero_v2.png";
+import donnaCharacter from "@/assets/mascot-confident.png";
+import FeatureMarquee from "@/components/FeatureMarquee";
 
 const Hero = () => {
   return (
@@ -16,8 +11,8 @@ const Hero = () => {
 
       {/* Background blobs */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute w-[500px] h-[500px] rounded-full bg-white/5 blur-3xl -top-32 -left-32" />
-        <div className="absolute w-[350px] h-[350px] rounded-full bg-white/5 blur-3xl bottom-0 right-0" />
+        <div className="absolute w-[300px] h-[300px] md:w-[500px] md:h-[500px] rounded-full bg-white/5 blur-2xl md:blur-3xl -top-32 -left-32" />
+        <div className="absolute w-[220px] h-[220px] md:w-[350px] md:h-[350px] rounded-full bg-white/5 blur-2xl md:blur-3xl bottom-0 right-0" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 pt-36 pb-20">
@@ -30,12 +25,12 @@ const Hero = () => {
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: .6 }}
-            className="text-center lg:text-left"
+            className="text-center lg:text-left will-change-transform"
           >
 
             {/* Badge */}
 
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-md border border-white/20 px-5 py-2 mb-8">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/20 md:bg-white/15 md:backdrop-blur-md border border-white/20 px-5 py-2 mb-8">
 
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
 
@@ -47,13 +42,13 @@ const Hero = () => {
 
             {/* Heading */}
 
-            <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black leading-tight tracking-tight">
+            <h1 className="text-6xl sm:text-7xl lg:text-8xl xl:text-9xl font-black leading-[0.95] tracking-tight drop-shadow-[0_4px_24px_rgba(0,0,0,0.15)]">
 
               Donna Drive
 
             </h1>
 
-            <p className="mt-6 text-xl sm:text-2xl font-semibold text-white/90">
+            <p className="mt-8 text-xl sm:text-2xl font-semibold text-white/90">
 
               Booking Assistant & Smart Calendar
 
@@ -69,13 +64,13 @@ const Hero = () => {
 
             {/* Buttons */}
 
-            <div className="flex flex-col sm:flex-row gap-5 mt-10 justify-center lg:justify-start">
+            <div className="mx-auto flex w-full max-w-xs flex-col gap-3 mt-10 sm:mx-0 sm:max-w-none sm:flex-row sm:gap-5 justify-center lg:justify-start">
 
-              <Link to="/book-demo">
+              <Link to="/book-demo" className="w-full sm:w-auto">
 
                 <Button
                   size="lg"
-                  className="rounded-xl bg-white text-[#F86C4F] hover:bg-white/90 h-14 px-10 text-base font-semibold shadow-xl"
+                  className="w-full sm:w-auto rounded-xl bg-white text-[#F86C4F] hover:bg-white/90 h-14 px-10 text-base font-semibold shadow-xl"
                 >
 
                   Book a Demo
@@ -84,12 +79,12 @@ const Hero = () => {
 
               </Link>
 
-              <a href="#how-it-works">
+              <a href="#how-it-works" className="w-full sm:w-auto">
 
                 <Button
                   variant="outline"
                   size="lg"
-                  className="rounded-xl border-white/30 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 h-14 px-10"
+                  className="w-full sm:w-auto rounded-xl border-white/30 bg-white/15 md:bg-white/10 md:backdrop-blur-md text-white hover:bg-white/20 h-14 px-10"
                 >
 
                   See How It Works
@@ -108,14 +103,14 @@ const Hero = () => {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: .8 }}
-            className="flex justify-center lg:justify-end"
+            className="flex justify-center lg:justify-end will-change-transform"
           >
 
             <div className="relative">
 
               {/* Glow */}
 
-              <div className="absolute inset-0 rounded-full bg-white/20 blur-3xl scale-110" />
+              <div className="absolute inset-0 rounded-full bg-white/20 blur-2xl md:blur-3xl scale-110" />
 
               {/* Floating card */}
 
@@ -128,92 +123,16 @@ const Hero = () => {
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="relative"
+                className="relative will-change-transform"
               >
 
                 <img
                   src={donnaCharacter}
                   alt="Donna AI"
-                  className="w-[420px] lg:w-[560px] xl:w-[620px] object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)]"
+                  loading="eager"
+                  decoding="async"
+                  className="w-full max-w-[240px] sm:max-w-[420px] lg:max-w-[560px] xl:max-w-[620px] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.2)] md:drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)] will-change-transform"
                 />
-
-                {/* Floating notification */}
-
-                <motion.div
-                  animate={{
-                    y: [0, -8, 0]
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity
-                  }}
-                  className="absolute -left-8 top-12 bg-white rounded-2xl shadow-xl p-4"
-                >
-
-                  <div className="flex items-center gap-3">
-
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-
-                      💬
-
-                    </div>
-
-                    <div>
-
-                      <p className="font-semibold text-gray-800 text-sm">
-
-                        Lesson Booked
-
-                      </p>
-
-                      <p className="text-xs text-gray-500">
-
-                        via WhatsApp
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </motion.div>
-
-                {/* Floating calendar */}
-
-                <motion.div
-                  animate={{
-                    y: [0, 8, 0]
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity
-                  }}
-                  className="absolute -right-8 bottom-10 bg-white rounded-2xl shadow-xl p-4"
-                >
-
-                  <div className="flex items-center gap-3">
-
-                    <Calendar className="text-[#F86C4F]" />
-
-                    <div>
-
-                      <p className="font-semibold text-gray-800 text-sm">
-
-                        Calendar Updated
-
-                      </p>
-
-                      <p className="text-xs text-gray-500">
-
-                        No double bookings
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </motion.div>
 
               </motion.div>
 
@@ -221,88 +140,16 @@ const Hero = () => {
 
           </motion.div>
 
-        </div>        {/* Feature Cards */}
+        </div>
+
+        {/* Feature Cards — continuous marquee, pauses + expands on hover */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.35 }}
-          className="mt-10"
+          className="mt-4 relative left-1/2 right-1/2 -mx-[50vw] w-screen hidden md:block"
         >
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-
-            <Link
-              to="/ai-whatsapp-booking"
-              className="group rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
-                <MessageCircle className="w-7 h-7" />
-              </div>
-
-              <h3 className="font-bold text-lg">
-                AI WhatsApp
-              </h3>
-
-              <p className="mt-2 text-sm text-white/75 leading-6">
-                Replies instantly, books lessons and answers learner
-                questions 24/7.
-              </p>
-            </Link>
-
-            <Link
-              to="/smart-calendar"
-              className="group rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
-                <Calendar className="w-7 h-7" />
-              </div>
-
-              <h3 className="font-bold text-lg">
-                Smart Calendar
-              </h3>
-
-              <p className="mt-2 text-sm text-white/75 leading-6">
-                Automatic scheduling that prevents conflicts and keeps
-                your diary perfectly organised.
-              </p>
-            </Link>
-
-            <Link
-              to="/route-optimization"
-              className="group rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
-                <Route className="w-7 h-7" />
-              </div>
-
-              <h3 className="font-bold text-lg">
-                Optimised Routes
-              </h3>
-
-              <p className="mt-2 text-sm text-white/75 leading-6">
-                Spend less time driving between learners and more time
-                teaching.
-              </p>
-            </Link>
-
-            <Link
-              to="/portal"
-              className="group rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-6 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mb-5">
-                <LayoutDashboard className="w-7 h-7" />
-              </div>
-
-              <h3 className="font-bold text-lg">
-                Student Portal
-              </h3>
-
-              <p className="mt-2 text-sm text-white/75 leading-6">
-                Learners can view bookings, payments and lesson progress
-                anytime.
-              </p>
-            </Link>
-
-          </div>
+          <FeatureMarquee />
         </motion.div>
 
       </div>
@@ -311,7 +158,7 @@ const Hero = () => {
       <div className="absolute bottom-0 left-0 right-0 overflow-hidden leading-none">
         <svg
           viewBox="0 0 1440 120"
-          className="w-full h-16 lg:h-24 fill-background"
+          className="w-full h-16 lg:h-24 fill-[#F2EEE6]"
           preserveAspectRatio="none"
         >
           <path d="M0,32L80,42.7C160,53,320,75,480,90.7C640,107,800,117,960,101.3C1120,85,1280,43,1360,21.3L1440,0L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z" />

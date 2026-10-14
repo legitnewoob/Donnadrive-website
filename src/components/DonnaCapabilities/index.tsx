@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 
 import WhatsAppPreview from "./WhatsAppPreview";
 import CalendarPreview from "./CalendarPreview";
@@ -10,13 +10,13 @@ const DonnaCapabilities = () => {
     return (
         <section
             id="capabilities"
-            className="relative overflow-hidden py-32 bg-gradient-to-b from-background via-orange-50/30 to-background"
+            className="relative overflow-hidden py-16 md:py-32 bg-gradient-to-b from-background via-orange-50/30 to-background"
         >
             {/* Background */}
 
-            <div className="absolute left-0 top-24 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
+            <div className="absolute left-0 top-24 h-80 w-80 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
 
-            <div className="absolute right-0 bottom-0 h-[28rem] w-[28rem] rounded-full bg-orange-300/10 blur-3xl" />
+            <div className="absolute right-0 bottom-0 h-[28rem] w-[28rem] rounded-full bg-orange-300/10 blur-2xl md:blur-3xl" />
 
             <div className="relative mx-auto max-w-7xl px-6">
 
@@ -35,7 +35,7 @@ const DonnaCapabilities = () => {
 
                     </span>
 
-                    <h2 className="mt-6 text-5xl lg:text-6xl font-black tracking-tight">
+                    <h2 className="mt-6 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight">
 
                         One Assistant.
                         <br />
@@ -54,7 +54,7 @@ const DonnaCapabilities = () => {
 
                 {/* Grid */}
 
-                <div className="mt-24 grid grid-cols-12 auto-rows-[280px] gap-6">
+                <div className="mt-24 grid grid-cols-12 auto-rows-[minmax(220px,auto)] sm:auto-rows-[minmax(260px,auto)] lg:auto-rows-[minmax(280px,auto)] gap-6">
 
                     {/* WhatsApp */}
                     <div className="col-span-12 lg:col-span-7 row-span-2">

@@ -1,18 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  User,
-  Mail,
-  Building2,
-  Phone,
-  Briefcase,
-  CheckCircle2,
-  ArrowLeft,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
-import { Input } from "@/components/ui/input";
+import ScrollProgress from "@/components/ScrollProgress";
+
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -20,47 +12,72 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import ScrollProgress from "@/components/ScrollProgress";
+
+import UserTypeSelector from "@/components/onboarding/UserTypeSelector";
+import InstructorForm from "@/components/onboarding/InstructorForm";
+import SchoolForm from "@/components/onboarding/SchoolForm";
+import PricingCard from "@/components/onboarding/PricingCard";
+
+import {
+  OnboardingForm,
+  UserType,
+} from "@/components/onboarding/types";
 
 const Onboarding = () => {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    company: "",
-    phone: "",
-    role: "",
-  });
-
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+  const [form, setForm] = useState<OnboardingForm>({
+    userType: "",
+
+    fullName: "",
+    email: "",
+    phone: "",
+
+    postcode: "",
+    activeStudents: "",
+
+    schoolName: "",
+    instructorCount: "",
+    callback: "",
+  });
+
+  const setUserType = (type: UserType) => {
+    setForm((prev) => ({
+      ...prev,
+      userType: type,
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log("Onboarding submitted:", form);
+    console.log(form);
 
-    navigate("/thank-you");
+    e.preventDefault();
+
+    if (form.userType === "SCHOOL") {
+
+      navigate("/callback-confirmed");
+
+      return;
+
+    }
+
+    navigate(`/connect-google?type=${form.userType}`);
+
   };
 
-  const benefits = [
-    "24/7 WhatsApp learner support",
-    "Automated reminders & notifications",
-    "Instructor management dashboard",
-    "Reduce admin work and missed lessons",
-  ];
+  const buttonText = {
+    PDI: "Continue for Free →",
+    ADI: "Continue →",
+    SCHOOL: "Book Callback →",
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50">
       <ScrollProgress />
 
-      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
         <Button
           variant="ghost"
           onClick={() => navigate("/")}
@@ -70,186 +87,93 @@ const Onboarding = () => {
           Back to Home
         </Button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 items-center">
-          {/* LEFT SECTION */}
-          <div className="space-y-6 sm:space-y-8">
-            {/* <Badge
-              variant="secondary"
-              className="rounded-full px-4 py-1"
-            >
-              🚗 Driving School Automation Platform
-            </Badge> */}
-
-            <div className="space-y-4">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight">
-                Grow your driving school with{" "}
-                <span className="text-sky-600">
-                  Donna Drive
-                </span>
-              </h1>
-
-              <p className="text-base sm:text-lg text-muted-foreground max-w-xl">
-                Automate learner communication, lesson reminders,
-                instructor coordination and support through a
-                powerful WhatsApp-first platform.
-              </p>
-            </div>
-
-            <div className="grid gap-4">
-              {benefits.map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center gap-3 rounded-xl border bg-white p-4 shadow-sm"
-                >
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-
-                  <span className="font-medium">
-                    {item}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Badge variant="outline">
-                WhatsApp Powered
-              </Badge>
-
-              <Badge variant="outline">
-                Secure Data Storage
-              </Badge>
-
-              <Badge variant="outline">
-                No Credit Card Required
-              </Badge>
-            </div>
-
-            <div className="rounded-2xl bg-sky-50 border p-6">
-              <p className="text-muted-foreground italic">
-                “Donna Drive has helped driving schools reduce
-                repetitive admin work and improve learner engagement
-                through conversational automation.”
-              </p>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
 
           {/* FORM */}
-          <Card className="border-0 shadow-2xl rounded-3xl">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-2xl sm:text-3xl">
-                Get Started
+
+          <Card className="rounded-3xl shadow-xl border-0">
+
+            <CardHeader>
+
+              <CardTitle className="text-3xl sm:text-4xl">
+                Book your Donna Drive demo
               </CardTitle>
 
-              <CardDescription>
-                Tell us a little about yourself and we'll help you
-                get set up with Donna Drive.
+              <CardDescription className="text-base">
+                Choose your account type and tell us a little about
+                yourself. We'll tailor Donna Drive around your
+                business.
               </CardDescription>
+
             </CardHeader>
 
             <CardContent>
+
               <form
                 onSubmit={handleSubmit}
-                className="space-y-5"
+                className="space-y-8"
               >
-                <div className="grid md:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <Label>Name</Label>
 
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <UserTypeSelector
+                  value={form.userType}
+                  onChange={setUserType}
+                />
 
-                      <Input
-                        className="pl-10"
-                        name="name"
-                        value={form.name}
-                        onChange={handleChange}
-                        placeholder="John Doe"
-                        required
+                {form.userType && (
+                  <div className="border-t pt-8">
+
+                    {(form.userType === "PDI" ||
+                      form.userType === "ADI") && (
+
+                        <InstructorForm
+                          form={form}
+                          setForm={setForm}
+                        />
+
+                      )}
+
+                    {form.userType === "SCHOOL" && (
+
+                      <SchoolForm
+                        form={form}
+                        setForm={setForm}
                       />
-                    </div>
+
+                    )}
+
                   </div>
-
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-
-                      <Input
-                        className="pl-10"
-                        name="email"
-                        type="email"
-                        value={form.email}
-                        onChange={handleChange}
-                        placeholder="john@company.com"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Driving School</Label>
-
-                    <div className="relative">
-                      <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-
-                      <Input
-                        className="pl-10"
-                        name="company"
-                        value={form.company}
-                        onChange={handleChange}
-                        placeholder="Donna Driving School"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-
-                      <Input
-                        className="pl-10"
-                        name="phone"
-                        value={form.phone}
-                        onChange={handleChange}
-                        placeholder="+44 1234 567890"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Role</Label>
-
-                  <div className="relative">
-                    <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-
-                    <Input
-                      className="pl-10"
-                      name="role"
-                      value={form.role}
-                      onChange={handleChange}
-                      placeholder="Owner, Instructor, Administrator..."
-                    />
-                  </div>
-                </div>
+                )}
 
                 <Button
                   type="submit"
+                  disabled={!form.userType}
                   size="lg"
                   className="w-full rounded-xl h-12 text-base"
                 >
-                  Book My Donna Demo →
+                  {form.userType
+                    ? buttonText[form.userType]
+                    : "Choose an account type"}
                 </Button>
 
                 <p className="text-center text-sm text-muted-foreground">
-                  Takes less than a minute • No credit card required
+                  Takes less than a minute • No obligation • Secure
+                  setup
                 </p>
+
               </form>
+
             </CardContent>
+
           </Card>
+
+          {/* PRICING */}
+
+          <div className="sticky top-8">
+            <PricingCard
+              userType={form.userType}
+            />
+          </div>
+
         </div>
       </div>
     </main>

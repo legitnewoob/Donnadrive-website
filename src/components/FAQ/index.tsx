@@ -1,10 +1,11 @@
-import {
+﻿import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { motion } from "framer-motion";
+import RoundaboutMapBackground from "@/components/RoundaboutMapBackground";
 
 const faqs = [
   {
@@ -43,9 +44,11 @@ const FAQ = () => {
   return (
     <section
       id="faq"
-      className="relative overflow-hidden py-32 bg-background"
+      className="relative overflow-hidden py-16 md:py-32 bg-background"
     >
-      <div className="absolute left-0 top-40 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
+      <RoundaboutMapBackground />
+
+      <div className="absolute left-0 top-40 h-72 w-72 rounded-full bg-primary/5 blur-2xl md:blur-3xl" />
 
       <div className="mx-auto max-w-5xl px-6">
 
@@ -59,7 +62,7 @@ const FAQ = () => {
             Questions?
           </span>
 
-          <h2 className="mt-6 text-5xl font-black tracking-tight">
+          <h2 className="mt-6 text-4xl md:text-5xl font-black tracking-tight">
             Frequently Asked Questions
           </h2>
 

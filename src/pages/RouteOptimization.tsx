@@ -15,11 +15,11 @@ const RouteOptimization = () => {
         <meta name="description" content="Save time and fuel with Donna Drive's smart route optimization. Auto-arrange lesson bookings by location so you teach more and drive less. Book a demo." />
       </Helmet>
       
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pb-24 lg:pb-0">
         <Header />
         
         {/* Breadcrumb */}
-        <div className="container mx-auto px-4 pt-20 pb-2">
+        <div className="container mx-auto px-4 pt-28 pb-2">
           <Link to="/#features" className="text-sm text-muted-foreground hover:text-primary transition-colors">
             ← Back to Features
           </Link>
@@ -390,7 +390,7 @@ const RouteOptimization = () => {
         </section>
 
         {/* Mobile sticky CTA */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border lg:hidden z-40">
+        <div className="fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 border-t border-border lg:hidden z-40">
           <Link to="/book-demo" className="block">
             <Button variant="accent" size="lg" className="w-full">
               Book a Demo

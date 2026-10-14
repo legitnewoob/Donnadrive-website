@@ -190,7 +190,7 @@ const Portal = () => {
 
       {/* Hero Section */}
       <section className="relative bg-gradient-hero text-primary-foreground overflow-hidden">
-        <div className="container mx-auto px-4 py-10 sm:py-14 lg:py-20">
+        <div className="container mx-auto px-4 pt-28 pb-10 sm:pt-32 sm:pb-14 lg:pt-36 lg:pb-20">
           <Link to="/" className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground transition-colors mb-6 text-sm">
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Home</span>

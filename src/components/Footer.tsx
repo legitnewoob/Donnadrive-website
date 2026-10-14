@@ -7,20 +7,20 @@ import {
   Twitter,
 } from "lucide-react";
 
-import donnaLogo from "@/assets/donna-drive-logo.png";
+import donnaLogo from "@/assets/donna-drive-logo-v2.png";
 
 const Footer = () => {
   return (
     <footer className="border-t bg-background">
-      <div className="mx-auto max-w-7xl px-6 py-16">
+      <div className="mx-auto max-w-7xl px-6 py-12 md:py-16">
 
         {/* Top */}
 
-        <div className="grid gap-12 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-[1.5fr_1fr_1fr_1fr] lg:gap-12">
 
           {/* Brand */}
 
-          <div>
+          <div className="col-span-2 sm:col-span-3 lg:col-span-1">
 
             <img
               src={donnaLogo}
@@ -72,14 +72,14 @@ const Footer = () => {
             <div className="mt-6 space-y-4">
 
               <a
-                href="#features"
+                href="/#whatsapp-demo"
                 className="block text-muted-foreground transition hover:text-primary"
               >
                 Features
               </a>
 
               <a
-                href="#pricing"
+                href="/#pricing"
                 className="block text-muted-foreground transition hover:text-primary"
               >
                 Pricing
@@ -94,6 +94,16 @@ const Footer = () => {
                 <ArrowUpRight className="h-4 w-4" />
 
               </Link>
+
+              <a
+                href="https://portal.donnadrive.co.uk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-muted-foreground transition hover:text-primary"
+              >
+                Manage Account
+                <ArrowUpRight className="h-4 w-4" />
+              </a>
 
             </div>
 

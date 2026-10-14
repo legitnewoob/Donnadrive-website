@@ -259,6 +259,7 @@ const STATUS_STYLES: Record<string, string> = {
   comped: "bg-violet-100 text-violet-700",
   school: "bg-indigo-100 text-indigo-700",
   suspended: "bg-red-100 text-red-700",
+  deleted: "bg-slate-200 text-slate-500 line-through",
 };
 
 export function StatusBadge({ status }: { status: string }) {

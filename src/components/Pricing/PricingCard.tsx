@@ -3,9 +3,11 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import SignupDialog from "../SignupDialog";
+import type { DisplayPlan } from "@/lib/pricing";
+import { gbp } from "@/lib/pricing";
 
 interface Props {
-  plan: any;
+  plan: DisplayPlan;
   index: number;
 }
 
@@ -59,14 +61,24 @@ const PricingCard = ({ plan, index }: Props) => {
           {plan.subtitle}
         </p>
 
-        <div className="mt-8 flex items-end gap-2">
+        <div className="mt-8 flex flex-wrap items-end gap-x-2">
+          {plan.sale && (
+            <span className="pb-1.5 text-2xl font-bold text-muted-foreground line-through decoration-rose-500/70">
+              {plan.price}
+            </span>
+          )}
           <span className="text-4xl sm:text-5xl font-black">
-            {plan.price}
+            {plan.sale ? gbp(plan.sale.amount) : plan.price}
           </span>
           <span className="pb-2 text-muted-foreground">
             {plan.period}
           </span>
         </div>
+        {plan.sale && (
+          <p className="mt-2 inline-flex rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600">
+            {plan.sale.label}
+          </p>
+        )}
 
         <div className="mt-10 space-y-4">
           {plan.features.map((feature: string) => (

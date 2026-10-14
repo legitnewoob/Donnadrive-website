@@ -1,5 +1,6 @@
 import { CheckCircle2 } from "lucide-react";
 import { UserType } from "./types";
+import { useDisplayPlans, gbp } from "@/lib/pricing";
 
 interface Props {
   userType: UserType | "";
@@ -13,6 +14,10 @@ const Feature = ({ children }: { children: React.ReactNode }) => (
 );
 
 export default function PricingCard({ userType }: Props) {
+  const { plans } = useDisplayPlans();
+  const adi = plans.find((p) => p.slug === "adi");
+  const school = plans.find((p) => p.slug === "driving-school");
+  const price = (p: typeof adi, fallback: string) => (p?.amount != null ? gbp(p.sale ? p.sale.amount : p.amount) : fallback);
   if (!userType) {
     return (
       <div className="rounded-3xl border bg-white p-8 shadow-lg sticky top-8">
@@ -62,7 +67,7 @@ export default function PricingCard({ userType }: Props) {
 
         <div className="mt-2 flex items-end gap-1">
           <span className="text-5xl font-bold">
-            £10
+            {price(adi, "£10")}
           </span>
 
           <span className="pb-2 text-muted-foreground">
@@ -92,7 +97,7 @@ export default function PricingCard({ userType }: Props) {
 
       <div className="mt-2 flex items-end gap-1">
         <span className="text-5xl font-bold">
-          £20
+          {price(school, "£20")}
         </span>
 
         <span className="pb-2 text-muted-foreground">
@@ -101,7 +106,8 @@ export default function PricingCard({ userType }: Props) {
       </div>
 
       <p className="mt-2 text-muted-foreground">
-        3 instructors included, each with their own Donna. Need more? £10/month per extra instructor.
+        {school?.includedSeats ?? 3} instructors included, each with their own Donna. Need more?{" "}
+        {gbp(school?.extraSeatAmount || 1000)}/month per extra instructor.
       </p>
 
       <p className="mt-8 text-sm text-muted-foreground">

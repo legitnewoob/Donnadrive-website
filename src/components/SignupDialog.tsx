@@ -11,8 +11,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { googleSignup, createCheckoutSession, getProfile } from "@/lib/api";
+import { googleSignup, createCheckoutSession, chooseFreePlan, getProfile } from "@/lib/api";
 import { useDisplayPlans, gbp, type DisplayPlan } from "@/lib/pricing";
+import { homePath, isSuperAdmin, setAccess, markPlanChosen } from "@/lib/access";
 
 interface Props {
   open: boolean;
@@ -37,12 +38,20 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
           .then((profile) => {
             setUserName(profile.name.split(" ")[0]);
             setIsReturning(true);
-            setStep("success");
             window.dispatchEvent(new Event("dd_auth_change"));
-            setTimeout(() => navigate("/get-onboard"), 1200);
+            // Signed in earlier but closed the plan picker: pick one now
+            if (profile.needsPlan) {
+              setAuthToken(existingToken);
+              setStep("plan");
+              onOpenChange(true);
+              return;
+            }
+            setStep("success");
+            setTimeout(() => navigate(homePath()), 1200);
           })
           .catch(() => {
             localStorage.removeItem("dd_token");
+            localStorage.removeItem("dd_access");
             localStorage.removeItem("dd_apiKey");
             onOpenChange(true);
           });
@@ -66,25 +75,28 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
 
         localStorage.setItem("dd_token", result.token);
         if (result.apiKey) localStorage.setItem("dd_apiKey", result.apiKey);
+        setAccess({ staffRole: null, superAdmin: false, ...result.access, needsPlan: !!result.needsPlan });
         setAuthToken(result.token);
         window.dispatchEvent(new Event("dd_auth_change"));
 
-        const hasActiveSub = ["active", "trialing"].includes(result.instructor.subscriptionStatus ?? "");
-
-        if (!result.isNew) {
-          setIsReturning(true);
+        // Super admins aren't customers: straight to the admin panel, no plan to pick
+        if (result.access?.superAdmin) {
           setUserName(result.instructor.name.split(" ")[0]);
+          setIsReturning(!result.isNew);
+          setStep("success");
+          setTimeout(() => navigate("/admin"), 1200);
+          return;
         }
 
-        if (!result.isNew && hasActiveSub) {
-          setStep("success");
-          setTimeout(() => navigate("/get-onboard"), 1500);
-        } else if (hasActiveSub) {
-          setStep("success");
-          setTimeout(() => navigate("/get-onboard"), 1500);
-        } else {
-          setUserName(result.instructor.name.split(" ")[0]);
+        setUserName(result.instructor.name.split(" ")[0]);
+        if (!result.isNew) setIsReturning(true);
+
+        // Anyone who hasn't picked a plan picks one now; everyone else goes in
+        if (result.needsPlan) {
           setStep("plan");
+        } else {
+          setStep("success");
+          setTimeout(() => navigate("/get-onboard"), 1500);
         }
       } catch (err) {
         console.error("Signup error:", err);
@@ -106,15 +118,32 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
     if (!token) return;
 
     if (plan.slug === "pdi") {
-      setStep("success");
-      setTimeout(() => navigate("/get-onboard"), 1500);
+      setLoading(true);
+      try {
+        await chooseFreePlan(token);
+        markPlanChosen();
+        setStep("success");
+        setTimeout(() => navigate("/get-onboard"), 1500);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Couldn't choose the plan.");
+        setStep("error");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
-    setLoading(true);
+    // Paid plans: pay in the modal over the dashboard (it stays locked until they do)
+    if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
+      setLoading(true);
+    } else {
+      handleClose();
+      navigate(`/get-onboard?plan=${plan.slug}`);
+      return;
+    }
     try {
       const checkout = await createCheckoutSession(token, plan.slug);
-      window.location.href = checkout.url;
+      if (checkout.url) window.location.href = checkout.url;
     } catch (err) {
       console.error("Checkout error:", err);
       setError(err instanceof Error ? err.message : "Failed to start checkout.");
@@ -148,8 +177,8 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
             {step === "signin" && "Sign in with Google to continue."}
             {step === "plan" && "Start free. Upgrade when you're ready. No contracts."}
             {step === "success" && (isReturning
-              ? "Redirecting to your dashboard..."
-              : "Your account is ready. Redirecting to your dashboard..."
+              ? `Redirecting to ${isSuperAdmin() ? "the admin panel" : "your dashboard"}...`
+              : `Your account is ready. Redirecting to ${isSuperAdmin() ? "the admin panel" : "your dashboard"}...`
             )}
             {step === "error" && "We couldn't complete your sign-in."}
           </DialogDescription>
@@ -273,7 +302,7 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
               <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                 <Check className="h-8 w-8 text-green-600" />
               </div>
-              <p className="text-muted-foreground">Redirecting to your dashboard...</p>
+              <p className="text-muted-foreground">Redirecting to {isSuperAdmin() ? "the admin panel" : "your dashboard"}...</p>
             </motion.div>
           )}
 

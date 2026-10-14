@@ -6,10 +6,12 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, LayoutDashboard, Smartphone } from "lucide-react";
+import { Menu, LayoutDashboard, Smartphone, ShieldCheck, LogOut, Sparkles } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
 import SignupDialog from "@/components/SignupDialog";
+import { getAccess, signOut } from "@/lib/access";
+import { getProfile } from "@/lib/api";
 
 const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
 
@@ -20,10 +22,31 @@ const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Staff get an Admin panel button; super admins aren't customers, so only that
+  const [staff, setStaff] = useState(false);
+  const [superAdmin, setSuperAdmin] = useState(false);
+  // Signed in but no plan yet: dashboard and Portal stay locked, so just "Finish signing up"
+  const [planless, setPlanless] = useState(false);
 
   const checkAuth = useCallback(() => {
-    setIsLoggedIn(!!localStorage.getItem("dd_token"));
+    const signedIn = !!localStorage.getItem("dd_token");
+    const access = signedIn ? getAccess() : null;
+    setIsLoggedIn(signedIn);
+    setStaff(!!access?.staffRole);
+    setSuperAdmin(!!access?.superAdmin);
+    setPlanless(!!access?.needsPlan && !access?.staffRole);
   }, []);
+
+  // Signed in before roles were remembered: look them up once
+  useEffect(() => {
+    const token = localStorage.getItem("dd_token");
+    if (token && !getAccess()) getProfile(token).then(checkAuth).catch(() => {});
+  }, [checkAuth]);
+
+  function handleSignOut() {
+    signOut();
+    navigate("/");
+  }
 
   useEffect(() => {
     checkAuth();
@@ -99,8 +122,58 @@ const Header = () => {
 
             {/* Right Side */}
             <div className="flex items-center gap-3">
-              {isLoggedIn ? (
+              {isLoggedIn && planless ? (
                 <div className="hidden sm:flex items-center bg-white rounded-xl shadow-lg overflow-hidden">
+                  <button
+                    onClick={() => navigate("/get-onboard")}
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Finish signing up
+                  </button>
+                  <div className="w-px h-6 bg-primary/15" />
+                  <button
+                    onClick={handleSignOut}
+                    title="Sign out"
+                    aria-label="Sign out"
+                    className="flex items-center px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : isLoggedIn && superAdmin ? (
+                <div className="hidden sm:flex items-center bg-white rounded-xl shadow-lg overflow-hidden">
+                  <button
+                    onClick={() => navigate("/admin")}
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50 transition-colors"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Go to admin panel
+                  </button>
+                  <div className="w-px h-6 bg-slate-200" />
+                  <button
+                    onClick={handleSignOut}
+                    title="Sign out"
+                    aria-label="Sign out"
+                    className="flex items-center px-3 py-2.5 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : isLoggedIn ? (
+                <div className="hidden sm:flex items-center bg-white rounded-xl shadow-lg overflow-hidden">
+                  {staff && (
+                    <>
+                      <button
+                        onClick={() => navigate("/admin")}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50 transition-colors"
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        Admin
+                      </button>
+                      <div className="w-px h-6 bg-primary/15" />
+                    </>
+                  )}
                   <button
                     onClick={() => navigate("/get-onboard")}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
@@ -183,7 +256,37 @@ const Header = () => {
                       </Link>
                     </SheetClose>
 
-                    {isLoggedIn ? (
+                    {isLoggedIn && staff && (
+                      <SheetClose asChild>
+                        <Link to="/admin" className="text-lg font-medium text-violet-700 hover:text-violet-900 flex items-center gap-2">
+                          <ShieldCheck className="h-5 w-5" />
+                          {superAdmin ? "Go to admin panel" : "Admin panel"}
+                        </Link>
+                      </SheetClose>
+                    )}
+                    {isLoggedIn && planless ? (
+                      <>
+                        <SheetClose asChild>
+                          <Link to="/get-onboard" className="text-lg font-medium text-primary flex items-center gap-2">
+                            <Sparkles className="h-5 w-5" />
+                            Finish signing up
+                          </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                          <button onClick={handleSignOut} className="text-lg font-medium hover:text-primary flex items-center gap-2 text-left">
+                            <LogOut className="h-5 w-5" />
+                            Sign out
+                          </button>
+                        </SheetClose>
+                      </>
+                    ) : isLoggedIn && superAdmin ? (
+                      <SheetClose asChild>
+                        <button onClick={handleSignOut} className="text-lg font-medium hover:text-primary flex items-center gap-2 text-left">
+                          <LogOut className="h-5 w-5" />
+                          Sign out
+                        </button>
+                      </SheetClose>
+                    ) : isLoggedIn ? (
                       <>
                         <SheetClose asChild>
                           <Link

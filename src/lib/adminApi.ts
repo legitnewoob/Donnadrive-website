@@ -36,6 +36,9 @@ export interface CustomerRow {
   active: boolean;
   suspended: boolean;
   createdAt: string;
+  deletedAt: string | null;
+  /** Signed up again after deleting an earlier account */
+  returning: boolean;
 }
 
 export interface CustomerDetail extends CustomerRow {
@@ -46,6 +49,8 @@ export interface CustomerDetail extends CustomerRow {
   number: { phoneNumber: string; region: string; assignedAt: string } | null;
   stripe: { customerId: string; subscriptionId: string | null; url: string } | null;
   history: AuditEntry[];
+  previousAccounts: Array<{ id: string; plan: string; createdAt: string; deletedAt: string; lessons: number }>;
+  rejoinedAs: { id: string; name: string; email: string; createdAt: string } | null;
 }
 
 export interface AuditEntry {
@@ -58,7 +63,7 @@ export interface AuditEntry {
 }
 
 export interface Overview {
-  instructors: { total: number; byPlan: Record<string, number>; suspended: number };
+  instructors: { total: number; byPlan: Record<string, number>; suspended: number; returning: number; deletedLast30: number };
   revenue: { mrr: number; arr: number; paying: number; trialing: number; pastDue: number; comped: number; canceledLast30: number; currency: string };
   signups: Array<{ date: string; count: number }>;
   signupsLast30: number;

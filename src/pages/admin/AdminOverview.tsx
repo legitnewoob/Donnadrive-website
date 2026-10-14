@@ -12,6 +12,7 @@ import {
   Loader2,
   TrendingDown,
   GraduationCap,
+  Undo2,
 } from "lucide-react";
 import AdminLayout, { StatCard, StatusBadge } from "@/components/admin/AdminLayout";
 import { adminApi, gbp, PLAN_LABELS, type Overview } from "@/lib/adminApi";
@@ -157,7 +158,13 @@ function Body({ data }: { data: Overview }) {
           <StatCard label="Learners" value={data.learners} hint="Across all instructors" icon={GraduationCap} tone="violet" />
           <StatCard label="School seats" value={data.schools.seats} hint={`${data.schools.extraSeats} paid extra`} icon={Building2} />
           <StatCard label="On trial" value={revenue.trialing} hint={`${data.trialsEnding.length} ending this week`} icon={Sparkles} tone="amber" />
-          <StatCard label="Suspended" value={instructors.suspended} icon={AlertTriangle} tone={instructors.suspended ? "red" : "slate"} />
+          <StatCard
+            label="Came back"
+            value={instructors.returning}
+            hint={`${instructors.deletedLast30} deleted in 30 days · ${instructors.suspended} suspended`}
+            icon={Undo2}
+            tone="amber"
+          />
         </section>
       </div>
 

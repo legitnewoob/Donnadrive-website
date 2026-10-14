@@ -243,6 +243,8 @@ export interface RouteSettings {
 }
 
 export interface BotSettings {
+  /** Master switch: off = Donna stops replying and booking */
+  donnaEnabled: boolean;
   workingHours: Record<DayKey, string[]>;
   breaks: Array<{ from: string; to: string }>;
   maxLessonsPerDay: number | null;
@@ -263,7 +265,27 @@ export interface BotSettings {
   handover: boolean;
 }
 
+export interface SetupStatus {
+  complete: boolean;
+  required: Array<{ key: string; label: string; done: boolean; link: string }>;
+  missing: string[];
+  hasNumber: boolean;
+  calendarConnected: boolean;
+}
+
+// Pages fire this after saving anything that can change the setup checklist
+export const SETUP_CHANGED_EVENT = "dd_setup_change";
+export const notifySetupChanged = () => window.dispatchEvent(new Event(SETUP_CHANGED_EVENT));
+
+export async function getSetupStatus(token: string) {
+  const res = await fetch(`${API_BASE}/api/dashboard/setup-status`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to load setup status");
+  return data.data as SetupStatus;
+}
+
 export interface DonnaSettings {
+  setup?: SetupStatus;
   baseAddress: string;
   hasBaseLocation: boolean;
   routeSettings: RouteSettings;

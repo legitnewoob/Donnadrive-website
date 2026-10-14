@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Users,
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
 import { START_TOUR_EVENT } from "@/components/DashboardTour";
+import { getSetupStatus, SETUP_CHANGED_EVENT } from "@/lib/api";
 
 const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
 
@@ -40,10 +41,33 @@ interface DashboardLayoutProps {
   mobileFooter?: React.ReactNode;
 }
 
+// Small red dot meaning "something here needs your attention"
+const SetupDot = ({ floating = false }: { floating?: boolean }) => (
+  <span
+    className={`h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white ${floating ? "absolute -right-1 -top-0.5" : ""}`}
+    aria-label="Needs setting up"
+    role="status"
+  />
+);
+
 const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFooter }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Red dot on Donna Settings until the required setup is done
+  const [setupIncomplete, setSetupIncomplete] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("dd_token");
+    if (!token) return;
+    const refresh = () =>
+      getSetupStatus(token)
+        .then((s) => setSetupIncomplete(!s.complete && !s.hasNumber))
+        .catch(() => {});
+    refresh();
+    window.addEventListener(SETUP_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(SETUP_CHANGED_EVENT, refresh);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("dd_token");
@@ -105,7 +129,8 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
           className={itemClass(active)}
         >
           <Icon className="h-5 w-5 shrink-0" />
-          {item.label}
+          <span className="flex-1 text-left">{item.label}</span>
+          {item.path === "/settings" && setupIncomplete && <SetupDot />}
         </button>
       );
     };
@@ -259,7 +284,10 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
                     active ? "text-slate-900" : "text-slate-500"
                   }`}
                 >
-                  <Icon className={`h-5 w-5 ${active ? "stroke-[2.25]" : ""}`} />
+                  <span className="relative">
+                    <Icon className={`h-5 w-5 ${active ? "stroke-[2.25]" : ""}`} />
+                    {item.path === "/settings" && setupIncomplete && <SetupDot floating />}
+                  </span>
                   {item.short}
                 </button>
               );

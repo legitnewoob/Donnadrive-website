@@ -12,11 +12,13 @@ import {
   Menu,
   Loader2,
   Lock,
+  LogOut,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
 import { adminApi, type StaffMe } from "@/lib/adminApi";
+import { isSuperAdmin, setAccess, signOut } from "@/lib/access";
 
 const StaffContext = createContext<StaffMe | null>(null);
 
@@ -62,6 +64,7 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
     adminApi
       .me()
       .then((m) => {
+        setAccess({ staffRole: m.role, superAdmin: !!m.superAdmin });
         setMe(m);
         setState("ok");
       })
@@ -90,6 +93,12 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
   }
 
   const allowed = me.permissions.includes(permission);
+  // Super admins don't have an instructor side; other staff may also teach
+  const superAdmin = isSuperAdmin();
+  const handleSignOut = () => {
+    signOut();
+    navigate("/");
+  };
   const items = NAV.filter((n) => me.permissions.includes(n.permission));
 
   const Nav = ({ onGo }: { onGo?: () => void }) => (
@@ -124,15 +133,27 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
         })}
       </nav>
       <div className="space-y-2 border-t border-white/10 p-3">
-        <Link
-          to="/get-onboard"
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" /> Instructor dashboard
-        </Link>
-        <div className="rounded-lg bg-white/5 px-3 py-2">
-          <p className="truncate text-xs text-slate-300">{me.email}</p>
-          <p className="text-[11px] font-semibold text-violet-400">{ROLE_LABEL[me.role]}</p>
+        {!superAdmin && (
+          <Link
+            to="/get-onboard"
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" /> Instructor dashboard
+          </Link>
+        )}
+        <div className="flex items-center gap-1 rounded-lg bg-white/5 py-1.5 pl-3 pr-1">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs text-slate-300">{me.email}</p>
+            <p className="text-[11px] font-semibold text-violet-400">{superAdmin ? "Super admin" : ROLE_LABEL[me.role]}</p>
+          </div>
+          <button
+            onClick={handleSignOut}
+            title="Sign out"
+            aria-label="Sign out"
+            className="shrink-0 rounded-md p-2 text-slate-400 hover:bg-white/10 hover:text-white"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
@@ -162,6 +183,9 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
             <span className="ml-auto rounded-full bg-violet-600/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-violet-300">
               Admin
             </span>
+            <button onClick={handleSignOut} aria-label="Sign out" title="Sign out" className="rounded-md p-1.5 text-slate-300 hover:bg-white/10">
+              <LogOut className="h-4 w-4" />
+            </button>
           </header>
 
           <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-5 sm:px-6 lg:py-8">

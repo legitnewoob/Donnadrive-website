@@ -6,6 +6,7 @@ export interface StaffMe {
   email: string;
   id?: string;
   role: StaffRole;
+  superAdmin?: boolean;
   permissions: string[];
 }
 

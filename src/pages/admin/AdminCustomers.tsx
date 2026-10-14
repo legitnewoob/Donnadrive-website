@@ -46,6 +46,7 @@ const STATUSES = [
   ["comped", "Comped"],
   ["school", "School instructor"],
   ["suspended", "Suspended"],
+  ["deleted", "Deleted"],
 ];
 
 const date = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—");

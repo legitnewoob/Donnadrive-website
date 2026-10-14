@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { googleSignup, createCheckoutSession, chooseFreePlan, getProfile } from "@/lib/api";
+import { googleSignup, chooseFreePlan, getProfile } from "@/lib/api";
 import { useDisplayPlans, gbp, type DisplayPlan } from "@/lib/pricing";
 import { homePath, isSuperAdmin, setAccess, markPlanChosen } from "@/lib/access";
 
@@ -133,24 +133,9 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
       return;
     }
 
-    // Paid plans: pay in the modal over the dashboard (it stays locked until they do)
-    if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
-      setLoading(true);
-    } else {
-      handleClose();
-      navigate(`/get-onboard?plan=${plan.slug}`);
-      return;
-    }
-    try {
-      const checkout = await createCheckoutSession(token, plan.slug);
-      if (checkout.url) window.location.href = checkout.url;
-    } catch (err) {
-      console.error("Checkout error:", err);
-      setError(err instanceof Error ? err.message : "Failed to start checkout.");
-      setStep("error");
-    } finally {
-      setLoading(false);
-    }
+    // Paid plans: always pay in the modal over the dashboard (it stays locked until they do)
+    handleClose();
+    navigate(`/get-onboard?plan=${plan.slug}`);
   }
 
   const handleClose = () => {

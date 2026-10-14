@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
-import { getLessonTypes, createLessonType, updateLessonType, deleteLessonType } from "@/lib/api";
+import { getLessonTypes, createLessonType, updateLessonType, deleteLessonType, notifySetupChanged } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,6 +90,7 @@ export default function LessonTypes() {
         });
       }
       await load();
+      notifySetupChanged();
       setDialogOpen(false);
     } catch (e) {
       console.error(e);
@@ -101,6 +102,7 @@ export default function LessonTypes() {
   async function handleToggleActive(t: LessonTypeItem) {
     try {
       await updateLessonType(token!, t._id, { active: !t.active });
+      notifySetupChanged();
       setTypes((prev) => prev.map((x) => (x._id === t._id ? { ...x, active: !x.active } : x)));
     } catch (e) {
       console.error(e);
@@ -112,6 +114,7 @@ export default function LessonTypes() {
     setDeleting(true);
     try {
       await deleteLessonType(token!, deleteTarget._id);
+      notifySetupChanged();
       setTypes((prev) => prev.filter((x) => x._id !== deleteTarget._id));
       setDeleteTarget(null);
     } catch (e) {

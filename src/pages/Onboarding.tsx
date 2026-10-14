@@ -15,7 +15,20 @@ import {
   Target,
   RefreshCw,
   XCircle,
+  Power,
+  ChevronRight,
+  Circle,
 } from "lucide-react";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   BarChart,
   Bar,
@@ -49,6 +62,10 @@ import {
   requestPhoneNumber,
   getCalendarConnectUrl,
   disconnectCalendar,
+  getSettings,
+  updateSettings,
+  notifySetupChanged,
+  type SetupStatus,
 } from "@/lib/api";
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -101,6 +118,10 @@ export default function Onboarding() {
   const [calendarConnecting, setCalendarConnecting] = useState(false);
   const [calendarDisconnecting, setCalendarDisconnecting] = useState(false);
   const [calendarMsg, setCalendarMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [setup, setSetup] = useState<SetupStatus | null>(null);
+  const [donnaEnabled, setDonnaEnabled] = useState(true);
+  const [savingSwitch, setSavingSwitch] = useState(false);
+  const [missingOpen, setMissingOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -137,14 +158,19 @@ export default function Onboarding() {
           setApiKey(currentApiKey);
         }
 
-        const [profileData, dashboardData] = await Promise.all([
+        const [profileData, dashboardData, settingsData] = await Promise.all([
           getProfile(currentToken),
           getDashboard(currentToken, range).catch(() => null),
+          getSettings(currentToken).catch(() => null),
         ]);
 
         if (!cancelled) {
           setProfile(profileData);
           setDashboard(dashboardData);
+          if (settingsData) {
+            setSetup(settingsData.setup ?? null);
+            setDonnaEnabled(settingsData.botSettings.donnaEnabled !== false);
+          }
 
           // Handle OAuth callback result
           if (calendarParam === "connected") {
@@ -177,12 +203,27 @@ export default function Onboarding() {
     };
   }, [searchParams, range]);
 
+  async function refreshSetup() {
+    if (!token) return null;
+    const s = await getSettings(token).catch(() => null);
+    if (s?.setup) setSetup(s.setup);
+    return s?.setup ?? null;
+  }
+
   async function handleRequestNumber() {
     if (!token) return;
+    // Donna needs the basics before she can take bookings on a real number
+    if (setup && !setup.complete) {
+      setMissingOpen(true);
+      return;
+    }
     setRequestingNumber(true);
     setNumberError("");
     try {
       const result = await requestPhoneNumber(token);
+      setSetup((prev) => (prev ? { ...prev, hasNumber: true } : prev));
+      notifySetupChanged();
+      toast.success(`Your WhatsApp number is ${result.phoneNumber}. Next, connect Google Calendar.`);
       setProfile((prev) =>
         prev
           ? {
@@ -197,11 +238,30 @@ export default function Onboarding() {
           : prev
       );
     } catch (err) {
-      setNumberError(
-        err instanceof Error ? err.message : "Failed to request number"
-      );
+      const message = err instanceof Error ? err.message : "Failed to request number";
+      if (/finish setting up donna/i.test(message)) {
+        await refreshSetup();
+        setMissingOpen(true);
+      } else {
+        setNumberError(message);
+      }
     } finally {
       setRequestingNumber(false);
+    }
+  }
+
+  async function handleToggleDonna(next: boolean) {
+    if (!token) return;
+    setDonnaEnabled(next);
+    setSavingSwitch(true);
+    try {
+      await updateSettings(token, { botSettings: { donnaEnabled: next } });
+      toast.success(next ? "Donna is back on and replying to learners." : "Donna is off. Learners will be asked to contact you directly.");
+    } catch (err) {
+      setDonnaEnabled(!next);
+      toast.error(err instanceof Error ? err.message : "Couldn't change Donna's status");
+    } finally {
+      setSavingSwitch(false);
     }
   }
 
@@ -301,48 +361,26 @@ export default function Onboarding() {
     >
       <DashboardTour />
 
-      {/* Phone number setup banner */}
-      {!hasPhone && (
-        <Card data-tour="phone-setup" className="mb-4 border-sky-200 bg-sky-50/50">
-          <CardContent className="py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="flex items-center gap-3 flex-1">
-                <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
-                  <Phone className="h-5 w-5 text-sky-600" />
-                </div>
-                <div>
-                  <p className="font-semibold">Set up your WhatsApp number</p>
-                  <p className="text-sm text-muted-foreground">
-                    Get a dedicated number so your learners can message Donna AI
-                  </p>
-                </div>
-              </div>
-              {numberError && (
-                <p className="text-sm text-red-600">{numberError}</p>
-              )}
-              <Button
-                onClick={handleRequestNumber}
-                disabled={requestingNumber}
-                className="rounded-xl shrink-0"
-              >
-                {requestingNumber ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Requesting...
-                  </>
-                ) : (
-                  <>
-                    <Phone className="mr-2 h-4 w-4" />
-                    Request Number
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Donna on/off */}
+      <DonnaSwitchCard enabled={donnaEnabled} saving={savingSwitch} hasPhone={hasPhone} onChange={handleToggleDonna} />
+
+      {/* Getting started: settings → number → calendar */}
+      {(!hasPhone || !calendarConnected) && (
+        <SetupCard
+          setup={setup}
+          hasPhone={hasPhone}
+          phoneNumber={profile.phoneNumber}
+          calendarConnected={calendarConnected}
+          requestingNumber={requestingNumber}
+          numberError={numberError}
+          calendarConnecting={calendarConnecting}
+          onRequestNumber={handleRequestNumber}
+          onConnectCalendar={handleConnectCalendar}
+          onGo={(link) => navigate(link)}
+        />
       )}
 
-      {hasPhone && (
+      {hasPhone && calendarConnected && (
         <Card data-tour="phone-setup" className="mb-4 border-green-200 bg-green-50/50">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
@@ -355,6 +393,37 @@ export default function Onboarding() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={missingOpen} onOpenChange={setMissingOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Finish setting up Donna first</DialogTitle>
+            <DialogDescription>
+              Donna needs these before she can take bookings on your WhatsApp number:
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2">
+            {(setup?.required || []).filter((r) => !r.done).map((r) => (
+              <li key={r.key}>
+                <button
+                  onClick={() => { setMissingOpen(false); navigate(r.link); }}
+                  className="flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm hover:bg-slate-50"
+                >
+                  <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+                  <span className="flex-1">{r.label}</span>
+                  <ChevronRight className="h-4 w-4 text-slate-400" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMissingOpen(false)}>Later</Button>
+            <Button onClick={() => { setMissingOpen(false); navigate((setup?.required.find((r) => !r.done)?.link) || "/settings"); }}>
+              Fill them in
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Calendar message (success/error from OAuth callback) */}
       {calendarMsg && (
@@ -440,43 +509,6 @@ export default function Onboarding() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   "Disconnect"
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {!calendarConnected && (
-        <Card data-tour="calendar-setup" className="mb-6 border-sky-200 bg-sky-50/50">
-          <CardContent className="py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="flex items-center gap-3 flex-1">
-                <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
-                  <Calendar className="h-5 w-5 text-sky-600" />
-                </div>
-                <div>
-                  <p className="font-semibold">Connect Google Calendar</p>
-                  <p className="text-sm text-muted-foreground">
-                    Donna AI will automatically add lessons to your calendar
-                  </p>
-                </div>
-              </div>
-              <Button
-                onClick={handleConnectCalendar}
-                disabled={calendarConnecting}
-                className="rounded-xl shrink-0"
-              >
-                {calendarConnecting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Redirecting...
-                  </>
-                ) : (
-                  <>
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Connect Calendar
-                  </>
                 )}
               </Button>
             </div>
@@ -814,5 +846,174 @@ export default function Onboarding() {
         </div>
       )}
     </DashboardLayout>
+  );
+}
+
+// ── Donna on/off ─────────────────────────────────────────────────────────────
+
+function DonnaSwitchCard({
+  enabled,
+  saving,
+  hasPhone,
+  onChange,
+}: {
+  enabled: boolean;
+  saving: boolean;
+  hasPhone: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <Card className={`mb-4 ${enabled ? "border-green-200 bg-green-50/40" : "border-red-300 bg-red-50/60"}`}>
+      <CardContent className="py-4">
+        <div className="flex items-center gap-3">
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${enabled ? "bg-green-100" : "bg-red-100"}`}>
+            <Power className={`h-5 w-5 ${enabled ? "text-green-600" : "text-red-600"}`} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">{enabled ? "Donna is on" : "Donna is off"}</p>
+            <p className="text-sm text-muted-foreground">
+              {enabled
+                ? hasPhone
+                  ? "She's replying to learners and booking lessons."
+                  : "She'll start replying once your WhatsApp number is set up."
+                : "Learners are told to contact you directly, and their messages come to you."}
+            </p>
+          </div>
+          <Switch
+            checked={enabled}
+            disabled={saving}
+            onCheckedChange={onChange}
+            aria-label={enabled ? "Turn Donna off" : "Turn Donna on"}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Getting started: settings → number → calendar ───────────────────────────
+
+function StepIcon({ done, active }: { done: boolean; active: boolean }) {
+  if (done) return <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />;
+  return <Circle className={`h-5 w-5 shrink-0 ${active ? "text-sky-600" : "text-slate-300"}`} />;
+}
+
+function SetupCard({
+  setup,
+  hasPhone,
+  phoneNumber,
+  calendarConnected,
+  requestingNumber,
+  numberError,
+  calendarConnecting,
+  onRequestNumber,
+  onConnectCalendar,
+  onGo,
+}: {
+  setup: SetupStatus | null;
+  hasPhone: boolean;
+  phoneNumber: string | null;
+  calendarConnected: boolean;
+  requestingNumber: boolean;
+  numberError: string;
+  calendarConnecting: boolean;
+  onRequestNumber: () => void;
+  onConnectCalendar: () => void;
+  onGo: (link: string) => void;
+}) {
+  const settingsDone = hasPhone || !!setup?.complete;
+
+  return (
+    <Card className="mb-6 border-sky-200">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Get Donna ready</CardTitle>
+        <p className="text-sm text-muted-foreground">Three quick steps before learners can book with you on WhatsApp.</p>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {/* Step 1: required settings */}
+        <div className="flex gap-3">
+          <StepIcon done={settingsDone} active={!settingsDone} />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">1. Fill in your Donna Settings</p>
+            {!settingsDone && setup && (
+              <ul className="mt-2 space-y-1.5">
+                {setup.required.map((r) => (
+                  <li key={r.key} className="flex items-center gap-2 text-sm">
+                    {r.done ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+                    ) : (
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" aria-hidden />
+                    )}
+                    <span className={`flex-1 ${r.done ? "text-muted-foreground" : ""}`}>{r.label}</span>
+                    {!r.done && (
+                      <button onClick={() => onGo(r.link)} className="shrink-0 text-sm font-medium text-sky-700 hover:underline">
+                        Add
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {settingsDone && <p className="text-sm text-muted-foreground">Done. You can change these any time.</p>}
+          </div>
+        </div>
+
+        {/* Step 2: WhatsApp number */}
+        <div className="flex gap-3" data-tour="phone-setup">
+          <StepIcon done={hasPhone} active={settingsDone && !hasPhone} />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">2. Get your WhatsApp number</p>
+            {hasPhone ? (
+              <p className="text-sm text-muted-foreground">Learners message Donna on {phoneNumber}.</p>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  {settingsDone
+                    ? "Your learners will message Donna on this number."
+                    : "Fill in the settings above first, then request your number."}
+                </p>
+                {numberError && <p className="mt-1 text-sm text-red-600">{numberError}</p>}
+                <Button
+                  onClick={onRequestNumber}
+                  disabled={requestingNumber}
+                  variant={settingsDone ? "default" : "outline"}
+                  size="sm"
+                  className="mt-2 rounded-xl"
+                >
+                  {requestingNumber ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Phone className="mr-2 h-4 w-4" />}
+                  Request number
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Step 3: Google Calendar */}
+        <div className="flex gap-3" data-tour="calendar-setup">
+          <StepIcon done={calendarConnected} active={hasPhone && !calendarConnected} />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">3. Connect Google Calendar</p>
+            <p className="text-sm text-muted-foreground">
+              {calendarConnected
+                ? "Lessons are synced automatically."
+                : hasPhone
+                  ? "Donna adds lessons to your calendar and checks it before offering times."
+                  : "Request your WhatsApp number first."}
+            </p>
+            {!calendarConnected && (
+              <Button
+                onClick={onConnectCalendar}
+                disabled={!hasPhone || calendarConnecting}
+                size="sm"
+                className="mt-2 rounded-xl"
+              >
+                {calendarConnecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Calendar className="mr-2 h-4 w-4" />}
+                Connect Calendar
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

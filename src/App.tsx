@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useSearchParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useSearchParams, useLocation, useNavigate } from "react-router-dom";
+import { isInstructorPage, isSuperAdmin } from "@/lib/access";
 import { useEffect } from "react";
 import ScrollToTop from "./components/ScrollToTop";
 import Index from "./pages/Index";
@@ -25,6 +26,7 @@ import LessonTypes from "./pages/LessonTypes";
 import DonnaSettings from "./pages/DonnaSettings";
 import Team from "./pages/Team";
 import JoinSchool from "./pages/JoinSchool";
+import PlanGate from "./components/PlanGate";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminPricing from "./pages/admin/AdminPricing";
@@ -40,11 +42,29 @@ function LogoutHandler() {
   useEffect(() => {
     if (params.get("action") === "logout") {
       localStorage.removeItem("dd_token");
+      localStorage.removeItem("dd_access");
       localStorage.removeItem("dd_apiKey");
       window.dispatchEvent(new Event("dd_auth_change"));
       setParams({}, { replace: true });
     }
   }, [params, setParams]);
+  return null;
+}
+
+// Instructor pages: super admins go to the admin panel (they aren't customers)
+function AccessRedirect() {
+  const { pathname, search } = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const check = () => {
+      const { pathname: path, search: query } = window.location;
+      if (!isInstructorPage(path, query)) return;
+      if (isSuperAdmin()) navigate("/admin", { replace: true });
+    };
+    check();
+    window.addEventListener("dd_auth_change", check);
+    return () => window.removeEventListener("dd_auth_change", check);
+  }, [pathname, search, navigate]);
   return null;
 }
 
@@ -56,6 +76,8 @@ const App = () => (
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
         <LogoutHandler />
+        <AccessRedirect />
+        <PlanGate />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/book-demo" element={<BookDemo />} />

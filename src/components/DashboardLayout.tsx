@@ -87,6 +87,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
 
   const handleLogout = () => {
     localStorage.removeItem("dd_token");
+    localStorage.removeItem("dd_access");
     localStorage.removeItem("dd_apiKey");
     window.dispatchEvent(new Event("dd_auth_change"));
     navigate("/");

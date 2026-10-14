@@ -138,7 +138,7 @@ export default function Onboarding() {
         let currentApiKey: string | null = null;
 
         if (authCode) {
-          const result = await exchangeAuthCode(authCode);
+          const result = await exchangeAuthCode(authCode, searchParams.get("session_id"));
           currentToken = result.token;
           currentApiKey = result.apiKey;
           localStorage.setItem("dd_token", result.token);

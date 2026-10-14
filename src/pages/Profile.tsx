@@ -182,6 +182,7 @@ export default function ProfilePage() {
     try {
       await deleteAccount(token);
       localStorage.removeItem("dd_token");
+      localStorage.removeItem("dd_access");
       localStorage.removeItem("dd_apiKey");
       window.dispatchEvent(new Event("dd_auth_change"));
       navigate("/");

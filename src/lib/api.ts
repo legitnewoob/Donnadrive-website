@@ -1,3 +1,5 @@
+import { setAccess } from "./access";
+
 const API_BASE = import.meta.env.VITE_API_URL;
 
 export async function googleSignup(credential: string, plan: string) {
@@ -14,30 +16,45 @@ export async function googleSignup(credential: string, plan: string) {
     token: string;
     apiKey: string | null;
     instructor: { name: string; email: string; plan: string; subscriptionStatus: string | null };
+    access?: { staffRole: "admin" | "support" | null; superAdmin: boolean; permissions: string[] };
+    needsPlan?: boolean;
     isNew: boolean;
   };
 }
 
-export async function createCheckoutSession(token: string, plan: string) {
+/** embedded: Stripe's checkout shown inside our modal (returns clientSecret) instead of a redirect (url) */
+export async function createCheckoutSession(token: string, plan: string, { embedded = false } = {}) {
   const res = await fetch(`${API_BASE}/api/stripe/create-checkout-session`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ plan }),
+    body: JSON.stringify({ plan, embedded }),
   });
 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to create checkout session");
-  return data as { success: boolean; url: string };
+  return data as { success: boolean; url: string | null; clientSecret: string | null };
 }
 
-export async function exchangeAuthCode(code: string) {
+/** Pick the free plan (paid plans are picked by finishing checkout) */
+export async function chooseFreePlan(token: string) {
+  const res = await fetch(`${API_BASE}/api/auth/choose-plan`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ plan: "pdi" }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Couldn't choose the plan");
+  return data as { success: boolean; plan: string };
+}
+
+export async function exchangeAuthCode(code: string, sessionId?: string | null) {
   const res = await fetch(`${API_BASE}/api/auth/exchange-code`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ code, sessionId: sessionId || undefined }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Code exchange failed");
@@ -55,6 +72,7 @@ export async function getProfile(token: string) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
+  if (data.instructor?.access) setAccess({ ...data.instructor.access, needsPlan: !!data.instructor.needsPlan });
   return data.instructor as {
     name: string;
     email: string;
@@ -67,6 +85,9 @@ export async function getProfile(token: string) {
     school?: { role: "owner" | "manager" | "member"; name: string | null } | null;
     access?: { staffRole: "admin" | "support" | null; superAdmin: boolean; permissions: string[] };
     comp?: { plan: string; until: string | null } | null;
+    needsPlan?: boolean;
+    /** Picked a paid plan but didn't finish paying */
+    pendingPlan?: "adi" | "driving-school" | null;
   };
 }
 

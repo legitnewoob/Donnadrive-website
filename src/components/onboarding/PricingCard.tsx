@@ -92,16 +92,16 @@ export default function PricingCard({ userType }: Props) {
 
       <div className="mt-2 flex items-end gap-1">
         <span className="text-5xl font-bold">
-          £8
+          £20
         </span>
 
         <span className="pb-2 text-muted-foreground">
-          /seat/month
+          /month
         </span>
       </div>
 
       <p className="mt-2 text-muted-foreground">
-        One seat per instructor.
+        3 instructors included, each with their own Donna. Need more? £10/month per extra instructor.
       </p>
 
       <p className="mt-8 text-sm text-muted-foreground">

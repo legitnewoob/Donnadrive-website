@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Route as RouteIcon,
@@ -29,6 +29,8 @@ import {
   getSettings,
   updateSettings,
   previewRoute,
+  notifySetupChanged,
+  type SetupStatus,
   type DonnaSettings as Settings,
   type RouteSettings,
   type BotSettings,
@@ -141,10 +143,17 @@ function Section({
   );
 }
 
-function Field({ label, help, children }: { label: string; help?: string; children: React.ReactNode }) {
+function Field({ label, help, required, children }: { label: string; help?: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="block text-sm font-medium text-slate-800">{label}</Label>
+      <Label className="flex items-center gap-2 text-sm font-medium text-slate-800">
+        {label}
+        {required && (
+          <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-600">
+            Required
+          </span>
+        )}
+      </Label>
       {children}
       {help && <p className="text-xs text-slate-500">{help}</p>}
     </div>
@@ -199,6 +208,8 @@ function tomorrowPlus(days: number) {
 
 export default function DonnaSettings() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [setup, setSetup] = useState<SetupStatus | null>(null);
   const token = localStorage.getItem("dd_token");
   const [saved, setSaved] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -217,6 +228,7 @@ export default function DonnaSettings() {
   const [previewing, setPreviewing] = useState(false);
 
   function apply(s: Settings) {
+    if (s.setup) setSetup(s.setup);
     setSaved(s);
     setBaseAddress(s.baseAddress);
     setRoute(s.routeSettings);
@@ -238,6 +250,14 @@ export default function DonnaSettings() {
       .finally(() => setLoading(false));
   }, [token, navigate]);
 
+  // Arriving from a setup link like /settings#route: jump there once the page has loaded
+  useEffect(() => {
+    if (loading || !location.hash) return;
+    const id = location.hash.slice(1);
+    const t = setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    return () => clearTimeout(t);
+  }, [loading, location.hash]);
+
   const districts = useMemo(
     () =>
       districtsText
@@ -251,6 +271,10 @@ export default function DonnaSettings() {
     () => (route ? { ...route, serviceArea: { ...route.serviceArea, postcodeDistricts: districts } } : null),
     [route, districts]
   );
+
+  function scrollToSection(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   if (loading) {
     return (
@@ -315,6 +339,8 @@ export default function DonnaSettings() {
     try {
       const next = await updateSettings(token!, body);
       setSaved(next);
+      if (next.setup) setSetup(next.setup);
+      notifySetupChanged();
       // Only reset the fields that were saved; keep unsaved edits elsewhere.
       if (section === "route" || section === "all") {
         setBaseAddress(next.baseAddress);
@@ -349,9 +375,13 @@ export default function DonnaSettings() {
     return save("route", routeBody());
   }
 
+  // Until working hours have been saved once, the defaults shown still need confirming
+  const hoursUnconfirmed = !!setup && !setup.hasNumber && setup.required.some((r) => r.key === "workingHours" && !r.done);
+  const availabilityDirty = dirtyFor(availabilityKeys) || hoursUnconfirmed;
+
   const sections = [
     { id: "route", label: "Route", dirty: routeDirty },
-    { id: "availability", label: "Availability", dirty: dirtyFor(availabilityKeys), keys: availabilityKeys },
+    { id: "availability", label: "Availability", dirty: availabilityDirty, keys: availabilityKeys },
     { id: "rules", label: "Rules", dirty: dirtyFor(rulesKeys), keys: rulesKeys },
     { id: "alerts", label: "Reminders", dirty: dirtyFor(alertKeys), keys: alertKeys },
     { id: "personality", label: "Personality", dirty: dirtyFor(personalityKeys), keys: personalityKeys },
@@ -445,6 +475,9 @@ export default function DonnaSettings() {
     >
       <SectionNav sections={sections} />
       <div className="space-y-6 max-w-4xl">
+        {setup && !setup.complete && !setup.hasNumber && (
+          <SetupBanner setup={setup} onGo={(link) => (link.startsWith("/settings#") ? scrollToSection(link.split("#")[1]) : navigate(link))} />
+        )}
         {/* ── Route & travel ───────────────────────────────────────────── */}
         <Section
           id="route"
@@ -459,6 +492,7 @@ export default function DonnaSettings() {
         >
           <Field
             label="Your home or base address"
+            required={!!setup && !setup.hasNumber}
             help={
               saved.hasBaseLocation
                 ? "Used for the drive to your first lesson and home from your last."
@@ -648,12 +682,12 @@ export default function DonnaSettings() {
           icon={CalendarClock}
           title="Availability"
           description="When learners can book with you."
-          dirty={dirtyFor(availabilityKeys)}
+          dirty={availabilityDirty}
           saving={saving === "availability" || saving === "all" || saving === "bot"}
           onSave={() => save("availability", { botSettings: pick(bot, availabilityKeys) })}
           onReset={() => setBot((b) => (b ? { ...b, ...pick(saved.botSettings, availabilityKeys) } : b))}
         >
-          <Field label="Working days and lesson start times" help="Tap a time to turn it on or off.">
+          <Field label="Working days and lesson start times" help="Tap a time to turn it on or off." required={!!setup && !setup.hasNumber}>
             <div className="space-y-2">
               {DAYS.map(({ key, label }) => (
                 <WorkingDayRow
@@ -967,6 +1001,32 @@ export default function DonnaSettings() {
         </Section>
       </div>
     </DashboardLayout>
+  );
+}
+
+function SetupBanner({ setup, onGo }: { setup: SetupStatus; onGo: (link: string) => void }) {
+  return (
+    <div role="alert" className="rounded-xl border border-red-200 bg-red-50/70 p-4">
+      <p className="font-semibold text-red-900">Before you can get your WhatsApp number</p>
+      <p className="mt-0.5 text-sm text-red-800">Donna needs these to take bookings for you:</p>
+      <ul className="mt-3 space-y-1.5">
+        {setup.required.map((r) => (
+          <li key={r.key} className="flex items-center gap-2 text-sm">
+            {r.done ? (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+            ) : (
+              <span className="h-2 w-2 shrink-0 rounded-full bg-red-500" aria-hidden />
+            )}
+            <span className={`flex-1 ${r.done ? "text-slate-500 line-through" : "text-slate-800"}`}>{r.label}</span>
+            {!r.done && (
+              <button onClick={() => onGo(r.link)} className="shrink-0 font-medium text-sky-700 hover:underline">
+                {r.link.startsWith("/settings#") ? "Show me" : "Add"}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

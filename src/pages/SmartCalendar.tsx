@@ -105,7 +105,7 @@ const SmartCalendar = () => {
       
       {/* Hero Section */}
       <section className="relative bg-gradient-hero text-primary-foreground overflow-hidden">
-        <div className="container mx-auto px-4 py-16 sm:py-20 lg:py-28">
+        <div className="container mx-auto px-4 pt-28 pb-16 sm:pt-32 sm:pb-20 lg:pt-36 lg:pb-28">
           <Link to="/" className="inline-flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground transition-colors mb-8">
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">Back to Home</span>

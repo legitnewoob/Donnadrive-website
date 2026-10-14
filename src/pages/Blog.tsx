@@ -27,7 +27,7 @@ export default function Blog() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <div className="container mx-auto px-4 py-12 lg:py-20 max-w-5xl">
+      <div className="container mx-auto px-4 pt-28 pb-12 lg:pt-36 lg:pb-20 max-w-5xl">
         {/* Page header */}
         <div className="mb-10 lg:mb-14">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">

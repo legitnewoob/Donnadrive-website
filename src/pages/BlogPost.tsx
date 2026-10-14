@@ -47,7 +47,7 @@ export default function BlogPost() {
 
       <Header />
 
-      <div className="container mx-auto px-4 py-10 lg:py-16 max-w-3xl">
+      <div className="container mx-auto px-4 pt-28 pb-10 lg:pt-32 lg:pb-16 max-w-3xl">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-primary transition-colors">Home</Link>

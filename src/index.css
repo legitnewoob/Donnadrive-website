@@ -116,3 +116,15 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Pause the feature-card marquee whenever any card in it is hovered —
+   pure CSS, no JS listeners needed to freeze an infinitely-animating track. */
+.marquee-track:has(.marquee-card:hover) {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}

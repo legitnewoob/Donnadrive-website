@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Building2,
   Users,
+  Undo2,
 } from "lucide-react";
 import AdminLayout, { StatusBadge, useStaff } from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,7 @@ const STATUSES = [
   ["school", "School instructor"],
   ["suspended", "Suspended"],
   ["deleted", "Deleted"],
+  ["returning", "Came back after deleting"],
 ];
 
 const date = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—");
@@ -146,6 +148,7 @@ export default function AdminCustomers() {
                       <p className="flex items-center gap-1.5 font-medium">
                         {r.name}
                         {r.staffRole && <ShieldCheck className="h-3.5 w-3.5 text-violet-600" aria-label={`Staff: ${r.staffRole}`} />}
+                        <ReturningBadge row={r} />
                       </p>
                       <p className="text-xs text-muted-foreground">{r.email}</p>
                     </td>
@@ -167,7 +170,7 @@ export default function AdminCustomers() {
                 <li key={r.id}>
                   <button onClick={() => setParam("open", r.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{r.name}</p>
+                      <p className="flex items-center gap-1.5 truncate font-medium">{r.name} <ReturningBadge row={r} /></p>
                       <p className="truncate text-xs text-muted-foreground">{r.email}</p>
                       <div className="mt-1"><SetupIcons row={r} /></div>
                     </div>
@@ -195,8 +198,20 @@ export default function AdminCustomers() {
         </div>
       )}
 
-      <CustomerSheet id={openId} onClose={() => setParam("open", "")} onChanged={load} />
+      <CustomerSheet id={openId} onClose={() => setParam("open", "")} onChanged={load} onOpen={(id) => setParam("open", id)} />
     </AdminLayout>
+  );
+}
+
+function ReturningBadge({ row }: { row: CustomerRow }) {
+  if (!row.returning) return null;
+  return (
+    <span
+      title="Signed up again after deleting an earlier account"
+      className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800"
+    >
+      <Undo2 className="h-3 w-3" /> Returning
+    </span>
   );
 }
 
@@ -215,7 +230,17 @@ function SetupIcons({ row }: { row: CustomerRow }) {
   );
 }
 
-function CustomerSheet({ id, onClose, onChanged }: { id: string | null; onClose: () => void; onChanged: () => void }) {
+function CustomerSheet({
+  id,
+  onClose,
+  onChanged,
+  onOpen,
+}: {
+  id: string | null;
+  onClose: () => void;
+  onChanged: () => void;
+  onOpen: (id: string) => void;
+}) {
   const { can, me } = useStaff();
   const [c, setC] = useState<CustomerDetail | null>(null);
   const [busy, setBusy] = useState("");
@@ -280,6 +305,36 @@ function CustomerSheet({ id, onClose, onChanged }: { id: string | null; onClose:
               {c.school && <Field label="School" value={`${c.school.name} · ${c.school.role === "member" ? "instructor" : c.school.role}`} wide />}
             </dl>
 
+            {c.deletedAt && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
+                <p className="font-medium">Deleted on {date(c.deletedAt)}</p>
+                <p className="text-xs text-muted-foreground">They can't sign in to this account. It's kept here for your records only.</p>
+                {c.rejoinedAs && (
+                  <button onClick={() => onOpen(c.rejoinedAs!.id)} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-violet-700 hover:underline">
+                    <Undo2 className="h-3.5 w-3.5" /> Came back {date(c.rejoinedAs.createdAt)} with a new account →
+                  </button>
+                )}
+              </div>
+            )}
+
+            {c.previousAccounts.length > 0 && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">
+                <p className="flex items-center gap-1.5 font-medium text-amber-900"><Undo2 className="h-4 w-4" /> Returning customer</p>
+                <p className="text-xs text-amber-800">
+                  They deleted {c.previousAccounts.length === 1 ? "an earlier account" : `${c.previousAccounts.length} earlier accounts`}. To them this is a brand-new account.
+                </p>
+                <ul className="mt-2 space-y-1">
+                  {c.previousAccounts.map((p) => (
+                    <li key={p.id}>
+                      <button onClick={() => onOpen(p.id)} className="text-left text-xs text-amber-900 hover:underline">
+                        {PLAN_LABELS[p.plan]} · joined {date(p.createdAt)} · deleted {date(p.deletedAt)} · {p.lessons} lessons →
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="grid grid-cols-3 gap-2 text-center">
               <Mini value={c.usage.learners} label="Learners" />
               <Mini value={c.usage.lessonsTotal} label="Lessons" />
@@ -317,7 +372,7 @@ function CustomerSheet({ id, onClose, onChanged }: { id: string | null; onClose:
             </div>
 
             {/* Actions */}
-            {can("admin.trials") && c.subscriptionStatus === "trialing" && (
+            {!c.deletedAt && can("admin.trials") && c.subscriptionStatus === "trialing" && (
               <Action title="Extend trial" icon={Clock}>
                 <div className="flex gap-2">
                   <Input type="number" min={1} max={90} value={trialDays} onChange={(e) => setTrialDays(e.target.value)} className="w-24" aria-label="Days" />
@@ -334,7 +389,7 @@ function CustomerSheet({ id, onClose, onChanged }: { id: string | null; onClose:
               </Action>
             )}
 
-            {can("admin.customers") && !["member", "manager"].includes(c.schoolRole || "") && (
+            {!c.deletedAt && can("admin.customers") && !["member", "manager"].includes(c.schoolRole || "") && (
               <Action title={c.comp ? "Comped plan" : "Comp a plan"} icon={Gift} hint="Free access without a subscription, e.g. for partners or beta testers.">
                 {c.comp ? (
                   <Button
@@ -375,7 +430,7 @@ function CustomerSheet({ id, onClose, onChanged }: { id: string | null; onClose:
               </Action>
             )}
 
-            {can("admin.customers") && !c.superAdmin && !isSelf && (
+            {!c.deletedAt && can("admin.customers") && !c.superAdmin && !isSelf && (
               <Action title={c.suspended ? "Suspended" : "Suspend account"} icon={c.suspended ? RotateCcw : Ban} hint="Suspended accounts can't sign in. Their data is kept.">
                 {c.suspended ? (
                   <Button size="sm" variant="outline" disabled={!!busy} onClick={() => act("reactivate", () => adminApi.reactivate(c.id), "Account reactivated")}>

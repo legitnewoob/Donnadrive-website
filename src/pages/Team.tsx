@@ -16,6 +16,7 @@ import {
   UserPlus,
   Plus,
   Minus,
+  ShieldCheck,
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,11 +40,15 @@ import {
   cancelSchoolInvite,
   removeSchoolMember,
   setSchoolSeats,
+  setSchoolMemberRole,
   type SchoolOverview,
   type SchoolMember,
 } from "@/lib/api";
 
-const monthlyCost = (extraSeats: number) => `£${20 + extraSeats * 10}`;
+const gbp = (pence: number) => `£${(pence / 100).toFixed(pence % 100 ? 2 : 0)}`;
+const monthlyCost = (school: SchoolOverview["school"], extraSeats: number) => gbp(school.planAmount + extraSeats * school.extraSeatAmount);
+const costBreakdown = (school: SchoolOverview["school"], extraSeats: number) =>
+  extraSeats > 0 ? ` (${gbp(school.planAmount)} + ${extraSeats} × ${gbp(school.extraSeatAmount)})` : "";
 
 const copy = async (text: string) => {
   try {
@@ -151,6 +156,16 @@ export default function Team() {
     }
   }
 
+  async function handleRole(member: SchoolMember, role: "manager" | "instructor") {
+    try {
+      const r = await setSchoolMemberRole(token!, member.id, role);
+      toast.success(`${member.name} is now ${role === "manager" ? "a manager" : "an instructor"}`);
+      setData((d) => d && { ...d, members: d.members.map((m) => (m.id === member.id ? { ...m, role: r.role as SchoolMember["role"], roleLabel: r.roleLabel } : m)) });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't change the role");
+    }
+  }
+
   async function handleRename() {
     try {
       const d = await renameSchool(token!, name.trim());
@@ -170,7 +185,9 @@ export default function Team() {
     );
   }
 
-  if (!data || data.role !== "owner") {
+  const can = (p: string) => !!data?.permissions?.includes(p);
+
+  if (!data || !can("school.viewAll")) {
     return (
       <DashboardLayout title="Team">
         <Card>
@@ -201,14 +218,17 @@ export default function Team() {
               ) : (
                 <div className="flex items-center gap-2">
                   <h2 className="truncate text-lg font-bold">{data.school.name}</h2>
-                  <button onClick={() => setEditingName(true)} className="text-slate-400 hover:text-slate-700" aria-label="Rename school">
-                    <Pencil className="h-4 w-4" />
-                  </button>
+                  {can("school.rename") && (
+                    <button onClick={() => setEditingName(true)} className="text-slate-400 hover:text-slate-700" aria-label="Rename school">
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               )}
               <p className="text-sm text-muted-foreground">
-                Driving School plan · {monthlyCost(data.school.extraSeats)}/month
-                {data.school.extraSeats > 0 ? ` (£20 + ${data.school.extraSeats} × £10)` : ""} · {seats.limit} instructor seats
+                {can("school.billing")
+                  ? <>Driving School plan · {monthlyCost(data.school, data.school.extraSeats)}/month{costBreakdown(data.school, data.school.extraSeats)} · {seats.limit} instructor seats</>
+                  : <>You're a manager · {data.owner?.name || "The owner"} handles billing and seats</>}
               </p>
             </div>
             <div className="shrink-0">
@@ -233,10 +253,12 @@ export default function Team() {
           <CardContent className="space-y-3">
             {seatsFull ? (
               <div className="flex flex-col gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 sm:flex-row sm:items-center">
-                <p className="flex-1">All {seats.limit} seats are in use. Add a seat for another instructor, or remove one to free a seat.</p>
+                <p className="flex-1">
+                  All {seats.limit} seats are in use. {can("school.billing") ? "Add a seat for another instructor, or remove one to free a seat." : "Ask the owner to add a seat, or remove an instructor to free one."}
+                </p>
                 {data.school.canBuySeats && (
                   <Button size="sm" onClick={() => setSeatChange(data.school.extraSeats + 1)}>
-                    <Plus className="mr-1 h-4 w-4" /> Add a seat · £10/month
+                    <Plus className="mr-1 h-4 w-4" /> Add a seat · {gbp(data.school.extraSeatAmount)}/month
                   </Button>
                 )}
               </div>
@@ -256,7 +278,7 @@ export default function Team() {
               </form>
             )}
             <p className="text-xs text-muted-foreground">
-              They'll sign in with Google using this email, then set up their own Donna. Your plan covers them.
+              They'll sign in with Google using this email, then set up their own Donna. The school's plan covers them.
             </p>
             {lastLink && (
               <div className="flex items-center gap-2 rounded-lg border bg-slate-50 p-2 text-sm">
@@ -287,13 +309,13 @@ export default function Team() {
         </Card>
 
         {/* Seats */}
-        {data.school.canBuySeats && (
+        {data.school.canBuySeats && can("school.billing") && (
           <Card>
             <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
               <div className="min-w-0 flex-1">
                 <p className="font-medium">Instructor seats</p>
                 <p className="text-sm text-muted-foreground">
-                  {data.school.includedSeats} included in your plan · extra seats £10/month each
+                  {data.school.includedSeats} included in your plan · extra seats {gbp(data.school.extraSeatAmount)}/month each
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -329,7 +351,9 @@ export default function Team() {
                   key={m.id}
                   member={m}
                   onView={() => navigate(`/learners?instructor=${m.id}`)}
-                  onRemove={() => setRemoving(m)}
+                  // Managers remove instructors; only the owner removes a manager
+                  onRemove={can("school.remove") && (m.role !== "manager" || can("school.roles")) ? () => setRemoving(m) : undefined}
+                  onRole={can("school.roles") ? (role) => handleRole(m, role) : undefined}
                 />
               ))}
             </div>
@@ -347,8 +371,8 @@ export default function Team() {
               {seatChange !== null && (
                 <>
                   You'll have {data.school.includedSeats + seatChange} instructor seats and pay{" "}
-                  <strong>{monthlyCost(seatChange)}/month</strong>
-                  {seatChange > 0 ? ` (£20 + ${seatChange} × £10)` : ""}. The difference for this month is charged or credited
+                  <strong>{monthlyCost(data.school, seatChange)}/month</strong>
+                  {costBreakdown(data.school, seatChange)}. The difference for this month is charged or credited
                   on your next invoice.
                 </>
               )}
@@ -392,7 +416,17 @@ function Check({ done, label, icon: Icon }: { done: boolean; label: string; icon
   );
 }
 
-function MemberCard({ member: m, onView, onRemove }: { member: SchoolMember; onView: () => void; onRemove: () => void }) {
+function MemberCard({
+  member: m,
+  onView,
+  onRemove,
+  onRole,
+}: {
+  member: SchoolMember;
+  onView: () => void;
+  onRemove?: () => void;
+  onRole?: (role: "manager" | "instructor") => void;
+}) {
   const ready = m.setup.complete || !!m.phoneNumber;
   return (
     <Card>
@@ -402,7 +436,14 @@ function MemberCard({ member: m, onView, onRemove }: { member: SchoolMember; onV
             {m.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate font-medium">{m.name}</p>
+            <p className="flex items-center gap-1.5 truncate font-medium">
+              {m.name}
+              {m.role === "manager" && (
+                <Badge variant="secondary" className="bg-violet-100 text-violet-700 hover:bg-violet-100">
+                  <ShieldCheck className="mr-1 h-3 w-3" /> Manager
+                </Badge>
+              )}
+            </p>
             <p className="truncate text-xs text-muted-foreground">{m.email}</p>
           </div>
           {m.phoneNumber ? (
@@ -429,9 +470,31 @@ function MemberCard({ member: m, onView, onRemove }: { member: SchoolMember; onV
           <Stat value={m.upcomingLessons} label="Upcoming" />
         </div>
 
+        {onRole && (
+          <div className="flex items-center justify-between gap-2 rounded-lg border px-3 py-2">
+            <div className="min-w-0">
+              <p className="text-sm font-medium">Role</p>
+              <p className="text-[11px] text-muted-foreground">
+                {m.role === "manager" ? "Can invite and remove instructors and see everyone's learners" : "Sees only their own learners"}
+              </p>
+            </div>
+            <select
+              aria-label={`Role for ${m.name}`}
+              value={m.role === "manager" ? "manager" : "instructor"}
+              onChange={(e) => onRole(e.target.value as "manager" | "instructor")}
+              className="h-8 shrink-0 rounded-md border bg-white px-2 text-sm"
+            >
+              <option value="instructor">Instructor</option>
+              <option value="manager">Manager</option>
+            </select>
+          </div>
+        )}
+
         <div className="flex gap-2">
           <Button size="sm" variant="outline" className="flex-1" onClick={onView}>View learners</Button>
-          <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={onRemove}>Remove</Button>
+          {onRemove && (
+            <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={onRemove}>Remove</Button>
+          )}
         </div>
       </CardContent>
     </Card>

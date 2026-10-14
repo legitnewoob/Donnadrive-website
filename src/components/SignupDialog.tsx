@@ -12,7 +12,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { googleSignup, createCheckoutSession, getProfile } from "@/lib/api";
-import { plans } from "@/components/Pricing/plans";
+import { useDisplayPlans, gbp, type DisplayPlan } from "@/lib/pricing";
 
 interface Props {
   open: boolean;
@@ -27,6 +27,7 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
   const [userName, setUserName] = useState("");
   const [authToken, setAuthToken] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { plans } = useDisplayPlans();
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
@@ -100,7 +101,7 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
     },
   });
 
-  async function handlePickPlan(plan: typeof plans[number]) {
+  async function handlePickPlan(plan: DisplayPlan) {
     const token = authToken || localStorage.getItem("dd_token");
     if (!token) return;
 
@@ -238,8 +239,11 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
                       </p>
                     </div>
                     <div className="text-right shrink-0">
+                      {plan.sale && (
+                        <p className="text-xs text-muted-foreground line-through">{plan.price}</p>
+                      )}
                       <p className="text-2xl font-black text-slate-900">
-                        {plan.price}
+                        {plan.sale ? gbp(plan.sale.amount) : plan.price}
                       </p>
                       {plan.period && (
                         <p className="text-xs text-muted-foreground">

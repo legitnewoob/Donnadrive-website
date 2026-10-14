@@ -1,12 +1,13 @@
 import { GraduationCap, Car, Building2 } from "lucide-react";
 import { UserType } from "./types";
+import { useDisplayPlans, gbp } from "@/lib/pricing";
 
 interface Props {
   value: UserType | "";
   onChange: (type: UserType) => void;
 }
 
-const options = [
+const baseOptions = [
   {
     type: "PDI" as const,
     title: "Potential Driving Instructor",
@@ -37,6 +38,20 @@ export default function UserTypeSelector({
   value,
   onChange,
 }: Props) {
+  // Live prices from the admin panel (sale price when a sale is on)
+  const { plans } = useDisplayPlans();
+  const slugFor = { PDI: "pdi", ADI: "adi", SCHOOL: "driving-school" } as const;
+  const options = baseOptions.map((o) => {
+    const p = plans.find((x) => x.slug === slugFor[o.type]);
+    if (!p || p.amount == null) return o;
+    const price = p.amount === 0 ? "FREE" : `${gbp(p.sale ? p.sale.amount : p.amount)}/mo`;
+    const description =
+      o.type === "SCHOOL" && p.extraSeatAmount
+        ? `${p.includedSeats} instructors included, +${gbp(p.extraSeatAmount)}/month each after.`
+        : o.description;
+    return { ...o, price, description };
+  });
+
   return (
     <div className="space-y-3">
       <div>

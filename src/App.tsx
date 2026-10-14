@@ -25,6 +25,13 @@ import LessonTypes from "./pages/LessonTypes";
 import DonnaSettings from "./pages/DonnaSettings";
 import Team from "./pages/Team";
 import JoinSchool from "./pages/JoinSchool";
+import AdminOverview from "./pages/admin/AdminOverview";
+import AdminCustomers from "./pages/admin/AdminCustomers";
+import AdminPricing from "./pages/admin/AdminPricing";
+import AdminSales from "./pages/admin/AdminSales";
+import AdminStaff from "./pages/admin/AdminStaff";
+import AdminNumbers from "./pages/admin/AdminNumbers";
+import AdminAudit from "./pages/admin/AdminAudit";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +76,14 @@ const App = () => (
           <Route path="/team" element={<Team />} />
           <Route path="/join/:token" element={<JoinSchool />} />
           <Route path="/account" element={<Profile />} />
+          {/* Donna Drive staff */}
+          <Route path="/admin" element={<AdminOverview />} />
+          <Route path="/admin/customers" element={<AdminCustomers />} />
+          <Route path="/admin/pricing" element={<AdminPricing />} />
+          <Route path="/admin/sales" element={<AdminSales />} />
+          <Route path="/admin/staff" element={<AdminStaff />} />
+          <Route path="/admin/numbers" element={<AdminNumbers />} />
+          <Route path="/admin/audit" element={<AdminAudit />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

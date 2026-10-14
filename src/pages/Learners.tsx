@@ -128,7 +128,7 @@ export default function Learners() {
   useEffect(() => {
     if (!token) { navigate("/"); return; }
     getProfile(token)
-      .then((p) => (p.school?.role === "owner" ? getSchool(token).then((s) => setTeam(s.members)) : undefined))
+      .then((p) => (p.school?.role === "owner" || p.school?.role === "manager" ? getSchool(token).then((s) => setTeam(s.members)) : undefined))
       .catch(() => {});
   }, [token, navigate]);
 

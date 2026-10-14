@@ -101,7 +101,7 @@ interface Profile {
     calendarConnected: boolean;
     calendarTokenExpired?: boolean;
   };
-  school?: { role: "owner" | "member"; name: string | null } | null;
+  school?: { role: "owner" | "manager" | "member"; name: string | null } | null;
 }
 
 type DashboardData = Awaited<ReturnType<typeof getDashboard>>;
@@ -171,7 +171,7 @@ export default function Onboarding() {
         if (!cancelled) {
           setProfile(profileData);
           setDashboard(dashboardData);
-          if (profileData.school?.role === "owner") {
+          if (profileData.school?.role === "owner" || profileData.school?.role === "manager") {
             getSchool(currentToken).then((sc) => !cancelled && setSchool(sc)).catch(() => {});
           }
           if (settingsData) {

@@ -67,7 +67,7 @@ interface Profile {
   };
   timezone?: string;
   createdAt?: string;
-  school?: { role: "owner" | "member"; name: string | null } | null;
+  school?: { role: "owner" | "manager" | "member"; name: string | null } | null;
 }
 
 interface Invoice {
@@ -370,17 +370,17 @@ export default function ProfilePage() {
                   <span className="font-medium">{profile.school.name || "Your driving school"}</span>
                 </div>
               )}
-              {profile.school?.role === "member" && (
+              {(profile.school?.role === "member" || profile.school?.role === "manager") && (
                 <p className="rounded-lg bg-slate-50 p-3 text-sm text-muted-foreground">
                   Your school covers your Donna Drive subscription, so there's nothing for you to pay.
                 </p>
               )}
-              {profile.school?.role === "owner" && (
+              {(profile.school?.role === "owner" || profile.school?.role === "manager") && (
                 <Button variant="outline" size="sm" className="mt-2 mr-2" onClick={() => navigate("/team")}>
                   Manage instructors
                 </Button>
               )}
-              {profile.plan !== "pdi" && profile.school?.role !== "member" && (
+              {profile.plan !== "pdi" && !["member", "manager"].includes(profile.school?.role ?? "") && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -405,7 +405,7 @@ export default function ProfilePage() {
                 <FileText className="h-4 w-4 text-sky-600" />
                 Billing
               </CardTitle>
-              {profile.subscriptionStatus && profile.school?.role !== "member" && (
+              {profile.subscriptionStatus && !["member", "manager"].includes(profile.school?.role ?? "") && (
                 <Button
                   variant="ghost"
                   size="sm"

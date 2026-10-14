@@ -64,7 +64,9 @@ export async function getProfile(token: string) {
     phoneNumberId: string | null;
     onboardingComplete: boolean;
     onboardingStatus: { phoneAssigned: boolean; subscriptionActive: boolean; calendarConnected: boolean; calendarTokenExpired?: boolean };
-    school?: { role: "owner" | "member"; name: string | null } | null;
+    school?: { role: "owner" | "manager" | "member"; name: string | null } | null;
+    access?: { staffRole: "admin" | "support" | null; superAdmin: boolean; permissions: string[] };
+    comp?: { plan: string; until: string | null } | null;
   };
 }
 
@@ -420,7 +422,8 @@ export interface SchoolMember {
   id: string;
   name: string;
   email: string;
-  role: "member";
+  role: "member" | "manager";
+  roleLabel: string | null;
   phoneNumber: string | null;
   calendarConnected: boolean;
   donnaEnabled: boolean;
@@ -432,8 +435,10 @@ export interface SchoolMember {
 }
 
 export interface SchoolOverview {
-  school: { id: string; name: string; seatLimit: number; includedSeats: number; extraSeats: number; canBuySeats: boolean };
-  role: "owner" | "member";
+  school: { id: string; name: string; seatLimit: number; includedSeats: number; extraSeats: number; planAmount: number; extraSeatAmount: number; canBuySeats: boolean };
+  role: "owner" | "manager" | "member";
+  roleLabel: string | null;
+  permissions: string[];
   owner: { name: string; email: string } | null;
   seats: { members: number; invites: number; used: number; limit: number };
   members: SchoolMember[];
@@ -463,10 +468,15 @@ export const inviteInstructor = (token: string, email: string) =>
     body: JSON.stringify({ email }),
   });
 export const cancelSchoolInvite = (token: string, id: string) => schoolRequest<void>(token, `/invites/${id}`, { method: "DELETE" });
-// Extra instructor seats on top of the 3 included (£10/month each, prorated)
+// Extra instructor seats on top of the ones included (prorated)
 export const setSchoolSeats = (token: string, extraSeats: number) =>
   schoolRequest<SchoolOverview>(token, "/seats", { method: "PUT", body: JSON.stringify({ extraSeats }) });
 export const removeSchoolMember = (token: string, id: string) => schoolRequest<{ id: string; name: string }>(token, `/members/${id}`, { method: "DELETE" });
+export const setSchoolMemberRole = (token: string, id: string, role: "manager" | "instructor") =>
+  schoolRequest<{ id: string; name: string; role: string; roleLabel: string }>(token, `/members/${id}/role`, {
+    method: "PUT",
+    body: JSON.stringify({ role }),
+  });
 export const getSchoolInvite = (inviteToken: string) =>
   schoolRequest<{ schoolName: string; ownerName: string | null; email: string; expiresAt: string }>(null, `/invites/${inviteToken}`);
 export const acceptSchoolInvite = (token: string, inviteToken: string) =>

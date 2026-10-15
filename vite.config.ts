@@ -10,6 +10,8 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  // Production builds never write to the browser console
+  esbuild: mode === "production" ? { drop: ["console", "debugger"] } : undefined,
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

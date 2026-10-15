@@ -52,8 +52,7 @@ export default function LessonTypes() {
     try {
       const data = await getLessonTypes(token!);
       setTypes(data);
-    } catch (e) {
-      console.error(e);
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -92,8 +91,7 @@ export default function LessonTypes() {
       await load();
       notifySetupChanged();
       setDialogOpen(false);
-    } catch (e) {
-      console.error(e);
+    } catch {
     } finally {
       setSaving(false);
     }
@@ -104,8 +102,7 @@ export default function LessonTypes() {
       await updateLessonType(token!, t._id, { active: !t.active });
       notifySetupChanged();
       setTypes((prev) => prev.map((x) => (x._id === t._id ? { ...x, active: !x.active } : x)));
-    } catch (e) {
-      console.error(e);
+    } catch {
     }
   }
 
@@ -117,8 +114,7 @@ export default function LessonTypes() {
       notifySetupChanged();
       setTypes((prev) => prev.filter((x) => x._id !== deleteTarget._id));
       setDeleteTarget(null);
-    } catch (e) {
-      console.error(e);
+    } catch {
     } finally {
       setDeleting(false);
     }

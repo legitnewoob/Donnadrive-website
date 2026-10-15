@@ -502,3 +502,14 @@ export const getSchoolInvite = (inviteToken: string) =>
   schoolRequest<{ schoolName: string; ownerName: string | null; email: string; expiresAt: string }>(null, `/invites/${inviteToken}`);
 export const acceptSchoolInvite = (token: string, inviteToken: string) =>
   schoolRequest<{ schoolName: string; hadOwnSubscription: boolean }>(token, `/invites/${inviteToken}/accept`, { method: "POST" });
+
+// Website "Contact us" form: emails the team, who reply to the address given
+export async function sendContactMessage(body: { name: string; email: string; message: string; website?: string }) {
+  const res = await fetch(`${API_BASE}/api/contact`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Couldn't send your message");
+}

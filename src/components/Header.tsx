@@ -118,6 +118,12 @@ const Header = () => {
               >
                 Blog
               </Link>
+              <Link
+                to="/contact"
+                className={`transition-colors font-medium ${pathname === "/contact" ? "text-black" : "text-black/90 hover:text-black"}`}
+              >
+                Contact us
+              </Link>
             </nav>
 
             {/* Right Side */}
@@ -255,6 +261,11 @@ const Header = () => {
                         Blog
                       </Link>
                     </SheetClose>
+                    <SheetClose asChild>
+                      <Link to="/contact" className="text-lg font-medium hover:text-primary">
+                        Contact us
+                      </Link>
+                    </SheetClose>
 
                     {isLoggedIn && staff && (
                       <SheetClose asChild>
@@ -309,22 +320,11 @@ const Header = () => {
                       </>
                     ) : (
                       <SheetClose asChild>
-                        <button
-                          onClick={() => setSignupOpen(true)}
-                          className="text-lg font-medium hover:text-primary text-left"
-                        >
+                        <Button className="w-full mt-4 rounded-xl" onClick={() => setSignupOpen(true)}>
                           Get Started
-                        </button>
+                        </Button>
                       </SheetClose>
                     )}
-
-                    <SheetClose asChild>
-                      <Link to="/book-demo">
-                        <Button className="w-full mt-4 rounded-xl">
-                          Book a Demo
-                        </Button>
-                      </Link>
-                    </SheetClose>
                   </nav>
                 </SheetContent>
               </Sheet>

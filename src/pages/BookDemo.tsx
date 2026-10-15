@@ -1,180 +1,100 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-
-
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { CheckCircle2, Loader2, Mail } from "lucide-react";
+import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { sendContactMessage } from "@/lib/api";
+import mascot from "@/assets/mascot-smile.png";
 
-import UserTypeSelector from "@/components/onboarding/UserTypeSelector";
-import InstructorForm from "@/components/onboarding/InstructorForm";
-import SchoolForm from "@/components/onboarding/SchoolForm";
-import PricingCard from "@/components/onboarding/PricingCard";
+const SUPPORT_EMAIL = "support@donnadrive.co.uk";
 
-import {
-  OnboardingForm,
-  UserType,
-} from "@/components/onboarding/types";
+/** Contact us: a name, an email and a one-line question. We get an email and reply. */
+const ContactUs = () => {
+  const [form, setForm] = useState({ name: "", email: "", message: "", website: "" });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
-const Onboarding = () => {
-  const navigate = useNavigate();
+  useEffect(() => {
+    const previous = document.title;
+    document.title = "Contact us · Donna Drive";
+    return () => {
+      document.title = previous;
+    };
+  }, []);
 
-  const [form, setForm] = useState<OnboardingForm>({
-    userType: "",
+  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [key]: e.target.value }));
 
-    fullName: "",
-    email: "",
-    phone: "",
-
-    postcode: "",
-    activeStudents: "",
-
-    schoolName: "",
-    instructorCount: "",
-    callback: "",
-  });
-
-  const setUserType = (type: UserType) => {
-    setForm((prev) => ({
-      ...prev,
-      userType: type,
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
-
-    e.preventDefault();
-
-    if (form.userType === "SCHOOL") {
-
-      navigate("/callback-confirmed");
-
-      return;
-
+    setSending(true);
+    setError("");
+    try {
+      await sendContactMessage(form);
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't send your message");
+    } finally {
+      setSending(false);
     }
-
-    navigate(`/connect-google?type=${form.userType}`);
-
-  };
-
-  const buttonText = {
-    PDI: "Continue for Free →",
-    ADI: "Continue →",
-    SCHOOL: "Book Callback →",
-  };
+  }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50">
-
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="-ml-3 mb-8 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Button>
-
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8 items-start">
-
-          {/* FORM */}
-
-          <Card className="rounded-3xl shadow-xl border-0">
-
-            <CardHeader>
-
-              <CardTitle className="text-3xl sm:text-4xl">
-                Book your Donna Drive demo
-              </CardTitle>
-
-              <CardDescription className="text-base">
-                Choose your account type and tell us a little about
-                yourself. We'll tailor Donna Drive around your
-                business.
-              </CardDescription>
-
-            </CardHeader>
-
-            <CardContent>
-
-              <form
-                onSubmit={handleSubmit}
-                className="space-y-8"
-              >
-
-                <UserTypeSelector
-                  value={form.userType}
-                  onChange={setUserType}
-                />
-
-                {form.userType && (
-                  <div className="border-t pt-8">
-
-                    {(form.userType === "PDI" ||
-                      form.userType === "ADI") && (
-
-                        <InstructorForm
-                          form={form}
-                          setForm={setForm}
-                        />
-
-                      )}
-
-                    {form.userType === "SCHOOL" && (
-
-                      <SchoolForm
-                        form={form}
-                        setForm={setForm}
-                      />
-
-                    )}
-
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  disabled={!form.userType}
-                  size="lg"
-                  className="w-full rounded-xl h-12 text-base"
-                >
-                  {form.userType
-                    ? buttonText[form.userType]
-                    : "Choose an account type"}
+    <div className="min-h-screen">
+      <Header />
+      <main className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-[#F86C4F] via-[#F47B62] to-[#F59678] px-4 pb-12 pt-28 md:pt-32">
+        <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
+          {sent ? (
+            <div className="py-4 text-center">
+              <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-600" />
+              <h1 className="mb-2 text-2xl font-bold">Thanks, {form.name.split(" ")[0]}!</h1>
+              <p className="mb-6 text-muted-foreground">
+                We've got your message and will email you at <strong className="text-foreground">{form.email}</strong> soon.
+              </p>
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link to="/">Back to home</Link>
+              </Button>
+            </div>
+          ) : (
+            <>
+              <img src={mascot} alt="" className="mx-auto mb-3 h-20 w-auto" />
+              <h1 className="mb-1 text-center text-2xl font-bold sm:text-3xl">Contact us</h1>
+              <p className="mb-6 text-center text-muted-foreground">
+                Leave your name and email with a line about what you need. We'll get back to you quickly.
+              </p>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="contact-name">Name</Label>
+                  <Input id="contact-name" required autoComplete="name" value={form.name} onChange={set("name")} placeholder="Your name" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="contact-email">Email</Label>
+                  <Input id="contact-email" type="email" required autoComplete="email" value={form.email} onChange={set("email")} placeholder="you@example.com" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="contact-message">How can we help?</Label>
+                  <Input id="contact-message" maxLength={300} value={form.message} onChange={set("message")} placeholder="e.g. I'd like a demo for my driving school" />
+                </div>
+                {/* Hidden from people; bots fill it in and get ignored */}
+                <input type="text" name="website" tabIndex={-1} autoComplete="off" value={form.website} onChange={set("website")} className="hidden" aria-hidden />
+                {error && <p className="text-sm text-red-600">{error}</p>}
+                <Button type="submit" size="lg" disabled={sending} className="h-12 w-full rounded-xl text-base">
+                  {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Send"}
                 </Button>
-
-                <p className="text-center text-sm text-muted-foreground">
-                  Takes less than a minute • No obligation • Secure
-                  setup
-                </p>
-
               </form>
-
-            </CardContent>
-
-          </Card>
-
-          {/* PRICING */}
-
-          <div className="sticky top-8">
-            <PricingCard
-              userType={form.userType}
-            />
-          </div>
-
+              <p className="mt-5 flex items-center justify-center gap-1.5 text-center text-sm text-muted-foreground">
+                <Mail className="h-4 w-4" /> Or email{" "}
+                <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-primary hover:underline">{SUPPORT_EMAIL}</a>
+              </p>
+            </>
+          )}
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 };
 
-export default Onboarding;
+export default ContactUs;

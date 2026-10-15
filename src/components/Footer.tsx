@@ -86,10 +86,10 @@ const Footer = () => {
               </a>
 
               <Link
-                to="/book-demo"
+                to="/contact"
                 className="flex items-center gap-1 text-muted-foreground transition hover:text-primary"
               >
-                Book Demo
+                Contact us
 
                 <ArrowUpRight className="h-4 w-4" />
 

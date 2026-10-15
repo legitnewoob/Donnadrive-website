@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import SignupDialog from "@/components/SignupDialog";
+import mascot from "@/assets/mascot-smile.png";
+import { homePath } from "@/lib/access";
 import {
   CheckCircle2,
   Phone,
@@ -111,6 +114,8 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [signedOut, setSignedOut] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -137,21 +142,23 @@ export default function Onboarding() {
         let currentToken: string | null = null;
         let currentApiKey: string | null = null;
 
-        if (authCode) {
-          const result = await exchangeAuthCode(authCode, searchParams.get("session_id"));
-          currentToken = result.token;
-          currentApiKey = result.apiKey;
-          localStorage.setItem("dd_token", result.token);
-          if (result.apiKey) localStorage.setItem("dd_apiKey", result.apiKey);
-          window.history.replaceState({}, "", "/get-onboard");
-        } else {
-          currentToken = localStorage.getItem("dd_token");
-          currentApiKey = localStorage.getItem("dd_apiKey");
+        // From checkout, or from the Portal's dashboard button (a one-time code).
+        // A used or expired code falls back to however they're signed in here.
+        const exchanged = authCode
+          ? await exchangeAuthCode(authCode, searchParams.get("session_id")).catch(() => null)
+          : null;
+        if (authCode) window.history.replaceState({}, "", "/get-onboard");
+        if (exchanged) {
+          localStorage.setItem("dd_token", exchanged.token);
+          if (exchanged.apiKey) localStorage.setItem("dd_apiKey", exchanged.apiKey);
+          window.dispatchEvent(new Event("dd_auth_change"));
         }
+        currentToken = localStorage.getItem("dd_token");
+        currentApiKey = localStorage.getItem("dd_apiKey");
 
         if (!currentToken) {
           if (!cancelled) {
-            setError("Please sign up first to access this page.");
+            setSignedOut(true);
             setLoading(false);
           }
           return;
@@ -208,6 +215,16 @@ export default function Onboarding() {
       cancelled = true;
     };
   }, [searchParams, range]);
+
+  // Signed in from the sign-in screen: load the dashboard they came for
+  useEffect(() => {
+    if (!signedOut) return;
+    const onAuth = () => {
+      if (localStorage.getItem("dd_token")) window.location.assign(homePath());
+    };
+    window.addEventListener("dd_auth_change", onAuth);
+    return () => window.removeEventListener("dd_auth_change", onAuth);
+  }, [signedOut]);
 
   async function refreshSetup() {
     if (!token) return null;
@@ -320,6 +337,32 @@ export default function Onboarding() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
+      </div>
+    );
+  }
+
+  if (signedOut) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+        <div className="w-full max-w-md rounded-3xl border bg-white p-6 text-center shadow-sm sm:p-8">
+          <img src={mascot} alt="" className="mx-auto mb-4 h-24 w-auto" />
+          <h1 className="mb-2 text-2xl font-bold">Sign in to see your dashboard</h1>
+          <p className="mb-6 text-muted-foreground">
+            Your dashboard lives on the Donna Drive website. Sign in with the same Google account you use for the Portal.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Button size="lg" className="w-full" onClick={() => setSignInOpen(true)}>
+              Sign in with Google
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={() => navigate("/")}>
+              Back to home
+            </Button>
+          </div>
+        </div>
+        <SignupDialog
+          open={signInOpen}
+          onOpenChange={setSignInOpen}
+        />
       </div>
     );
   }

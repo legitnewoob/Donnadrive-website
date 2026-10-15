@@ -65,7 +65,7 @@ export default function AdminNumbers() {
 
   return (
     <AdminLayout title="Phone numbers" subtitle="The WhatsApp numbers Donna hands out to instructors" permission="admin.numbers">
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <section className="rounded-xl border bg-white lg:col-span-2">
           <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
             <h2 className="mr-auto font-semibold">Pool</h2>

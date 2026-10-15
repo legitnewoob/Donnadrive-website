@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-import ScrollProgress from "@/components/ScrollProgress";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -75,7 +74,6 @@ const Onboarding = () => {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50">
-      <ScrollProgress />
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
         <Button

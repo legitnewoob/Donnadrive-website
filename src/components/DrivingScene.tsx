@@ -55,6 +55,18 @@ const DrivingScene = () => {
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // Phones get the copy on a plain background: the scene sat almost hidden
+  // behind the scrim there, and 120 frames is a lot to download on mobile data.
+  const [showScene, setShowScene] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setShowScene(mq.matches);
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   const drawFrame = (index: number) => {
     const canvas = canvasRef.current;
     const img = imagesRef.current[index];
@@ -69,6 +81,7 @@ const DrivingScene = () => {
   };
 
   useEffect(() => {
+    if (!showScene) return;
     let cancelled = false;
 
     // decode() (not just onload) is what guarantees a bitmap is fully
@@ -102,9 +115,10 @@ const DrivingScene = () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [showScene]);
 
   useEffect(() => {
+    if (!showScene) return;
     if (prefersReducedMotion) {
       const mid = Math.floor(FRAME_COUNT / 2);
       const interval = setInterval(() => {
@@ -153,28 +167,30 @@ const DrivingScene = () => {
       window.removeEventListener("resize", measure);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, showScene]);
 
   return (
     <section
       ref={sectionRef}
       className="relative overflow-hidden bg-[#F2EEE6] pt-16 pb-24 md:py-0 md:min-h-[760px] md:h-[92vh] md:max-h-[980px] flex items-center"
     >
-      {/* Scroll-scrubbed background */}
-      <canvas
-        ref={canvasRef}
-        width={FRAME_WIDTH}
-        height={FRAME_HEIGHT}
-        className={`absolute inset-0 w-full h-full object-cover object-right transition-opacity duration-700 ${
-          firstFrameReady ? "opacity-100" : "opacity-0"
-        }`}
-      />
+      {/* Scroll-scrubbed background, from md up only */}
+      {showScene && (
+        <>
+          <canvas
+            ref={canvasRef}
+            width={FRAME_WIDTH}
+            height={FRAME_HEIGHT}
+            className={`absolute inset-0 w-full h-full object-cover object-right transition-opacity duration-700 ${
+              firstFrameReady ? "opacity-100" : "opacity-0"
+            }`}
+          />
 
-      {/* Scrim: keeps the copy readable over the illustration. On mobile
-          the text column spans most of the width, so it stays mostly
-          opaque throughout; from md up it fades to fully transparent on
-          the right so the scene reads clearly. */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#F2EEE6] from-40% via-[#F2EEE6]/85 via-70% to-[#F2EEE6]/45 md:from-[#F2EEE6] md:from-0% md:via-[#F2EEE6]/60 md:via-60% md:to-transparent" />
+          {/* Scrim: keeps the copy readable over the illustration, fading to
+              fully transparent on the right so the scene reads clearly. */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F2EEE6] via-[#F2EEE6]/60 via-60% to-transparent" />
+        </>
+      )}
 
       <div className="relative mx-auto max-w-6xl px-6 w-full">
         <motion.div

@@ -1,5 +1,4 @@
-﻿import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+﻿import { motion } from "framer-motion";
 
 import PricingCard from "./PricingCard";
 import { useDisplayPlans } from "@/lib/pricing";
@@ -7,16 +6,7 @@ import donnaSurprised from "@/assets/mascot-surprised.png";
 import RoundaboutMapBackground from "@/components/RoundaboutMapBackground";
 
 const Pricing = () => {
-  const rowRef = useRef<HTMLDivElement>(null);
   const { plans, sale, trialDays } = useDisplayPlans();
-
-  // On phones, start the swipeable row on the "Most Popular" plan
-  useEffect(() => {
-    const row = rowRef.current;
-    const popular = row?.querySelector<HTMLElement>("[data-popular]");
-    if (!row || !popular || row.scrollWidth <= row.clientWidth) return;
-    row.scrollLeft = popular.offsetLeft - (row.clientWidth - popular.offsetWidth) / 2;
-  }, []);
 
   return (
     <section
@@ -53,7 +43,7 @@ const Pricing = () => {
             Choose Your Donna
           </h2>
 
-          <p className="mt-6 text-lg text-muted-foreground leading-8">
+          <p className="mt-4 text-base text-muted-foreground leading-7 md:mt-6 md:text-lg md:leading-8">
             Start free. Upgrade when you're ready.
             No contracts. Cancel anytime.
           </p>
@@ -76,18 +66,14 @@ const Pricing = () => {
 
         </motion.div>
 
-        {/* Phones: one swipeable row that opens on the popular plan; grid from md up */}
-        <div
-          ref={rowRef}
-          className="relative -mx-6 mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-4 pt-5 [scrollbar-width:none] md:mx-0 md:mt-20 md:grid md:gap-8 md:overflow-visible md:p-0 md:grid-cols-2 lg:grid-cols-3"
-        >
+        {/* Phones: plans stacked one under another; side by side from md up */}
+        <div className="relative mx-auto mt-10 grid max-w-md grid-cols-1 gap-8 md:mt-20 md:max-w-none md:grid-cols-2 lg:grid-cols-3">
 
           {plans.map((plan, index) => (
             <div
               key={plan.slug}
-              data-popular={plan.popular || undefined}
               // Same height for every card in the row, whatever badges or sale text they show
-              className="flex w-[85%] shrink-0 snap-center md:w-auto"
+              className="flex"
             >
               <PricingCard
                 plan={plan}
@@ -97,8 +83,6 @@ const Pricing = () => {
           ))}
 
         </div>
-
-        <p className="mt-2 text-center text-xs text-muted-foreground md:hidden">Swipe to compare plans</p>
 
       </div>
     </section>

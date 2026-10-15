@@ -71,7 +71,7 @@ export default function PlanGate() {
   return (
     <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-slate-900/40 px-3 py-6 backdrop-blur-md sm:items-center sm:py-10">
       <div role="dialog" aria-modal="true" aria-labelledby="plan-gate-title" className="w-full max-w-4xl rounded-3xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between gap-3 border-b px-5 py-4 sm:px-7">
+        <div className="flex items-center justify-between gap-3 border-b px-4 py-3 sm:px-7 sm:py-4">
           {paying ? (
             <button onClick={() => { setPaying(null); setResumed(false); }} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900">
               <ArrowLeft className="h-4 w-4" /> Change plan
@@ -123,45 +123,56 @@ function ChooseStep({ name, onPaid }: { name: string; onPaid: (slug: PaidSlug) =
   }
 
   return (
-    <div className="px-5 py-6 sm:px-7 sm:py-8">
-      <h2 id="plan-gate-title" className="text-center text-2xl font-black sm:text-3xl">
+    <div className="px-4 py-5 sm:px-7 sm:py-8">
+      <h2 id="plan-gate-title" className="text-center text-xl font-black sm:text-3xl">
         {name ? `${name}, choose your plan` : "Choose your plan"}
       </h2>
-      <p className="mt-2 text-center text-sm text-muted-foreground">Your dashboard and Portal open as soon as you pick one.</p>
+      <p className="mt-1 text-center text-sm text-muted-foreground sm:mt-2">Your dashboard and Portal open as soon as you pick one.</p>
 
-      <div className="mt-6 grid gap-3 md:grid-cols-3">
+      <div className="mt-4 grid gap-2.5 sm:mt-6 md:grid-cols-3 md:gap-3">
         {plans.map((plan) => {
           const Icon = plan.icon;
+          const price = plan.sale ? gbp(plan.sale.amount) : plan.price;
           return (
-            <div key={plan.slug} className={`flex flex-col rounded-2xl border p-5 ${plan.popular ? "border-primary ring-1 ring-primary" : ""}`}>
+            <div key={plan.slug} className={`flex flex-col rounded-2xl border p-3.5 md:p-5 ${plan.popular ? "border-primary ring-1 ring-primary" : ""}`}>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 md:h-10 md:w-10">
                   <Icon className="h-5 w-5 text-primary" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-2 font-bold">
                     {plan.title}
                     {plan.popular && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase text-white">Popular</span>}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">{plan.subtitle}</p>
                 </div>
+                {/* Phones: price beside the name, to keep each plan short */}
+                <div className="shrink-0 text-right md:hidden">
+                  {plan.sale && <p className="text-xs text-muted-foreground line-through">{plan.price}</p>}
+                  <p className="text-xl font-black leading-tight">{price}</p>
+                  {plan.period && <p className="text-[11px] text-muted-foreground">{plan.period}</p>}
+                </div>
               </div>
-              <div className="mt-4 flex flex-wrap items-end gap-x-1.5">
+              <div className="mt-4 hidden flex-wrap items-end gap-x-1.5 md:flex">
                 {plan.sale && <span className="pb-0.5 text-sm font-semibold text-muted-foreground line-through">{plan.price}</span>}
-                <span className="text-3xl font-black">{plan.sale ? gbp(plan.sale.amount) : plan.price}</span>
+                <span className="text-3xl font-black">{price}</span>
                 <span className="pb-1 text-sm text-muted-foreground">{plan.period}</span>
               </div>
               {plan.sale ? (
-                <p className="mt-1 text-xs font-semibold text-rose-600">{plan.sale.label}</p>
+                <p className="mt-2 text-xs font-semibold text-rose-600 md:mt-1">
+                  {plan.sale.label}
+                  {plan.trialDays > 0 && <span className="font-normal text-green-700 md:hidden"> · {plan.trialDays}-day free trial</span>}
+                </p>
               ) : plan.trialDays > 0 ? (
-                <p className="mt-1 text-xs text-green-700">{plan.trialDays}-day free trial</p>
+                <p className="mt-2 text-xs text-green-700 md:mt-1">{plan.trialDays}-day free trial</p>
               ) : null}
-              <ul className="mt-4 flex-1 space-y-1.5 text-sm">
+              {/* The full feature list is on the pricing page; on phones it made this two screens long */}
+              <ul className="mt-4 hidden flex-1 space-y-1.5 text-sm md:block">
                 {plan.features.slice(0, 5).map((f) => (
                   <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /> {f}</li>
                 ))}
               </ul>
-              <Button className="mt-5 w-full" variant={plan.popular ? "default" : "outline"} disabled={busy} onClick={() => pick(plan)}>
+              <Button className="mt-3 w-full md:mt-5" size="sm" variant={plan.popular ? "default" : "outline"} disabled={busy} onClick={() => pick(plan)}>
                 {busy && plan.slug === "pdi" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {plan.slug === "pdi" ? "Continue free" : plan.button}
               </Button>
@@ -199,8 +210,8 @@ function PayStep({ plan, resumed }: { plan: PaidSlug; resumed: boolean }) {
   }
 
   return (
-    <div className="px-5 py-6 sm:px-7">
-      <div className="mb-5">
+    <div className="px-4 py-5 sm:px-7 sm:py-6">
+      <div className="mb-4 sm:mb-5">
         <h2 id="plan-gate-title" className="text-xl font-black sm:text-2xl">
           {resumed ? `Finish setting up ${p?.title || "your plan"}` : `${p?.title || "Your plan"}`}
         </h2>

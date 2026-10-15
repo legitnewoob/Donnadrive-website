@@ -61,7 +61,7 @@ function Body({ data }: { data: Overview }) {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Sign-ups chart */}
         <section className="rounded-xl border bg-white p-4 lg:col-span-2">
           <div className="mb-3 flex items-baseline justify-between">
@@ -119,7 +119,7 @@ function Body({ data }: { data: Overview }) {
         </section>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Setup funnel */}
         <section className="rounded-xl border bg-white p-4">
           <h2 className="mb-4 font-semibold">Setup funnel</h2>
@@ -168,7 +168,7 @@ function Body({ data }: { data: Overview }) {
         </section>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <PeopleList title="Recent sign-ups" people={data.recentSignups} when={(p) => `Joined ${short(p.createdAt)}`} />
         <PeopleList
           title="Trials ending this week"

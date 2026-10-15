@@ -34,7 +34,7 @@ const PricingCard = ({ plan, index }: Props) => {
           h-full
           w-full
           flex-col
-          rounded-[36px]
+          rounded-3xl sm:rounded-[36px]
           border
           bg-white
           p-6 sm:p-8
@@ -53,11 +53,11 @@ const PricingCard = ({ plan, index }: Props) => {
           </div>
         )}
 
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-          <Icon className="h-7 w-7 text-primary" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 sm:h-14 sm:w-14">
+          <Icon className="h-6 w-6 text-primary sm:h-7 sm:w-7" />
         </div>
 
-        <h3 className="mt-6 text-2xl font-black">
+        <h3 className="mt-4 text-2xl font-black sm:mt-6">
           {plan.title}
         </h3>
 
@@ -65,7 +65,7 @@ const PricingCard = ({ plan, index }: Props) => {
           {plan.subtitle}
         </p>
 
-        <div className="mt-8 flex flex-wrap items-end gap-x-2">
+        <div className="mt-5 flex flex-wrap items-end gap-x-2 sm:mt-8">
           {plan.sale && (
             <span className="pb-1.5 text-2xl font-bold text-muted-foreground line-through decoration-rose-500/70">
               {plan.price}
@@ -100,20 +100,20 @@ const PricingCard = ({ plan, index }: Props) => {
         )}
 
         {/* Features fill the space so every card's button lines up at the bottom */}
-        <div className="mt-10 flex-1 space-y-4">
+        <div className="mt-6 flex-1 space-y-3 sm:mt-10 sm:space-y-4">
           {plan.features.map((feature: string) => (
             <div
               key={feature}
-              className="flex items-center gap-3"
+              className="flex items-start gap-3"
             >
-              <Check className="h-5 w-5 text-green-600" />
+              <Check className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
               <span>{feature}</span>
             </div>
           ))}
         </div>
 
         <Button
-          className="mt-10 w-full h-12 rounded-xl"
+          className="mt-6 w-full h-12 rounded-xl sm:mt-10"
           variant={plan.popular ? "default" : "outline"}
           onClick={() => setDialogOpen(true)}
         >

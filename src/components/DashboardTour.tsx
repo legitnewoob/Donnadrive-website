@@ -60,6 +60,26 @@ const STEPS: TourStep[] = [
   },
 ];
 
+// Remembered per account (from the sign-in token), not per browser, so a new
+// account on a browser that has seen the tour before still gets it
+function tourKey() {
+  try {
+    const payload = JSON.parse(atob((localStorage.getItem("dd_token") || "").split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (payload.instructorId) return `${TOUR_KEY}:${payload.instructorId}`;
+  } catch {
+    // No token or not readable: fall back to the browser-wide flag
+  }
+  return TOUR_KEY;
+}
+
+function tourSeen() {
+  try {
+    return !!localStorage.getItem(tourKey());
+  } catch {
+    return false;
+  }
+}
+
 export default function DashboardTour() {
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
@@ -85,19 +105,20 @@ export default function DashboardTour() {
       window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
     }
 
-    let seen = false;
-    try { seen = !!localStorage.getItem(TOUR_KEY); } catch {}
-
-    if (!forced && seen) {
-      return () => window.removeEventListener(START_TOUR_EVENT, start);
-    }
-
     // First visit: ask the server whether they've picked a plan (the stored flag can be
     // stale), then start once they have. Paying or picking Free signals dd_auth_change.
     let timer: ReturnType<typeof setTimeout> | undefined;
     let done = false;
     const tryStart = () => {
-      if (done || locked()) return;
+      if (done) return;
+      // Seen is per account: someone who deleted their account and came back is new again
+      if (!forced && tourSeen()) return;
+      if (needsPlan()) return;
+      // Back from checkout and still signing in: look again once the dashboard has finished
+      if (new URLSearchParams(window.location.search).has("auth_code")) {
+        timer = setTimeout(tryStart, 500);
+        return;
+      }
       done = true;
       timer = setTimeout(start, forced ? 400 : 1200);
     };
@@ -160,7 +181,7 @@ export default function DashboardTour() {
 
   function close() {
     setActive(false);
-    try { localStorage.setItem(TOUR_KEY, "true"); } catch {}
+    try { localStorage.setItem(tourKey(), "true"); } catch {}
   }
 
   function next() {

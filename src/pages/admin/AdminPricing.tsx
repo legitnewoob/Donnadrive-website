@@ -50,7 +50,7 @@ export default function AdminPricing() {
         <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-slate-400" /></div>
       ) : (
         <div className="space-y-8">
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             {plans.map((p) => <PlanEditor key={p.slug} plan={p} noticeDays={noticeDays} onSaved={load} />)}
           </div>
 

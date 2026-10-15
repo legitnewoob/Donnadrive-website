@@ -37,7 +37,7 @@ export default function AdminStaff() {
 
   return (
     <AdminLayout title="Staff & roles" subtitle="Who can use this admin panel" permission="admin.roles">
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <section className="rounded-xl border bg-white p-4">
             <h2 className="mb-1 flex items-center gap-2 font-semibold"><UserPlus className="h-4 w-4 text-violet-600" /> Add staff</h2>

@@ -231,7 +231,7 @@ export default function Learners() {
                 className="pl-9"
               />
             </div>
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 [scrollbar-width:none]">
+            <div className="flex flex-wrap gap-2">
               {(["all", "new", "active", "test-ready"] as const).map((v) => (
                 <Button
                   key={v}

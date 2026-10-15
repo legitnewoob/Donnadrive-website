@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useSearchParams, useLocation, useNavigate } from "react-router-dom";
-import { isInstructorPage, isSuperAdmin } from "@/lib/access";
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useLocation, useNavigate } from "react-router-dom";
+import { isInstructorPage, isSuperAdmin, homeRedirect } from "@/lib/access";
 import { useEffect } from "react";
 import ScrollToTop from "./components/ScrollToTop";
 import Index from "./pages/Index";
@@ -27,6 +27,7 @@ import DonnaSettings from "./pages/DonnaSettings";
 import Team from "./pages/Team";
 import JoinSchool from "./pages/JoinSchool";
 import PlanGate from "./components/PlanGate";
+import SchoolHome from "./pages/SchoolHome";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminPricing from "./pages/admin/AdminPricing";
@@ -51,6 +52,11 @@ function LogoutHandler() {
   return null;
 }
 
+function OldDashboardRedirect() {
+  const { search, hash } = useLocation();
+  return <Navigate to={`/dashboard${search}${hash}`} replace />;
+}
+
 // Instructor pages: super admins go to the admin panel (they aren't customers)
 function AccessRedirect() {
   const { pathname, search } = useLocation();
@@ -59,7 +65,12 @@ function AccessRedirect() {
     const check = () => {
       const { pathname: path, search: query } = window.location;
       if (!isInstructorPage(path, query)) return;
-      if (isSuperAdmin()) navigate("/admin", { replace: true });
+      if (isSuperAdmin()) return navigate("/admin", { replace: true });
+      // School owners have the school home; instructors their own dashboard.
+      // A sign-in code (from checkout or the Portal) is handled by the dashboard first.
+      if (new URLSearchParams(query).has("auth_code")) return;
+      const home = homeRedirect(path, query);
+      if (home) navigate(home, { replace: true });
     };
     check();
     window.addEventListener("dd_auth_change", check);
@@ -92,7 +103,10 @@ const App = () => (
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
-          <Route path="/get-onboard" element={<Onboarding />} />
+          <Route path="/dashboard" element={<Onboarding />} />
+          {/* Old address: checkout, emails and the Portal used it */}
+          <Route path="/get-onboard" element={<OldDashboardRedirect />} />
+          <Route path="/school" element={<SchoolHome />} />
           <Route path="/learners" element={<Learners />} />
           <Route path="/lesson-types" element={<LessonTypes />} />
           <Route path="/settings" element={<DonnaSettings />} />

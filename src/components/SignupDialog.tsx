@@ -96,7 +96,7 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
           setStep("plan");
         } else {
           setStep("success");
-          setTimeout(() => navigate("/get-onboard"), 1500);
+          setTimeout(() => navigate("/dashboard"), 1500);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -121,7 +121,7 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
         await chooseFreePlan(token);
         markPlanChosen();
         setStep("success");
-        setTimeout(() => navigate("/get-onboard"), 1500);
+        setTimeout(() => navigate("/dashboard"), 1500);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Couldn't choose the plan.");
         setStep("error");
@@ -133,7 +133,7 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
 
     // Paid plans: always pay in the modal over the dashboard (it stays locked until they do)
     handleClose();
-    navigate(`/get-onboard?plan=${plan.slug}`);
+    navigate(`/dashboard?plan=${plan.slug}`);
   }
 
   const handleClose = () => {

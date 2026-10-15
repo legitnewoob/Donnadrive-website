@@ -57,7 +57,7 @@ const NotFound = () => {
               </Button>
               {signedIn ? (
                 <Button asChild size="lg" variant="outline" className="h-12 rounded-xl border-white/40 bg-white/10 px-6 text-base text-white hover:bg-white/20 hover:text-white">
-                  <Link to="/get-onboard">
+                  <Link to="/dashboard">
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Go to your dashboard
                   </Link>
                 </Button>

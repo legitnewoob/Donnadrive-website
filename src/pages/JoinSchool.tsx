@@ -35,7 +35,7 @@ export default function JoinSchool() {
     try {
       const result = await acceptSchoolInvite(authToken, inviteToken);
       setJoined(result);
-      if (!result.hadOwnSubscription) setTimeout(() => navigate("/get-onboard"), 1800);
+      if (!result.hadOwnSubscription) setTimeout(() => navigate("/dashboard"), 1800);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't join the school");
     } finally {

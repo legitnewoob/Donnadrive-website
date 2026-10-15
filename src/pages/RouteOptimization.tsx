@@ -101,7 +101,8 @@ const RouteOptimization = () => {
                       alt="After Donna Drive - Clustered lessons, optimized routes, and less driving"
                       className="w-full rounded-lg sm:rounded-xl shadow-card border border-border"
                       loading="eager"
-                      fetchPriority="high"
+                      // React 18 only passes the lowercase attribute through
+                      {...{ fetchpriority: "high" }}
                     />
                   </div>
                   <p className="text-center mt-2 sm:mt-4 text-[10px] sm:text-sm lg:text-base text-muted-foreground">

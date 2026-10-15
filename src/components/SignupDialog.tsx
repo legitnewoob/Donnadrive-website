@@ -99,7 +99,6 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
           setTimeout(() => navigate("/get-onboard"), 1500);
         }
       } catch (err) {
-        console.error("Signup error:", err);
         setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
         setStep("error");
       } finally {
@@ -107,7 +106,6 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
       }
     },
     onError: (err) => {
-      console.error("Google login error:", err);
       setError("Google sign-in was cancelled or failed. Please try again.");
       setStep("error");
     },

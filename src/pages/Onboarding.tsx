@@ -193,7 +193,6 @@ export default function Onboarding() {
           }
         }
       } catch (err) {
-        console.error("Dashboard init error:", err);
         if (!cancelled) {
           setError(
             err instanceof Error ? err.message : "Failed to load your account."

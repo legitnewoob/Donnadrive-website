@@ -128,6 +128,7 @@ export default function Onboarding() {
   const [calendarMsg, setCalendarMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [setup, setSetup] = useState<SetupStatus | null>(null);
   const [donnaEnabled, setDonnaEnabled] = useState(true);
+  const [offBySchool, setOffBySchool] = useState(false);
   const [savingSwitch, setSavingSwitch] = useState(false);
   const [missingOpen, setMissingOpen] = useState(false);
   // What they were trying to do when we asked them to finish setting up
@@ -149,7 +150,7 @@ export default function Onboarding() {
         const exchanged = authCode
           ? await exchangeAuthCode(authCode, searchParams.get("session_id")).catch(() => null)
           : null;
-        if (authCode) window.history.replaceState({}, "", "/get-onboard");
+        if (authCode) window.history.replaceState({}, "", "/dashboard");
         if (exchanged) {
           localStorage.setItem("dd_token", exchanged.token);
           if (exchanged.apiKey) localStorage.setItem("dd_apiKey", exchanged.apiKey);
@@ -183,28 +184,35 @@ export default function Onboarding() {
           getSettings(currentToken).catch(() => null),
         ]);
 
+        // Driving school owners don't run Donna themselves: they have the school home
+        if (profileData.school?.role === "owner") {
+          navigate("/school", { replace: true });
+          return;
+        }
+
         if (!cancelled) {
           setProfile(profileData);
           setDashboard(dashboardData);
-          if (profileData.school?.role === "owner" || profileData.school?.role === "manager") {
+          if (profileData.school?.role === "manager") {
             getSchool(currentToken).then((sc) => !cancelled && setSchool(sc)).catch(() => {});
           }
           if (settingsData) {
             setSetup(settingsData.setup ?? null);
             setDonnaEnabled(settingsData.botSettings.donnaEnabled !== false);
+            setOffBySchool(!!settingsData.donnaOffBySchool);
           }
 
           // Handle OAuth callback result
           if (calendarParam === "connected") {
             setCalendarMsg({ type: "success", text: "Google Calendar connected successfully!" });
-            window.history.replaceState({}, "", "/get-onboard");
+            window.history.replaceState({}, "", "/dashboard");
           } else if (calendarParam === "error") {
             const reason = searchParams.get("reason");
             const text = reason === "not_found"
               ? "Could not find your account. Please try again."
               : "Failed to connect Google Calendar. Please try again.";
             setCalendarMsg({ type: "error", text });
-            window.history.replaceState({}, "", "/get-onboard");
+            window.history.replaceState({}, "", "/dashboard");
           }
         }
       } catch (err) {
@@ -457,6 +465,7 @@ export default function Onboarding() {
         saving={savingSwitch}
         hasPhone={hasPhone}
         setupDone={!setup || setup.complete}
+        offBySchool={offBySchool}
         onChange={handleToggleDonna}
       />
 
@@ -954,12 +963,14 @@ function DonnaSwitchCard({
   saving,
   hasPhone,
   setupDone,
+  offBySchool,
   onChange,
 }: {
   enabled: boolean;
   saving: boolean;
   hasPhone: boolean;
   setupDone: boolean;
+  offBySchool: boolean;
   onChange: (next: boolean) => void;
 }) {
   // Not set up yet isn't an emergency switch-off, so it isn't shown in red
@@ -978,14 +989,16 @@ function DonnaSwitchCard({
                 ? hasPhone
                   ? "She's replying to learners and booking lessons."
                   : "She'll start replying once your WhatsApp number is set up."
-                : setupDone
+                : offBySchool
+                  ? "Your driving school has switched Donna off for everyone. Ask them to turn her back on."
+                  : setupDone
                   ? "Learners are told to contact you directly, and their messages come to you."
                   : "Finish setting up and you can turn her on."}
             </p>
           </div>
           <Switch
             checked={enabled}
-            disabled={saving}
+            disabled={saving || offBySchool}
             onCheckedChange={onChange}
             aria-label={enabled ? "Turn Donna off" : "Turn Donna on"}
           />

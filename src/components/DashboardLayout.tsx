@@ -19,6 +19,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
 import { START_TOUR_EVENT } from "@/components/DashboardTour";
 import { getSetupStatus, getProfile, SETUP_CHANGED_EVENT } from "@/lib/api";
+import { isSchoolOwner } from "@/lib/access";
 
 const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
 
@@ -61,6 +62,8 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
   // Driving school owners and managers get a Team page; Donna Drive staff get Admin
   const [seesTeam, setSeesTeam] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
+  // School owners don't run Donna themselves: just their school, team and account
+  const [owner, setOwner] = useState(isSchoolOwner);
 
   useEffect(() => {
     const token = localStorage.getItem("dd_token");
@@ -68,6 +71,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
     getProfile(token)
       .then((p) => {
         setSeesTeam(p.school?.role === "owner" || p.school?.role === "manager");
+        setOwner(p.school?.role === "owner");
         setIsStaff(!!p.access?.staffRole);
       })
       .catch(() => {});
@@ -75,7 +79,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
 
   useEffect(() => {
     const token = localStorage.getItem("dd_token");
-    if (!token) return;
+    if (!token || owner) return;
     const refresh = () =>
       getSetupStatus(token)
         .then((s) => setSetupIncomplete(!s.complete && !s.hasNumber))
@@ -83,7 +87,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
     refresh();
     window.addEventListener(SETUP_CHANGED_EVENT, refresh);
     return () => window.removeEventListener(SETUP_CHANGED_EVENT, refresh);
-  }, []);
+  }, [owner]);
 
   const handleLogout = () => {
     localStorage.removeItem("dd_token");
@@ -95,10 +99,10 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
 
   function startTour() {
     setMobileOpen(false);
-    if (pathname === "/get-onboard") {
+    if (pathname === "/dashboard") {
       window.dispatchEvent(new Event(START_TOUR_EVENT));
     } else {
-      navigate("/get-onboard?tour=1");
+      navigate("/dashboard?tour=1");
     }
   }
 
@@ -111,20 +115,27 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
     return `${PORTAL_URL}?${params.toString()}`;
   }
 
-  const navItems: { label: string; short: string; icon: React.ElementType; path: string; tour?: string; inBottomBar?: boolean }[] = [
-    { label: "Dashboard", short: "Home", icon: LayoutDashboard, path: "/get-onboard", inBottomBar: true },
+  type NavItem = { label: string; short: string; icon: React.ElementType; path: string; tour?: string; inBottomBar?: boolean };
+  const ownerItems: NavItem[] = [
+    { label: "School", short: "Home", icon: LayoutDashboard, path: "/school", inBottomBar: true },
+    { label: "Team", short: "Team", icon: Building2, path: "/team", inBottomBar: true },
+    { label: "Account", short: "Account", icon: UserCircle, path: "/account", inBottomBar: true },
+  ];
+  const instructorItems: NavItem[] = [
+    { label: "Dashboard", short: "Home", icon: LayoutDashboard, path: "/dashboard", inBottomBar: true },
     { label: "Learners", short: "Learners", icon: Users, path: "/learners", inBottomBar: true },
     { label: "Lesson Types", short: "Lessons", icon: BookOpen, path: "/lesson-types" },
     ...(seesTeam ? [{ label: "Team", short: "Team", icon: Building2, path: "/team" }] : []),
     { label: "Donna Settings", short: "Settings", icon: SlidersHorizontal, path: "/settings", tour: "settings-link", inBottomBar: true },
     { label: "Account", short: "Account", icon: UserCircle, path: "/account", inBottomBar: true },
   ];
+  const navItems = owner ? ownerItems : instructorItems;
 
   const email = signedInEmail();
   const byPath = (path: string) => navItems.find((item) => item.path === path)!;
   // Everyday pages on top; settings and help pinned at the bottom; account last
-  const mainItems = ["/get-onboard", "/learners", ...(seesTeam ? ["/team"] : []), "/lesson-types"].map(byPath);
-  const settingsItem = byPath("/settings");
+  const mainItems = (owner ? ["/school", "/team"] : ["/dashboard", "/learners", ...(seesTeam ? ["/team"] : []), "/lesson-types"]).map(byPath);
+  const settingsItem = owner ? null : byPath("/settings");
 
   const itemClass = (active: boolean) =>
     `w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
@@ -164,15 +175,17 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
           {mainItems.map((item) => (
             <NavButton key={item.path} item={item} />
           ))}
-          <a
-            href={getPortalUrl()}
-            data-tour="portal-link"
-            className={itemClass(false)}
-          >
-            <Smartphone className="h-5 w-5 shrink-0" />
-            <span className="flex-1 text-left">Open Portal</span>
-            <ArrowUpRight className="h-4 w-4 text-slate-400" aria-hidden />
-          </a>
+          {!owner && (
+            <a
+              href={getPortalUrl()}
+              data-tour="portal-link"
+              className={itemClass(false)}
+            >
+              <Smartphone className="h-5 w-5 shrink-0" />
+              <span className="flex-1 text-left">Open Portal</span>
+              <ArrowUpRight className="h-4 w-4 text-slate-400" aria-hidden />
+            </a>
+          )}
         </nav>
 
         <div className="px-3 pb-3 space-y-1">
@@ -183,11 +196,13 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
               <ArrowUpRight className="h-4 w-4 text-slate-400" aria-hidden />
             </button>
           )}
-          <NavButton item={settingsItem} />
-          <button onClick={startTour} className={itemClass(false)}>
-            <Compass className="h-5 w-5 shrink-0" />
-            Take the tour
-          </button>
+          {settingsItem && <NavButton item={settingsItem} />}
+          {!owner && (
+            <button onClick={startTour} className={itemClass(false)}>
+              <Compass className="h-5 w-5 shrink-0" />
+              Take the tour
+            </button>
+          )}
         </div>
 
         {/* Account */}
@@ -236,14 +251,16 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
                 {subtitle && <p className="truncate text-[11px] leading-tight text-muted-foreground">{subtitle}</p>}
               </div>
             </div>
-            <a
-              href={getPortalUrl()}
-              data-tour="portal-link"
-              className="flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
-            >
-              <Smartphone className="h-4 w-4" />
-              Portal
-            </a>
+            {!owner && (
+              <a
+                href={getPortalUrl()}
+                data-tour="portal-link"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <Smartphone className="h-4 w-4" />
+                Portal
+              </a>
+            )}
           </div>
         </header>
 
@@ -254,22 +271,26 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
             {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
           </div>
           <div className="flex items-center gap-1">
-            <a
-              href={getPortalUrl()}
-              title="Open Portal"
-              className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-2"
-            >
-              <Smartphone className="h-5 w-5" />
-              <span className="text-sm font-medium">Portal</span>
-            </a>
-            <button
-              onClick={startTour}
-              title="Take the tour"
-              className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-2"
-            >
-              <Compass className="h-5 w-5" />
-              <span className="text-sm font-medium">Tour</span>
-            </button>
+            {!owner && (
+              <>
+                <a
+                  href={getPortalUrl()}
+                  title="Open Portal"
+                  className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-2"
+                >
+                  <Smartphone className="h-5 w-5" />
+                  <span className="text-sm font-medium">Portal</span>
+                </a>
+                <button
+                  onClick={startTour}
+                  title="Take the tour"
+                  className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-2"
+                >
+                  <Compass className="h-5 w-5" />
+                  <span className="text-sm font-medium">Tour</span>
+                </button>
+              </>
+            )}
             <button
               onClick={handleLogout}
               title="Sign out"
@@ -291,7 +312,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
         {/* Mobile bottom navigation */}
         <nav className="lg:hidden fixed inset-x-0 bottom-0 z-30 border-t bg-white/95 backdrop-blur pb-[env(safe-area-inset-bottom)]">
           {mobileFooter}
-          <div className="grid grid-cols-5">
+          <div className={`grid ${owner ? "grid-cols-4" : "grid-cols-5"}`}>
             {navItems.filter((item) => item.inBottomBar).map((item) => {
               const Icon = item.icon;
               const active = pathname === item.path;

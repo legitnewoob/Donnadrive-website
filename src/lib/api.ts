@@ -72,7 +72,9 @@ export async function getProfile(token: string) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
-  if (data.instructor?.access) setAccess({ ...data.instructor.access, needsPlan: !!data.instructor.needsPlan });
+  if (data.instructor?.access) {
+    setAccess({ ...data.instructor.access, needsPlan: !!data.instructor.needsPlan, schoolOwner: data.instructor.school?.role === "owner" });
+  }
   return data.instructor as {
     name: string;
     email: string;
@@ -314,6 +316,8 @@ export async function getSetupStatus(token: string) {
 
 export interface DonnaSettings {
   setup?: SetupStatus;
+  /** Their driving school has switched Donna off for everyone */
+  donnaOffBySchool?: boolean;
   baseAddress: string;
   hasBaseLocation: boolean;
   routeSettings: RouteSettings;
@@ -464,6 +468,10 @@ export interface SchoolOverview {
   seats: { members: number; invites: number; used: number; limit: number };
   members: SchoolMember[];
   invites: Array<{ id: string; email: string; sentAt: string; expiresAt: string; link: string }>;
+  /** The school-wide switch: off stops Donna for every instructor */
+  donnaEnabled: boolean;
+  /** Onboarded once an instructor has joined and set Donna up completely */
+  onboarding: { invited: boolean; joined: boolean; ready: boolean; complete: boolean; readyCount: number };
 }
 
 async function schoolRequest<T>(token: string | null, path: string, init: RequestInit = {}): Promise<T> {
@@ -481,6 +489,8 @@ async function schoolRequest<T>(token: string | null, path: string, init: Reques
 }
 
 export const getSchool = (token: string) => schoolRequest<SchoolOverview>(token, "");
+export const setSchoolDonna = (token: string, enabled: boolean) =>
+  schoolRequest<SchoolOverview>(token, "/donna", { method: "PUT", body: JSON.stringify({ enabled }) });
 export const renameSchool = (token: string, name: string) =>
   schoolRequest<SchoolOverview>(token, "", { method: "PATCH", body: JSON.stringify({ name }) });
 export const inviteInstructor = (token: string, email: string) =>

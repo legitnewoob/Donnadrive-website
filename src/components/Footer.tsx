@@ -127,7 +127,7 @@ const Footer = () => {
               </Link>
 
               <Link
-                to="/get-onboard"
+                to="/dashboard"
                 className="block text-muted-foreground transition hover:text-primary"
               >
                 Get Onboard

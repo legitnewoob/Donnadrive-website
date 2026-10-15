@@ -86,7 +86,7 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
           <Lock className="mx-auto h-10 w-10 text-slate-500" />
           <h1 className="mt-4 text-xl font-bold text-white">Staff only</h1>
           <p className="mt-2 text-sm text-slate-400">This area is for the Donna Drive team. Sign in with a staff Google account.</p>
-          <Button className="mt-6" variant="secondary" onClick={() => navigate("/get-onboard")}>Back to your dashboard</Button>
+          <Button className="mt-6" variant="secondary" onClick={() => navigate("/dashboard")}>Back to your dashboard</Button>
         </div>
       </div>
     );
@@ -135,7 +135,7 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
       <div className="space-y-2 border-t border-white/10 p-3">
         {!superAdmin && (
           <Link
-            to="/get-onboard"
+            to="/dashboard"
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" /> Instructor dashboard

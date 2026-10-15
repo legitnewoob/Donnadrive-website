@@ -131,7 +131,7 @@ const Header = () => {
               {isLoggedIn && planless ? (
                 <div className="hidden sm:flex items-center bg-white rounded-xl shadow-lg overflow-hidden">
                   <button
-                    onClick={() => navigate("/get-onboard")}
+                    onClick={() => navigate("/dashboard")}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
                   >
                     <Sparkles className="h-4 w-4" />
@@ -181,7 +181,7 @@ const Header = () => {
                     </>
                   )}
                   <button
-                    onClick={() => navigate("/get-onboard")}
+                    onClick={() => navigate("/dashboard")}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
                   >
                     <LayoutDashboard className="h-4 w-4" />
@@ -278,7 +278,7 @@ const Header = () => {
                     {isLoggedIn && planless ? (
                       <>
                         <SheetClose asChild>
-                          <Link to="/get-onboard" className="text-lg font-medium text-primary flex items-center gap-2">
+                          <Link to="/dashboard" className="text-lg font-medium text-primary flex items-center gap-2">
                             <Sparkles className="h-5 w-5" />
                             Finish signing up
                           </Link>
@@ -301,7 +301,7 @@ const Header = () => {
                       <>
                         <SheetClose asChild>
                           <Link
-                            to="/get-onboard"
+                            to="/dashboard"
                             className="text-lg font-medium hover:text-primary flex items-center gap-2"
                           >
                             <LayoutDashboard className="h-5 w-5" />

@@ -130,6 +130,8 @@ export default function Onboarding() {
   const [donnaEnabled, setDonnaEnabled] = useState(true);
   const [savingSwitch, setSavingSwitch] = useState(false);
   const [missingOpen, setMissingOpen] = useState(false);
+  // What they were trying to do when we asked them to finish setting up
+  const [missingFor, setMissingFor] = useState<"number" | "donna">("number");
   const [school, setSchool] = useState<SchoolOverview | null>(null);
 
   useEffect(() => {
@@ -152,6 +154,12 @@ export default function Onboarding() {
           localStorage.setItem("dd_token", exchanged.token);
           if (exchanged.apiKey) localStorage.setItem("dd_apiKey", exchanged.apiKey);
           window.dispatchEvent(new Event("dd_auth_change"));
+          // Sent from the Portal to a particular page (only ever a path on this site)
+          const next = searchParams.get("next");
+          if (next && /^\/[a-z-]/.test(next)) {
+            navigate(next, { replace: true });
+            return;
+          }
         }
         currentToken = localStorage.getItem("dd_token");
         currentApiKey = localStorage.getItem("dd_apiKey");
@@ -237,6 +245,7 @@ export default function Onboarding() {
     if (!token) return;
     // Donna needs the basics before she can take bookings on a real number
     if (setup && !setup.complete) {
+      setMissingFor("number");
       setMissingOpen(true);
       return;
     }
@@ -275,6 +284,12 @@ export default function Onboarding() {
 
   async function handleToggleDonna(next: boolean) {
     if (!token) return;
+    // Donna can't do her job until the basics are filled in
+    if (next && setup && !setup.complete) {
+      setMissingFor("donna");
+      setMissingOpen(true);
+      return;
+    }
     setDonnaEnabled(next);
     setSavingSwitch(true);
     try {
@@ -282,6 +297,13 @@ export default function Onboarding() {
       toast.success(next ? "Donna is back on and replying to learners." : "Donna is off. Learners will be asked to contact you directly.");
     } catch (err) {
       setDonnaEnabled(!next);
+      // Setup changed elsewhere since this page loaded
+      const latest = next ? await refreshSetup() : null;
+      if (latest && !latest.complete) {
+        setMissingFor("donna");
+        setMissingOpen(true);
+        return;
+      }
       toast.error(err instanceof Error ? err.message : "Couldn't change Donna's status");
     } finally {
       setSavingSwitch(false);
@@ -430,7 +452,13 @@ export default function Onboarding() {
       )}
 
       {/* Donna on/off */}
-      <DonnaSwitchCard enabled={donnaEnabled} saving={savingSwitch} hasPhone={hasPhone} onChange={handleToggleDonna} />
+      <DonnaSwitchCard
+        enabled={donnaEnabled}
+        saving={savingSwitch}
+        hasPhone={hasPhone}
+        setupDone={!setup || setup.complete}
+        onChange={handleToggleDonna}
+      />
 
       {/* Getting started: settings → number → calendar */}
       {(!hasPhone || !calendarConnected) && (
@@ -467,7 +495,9 @@ export default function Onboarding() {
           <DialogHeader>
             <DialogTitle>Finish setting up Donna first</DialogTitle>
             <DialogDescription>
-              Donna needs these before she can take bookings on your WhatsApp number:
+              {missingFor === "donna"
+                ? "Donna stays off until these are done, so she never tells learners something she can't back up:"
+                : "Donna needs these before she can take bookings on your WhatsApp number:"}
             </DialogDescription>
           </DialogHeader>
           <ul className="space-y-2">
@@ -923,19 +953,23 @@ function DonnaSwitchCard({
   enabled,
   saving,
   hasPhone,
+  setupDone,
   onChange,
 }: {
   enabled: boolean;
   saving: boolean;
   hasPhone: boolean;
+  setupDone: boolean;
   onChange: (next: boolean) => void;
 }) {
+  // Not set up yet isn't an emergency switch-off, so it isn't shown in red
+  const tone = enabled ? "green" : setupDone ? "red" : "slate";
   return (
-    <Card className={`mb-4 ${enabled ? "border-green-200 bg-green-50/40" : "border-red-300 bg-red-50/60"}`}>
+    <Card className={`mb-4 ${{ green: "border-green-200 bg-green-50/40", red: "border-red-300 bg-red-50/60", slate: "border-slate-200 bg-white" }[tone]}`}>
       <CardContent className="py-4">
         <div className="flex items-center gap-3">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${enabled ? "bg-green-100" : "bg-red-100"}`}>
-            <Power className={`h-5 w-5 ${enabled ? "text-green-600" : "text-red-600"}`} />
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${{ green: "bg-green-100", red: "bg-red-100", slate: "bg-slate-100" }[tone]}`}>
+            <Power className={`h-5 w-5 ${{ green: "text-green-600", red: "text-red-600", slate: "text-slate-500" }[tone]}`} />
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-semibold">{enabled ? "Donna is on" : "Donna is off"}</p>
@@ -944,7 +978,9 @@ function DonnaSwitchCard({
                 ? hasPhone
                   ? "She's replying to learners and booking lessons."
                   : "She'll start replying once your WhatsApp number is set up."
-                : "Learners are told to contact you directly, and their messages come to you."}
+                : setupDone
+                  ? "Learners are told to contact you directly, and their messages come to you."
+                  : "Finish setting up and you can turn her on."}
             </p>
           </div>
           <Switch

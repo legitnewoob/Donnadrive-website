@@ -219,10 +219,10 @@ function PayStep({ plan, resumed }: { plan: PaidSlug; resumed: boolean }) {
           </EmbeddedCheckoutProvider>
         </div>
       ) : (
-        <div className="rounded-2xl border bg-slate-50 p-6 text-center">
+        <div className="rounded-2xl border bg-slate-50 p-4 text-center sm:p-6">
           <Lock className="mx-auto h-6 w-6 text-slate-400" />
           <p className="mt-2 text-sm text-muted-foreground">Payment is handled securely by Stripe.</p>
-          <Button className="mt-4" onClick={redirect} disabled={redirecting}>
+          <Button className="mt-4 h-auto w-full whitespace-normal py-3 sm:w-auto" onClick={redirect} disabled={redirecting}>
             {redirecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Continue to secure payment
           </Button>

@@ -49,7 +49,8 @@ export default function UserTypeSelector({
       o.type === "SCHOOL" && p.extraSeatAmount
         ? `${p.includedSeats} instructors included, +${gbp(p.extraSeatAmount)}/month each after.`
         : o.description;
-    return { ...o, price, description };
+    const trial = p.amount > 0 && p.trialDays > 0 ? ` ${p.trialDays}-day free trial.` : "";
+    return { ...o, price, description: description + trial };
   });
 
   return (

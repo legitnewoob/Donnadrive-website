@@ -137,8 +137,8 @@ export default function Learners() {
     setLoading(true);
     setExpanded(null);
     setDetail(null);
-    getLearners(token, undefined, viewing || undefined).then(setLearners).catch(console.error).finally(() => setLoading(false));
-    if (!viewing) getLessonTypes(token).then(setLessonTypes).catch(console.error);
+    getLearners(token, undefined, viewing || undefined).then(setLearners).catch(() => {}).finally(() => setLoading(false));
+    if (!viewing) getLessonTypes(token).then(setLessonTypes).catch(() => {});
   }, [token, viewing]);
 
   const filtered = learners.filter((l) => {
@@ -164,8 +164,7 @@ export default function Learners() {
       const d = await getLearnerDetail(token!, phone, viewing || undefined);
       setDetail(d);
       setNotes(d.instructorNotes || "");
-    } catch (e) {
-      console.error(e);
+    } catch {
     } finally {
       setDetailLoading(false);
     }
@@ -179,8 +178,7 @@ export default function Learners() {
       setSavingNotes(true);
       try {
         await updateLearnerNotes(token!, expanded!, value);
-      } catch (e) {
-        console.error(e);
+      } catch {
       } finally {
         setSavingNotes(false);
       }

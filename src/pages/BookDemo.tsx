@@ -50,7 +50,6 @@ const Onboarding = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log(form);
 
     e.preventDefault();
 

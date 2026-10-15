@@ -52,7 +52,7 @@ const FAQ = () => {
   return (
     <section
       id="faq"
-      className="relative overflow-hidden py-16 md:py-32 bg-background"
+      className="relative overflow-hidden py-12 md:py-32 bg-background"
     >
       <RoundaboutMapBackground />
 

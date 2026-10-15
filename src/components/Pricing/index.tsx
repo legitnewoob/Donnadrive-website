@@ -11,7 +11,7 @@ const Pricing = () => {
   return (
     <section
       id="pricing"
-      className="relative overflow-hidden py-16 md:py-32 bg-gradient-to-b from-orange-50/20 to-background"
+      className="relative overflow-hidden py-12 md:py-32 bg-gradient-to-b from-orange-50/20 to-background"
     >
       <RoundaboutMapBackground />
 
@@ -48,9 +48,9 @@ const Pricing = () => {
             No contracts. Cancel anytime.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 md:mt-8">
             {sale && (
-              <div className="inline-flex flex-wrap items-center justify-center gap-x-2 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-500/20">
+              <div className="inline-flex flex-wrap items-center justify-center gap-x-2 rounded-2xl bg-gradient-to-r from-rose-500 to-orange-500 px-4 py-2 text-xs sm:rounded-full sm:px-5 sm:text-sm font-semibold text-white shadow-lg shadow-rose-500/20">
                 <span>{sale.bannerText}</span>
                 <span className="font-normal opacity-90">
                   · ends {new Date(sale.endsAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
@@ -58,7 +58,7 @@ const Pricing = () => {
               </div>
             )}
             {trialDays > 0 && (
-              <div className="inline-flex rounded-full bg-green-100 px-5 py-2 text-sm font-semibold text-green-700">
+              <div className="inline-flex rounded-2xl bg-green-100 px-4 py-2 text-xs font-semibold text-green-700 sm:rounded-full sm:px-5 sm:text-sm">
                 🎉 {trialDays}-day free trial on paid plans • Cancel anytime
               </div>
             )}

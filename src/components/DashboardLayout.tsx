@@ -156,12 +156,8 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
 
     return (
       <>
-        <div className={`${mobile ? "px-6 pb-4" : "p-6"} flex items-center gap-3`}>
+        <div className={`${mobile ? "px-6 pb-4" : "p-6"} flex items-center`}>
           <img src={donnaDriveLogo} alt="Donna Drive" className="h-10 w-auto rounded-lg" />
-          <div>
-            <h1 className="font-bold text-slate-900">Donna Drive</h1>
-            <p className="text-xs text-muted-foreground">{title}</p>
-          </div>
         </div>
 
         <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 space-y-1">

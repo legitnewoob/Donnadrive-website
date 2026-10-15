@@ -58,18 +58,21 @@ const Pricing = () => {
             No contracts. Cancel anytime.
           </p>
 
-          {sale ? (
-            <div className="mt-8 inline-flex flex-wrap items-center justify-center gap-x-2 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-500/20">
-              <span>{sale.bannerText}</span>
-              <span className="font-normal opacity-90">
-                · ends {new Date(sale.endsAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-              </span>
-            </div>
-          ) : trialDays > 0 ? (
-            <div className="mt-8 inline-flex rounded-full bg-green-100 px-5 py-2 text-sm font-semibold text-green-700">
-              🎉 {trialDays}-Day Free Trial • No Card Required
-            </div>
-          ) : null}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+            {sale && (
+              <div className="inline-flex flex-wrap items-center justify-center gap-x-2 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-500/20">
+                <span>{sale.bannerText}</span>
+                <span className="font-normal opacity-90">
+                  · ends {new Date(sale.endsAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                </span>
+              </div>
+            )}
+            {trialDays > 0 && (
+              <div className="inline-flex rounded-full bg-green-100 px-5 py-2 text-sm font-semibold text-green-700">
+                🎉 {trialDays}-day free trial on paid plans • Cancel anytime
+              </div>
+            )}
+          </div>
 
         </motion.div>
 
@@ -83,7 +86,8 @@ const Pricing = () => {
             <div
               key={plan.slug}
               data-popular={plan.popular || undefined}
-              className="w-[85%] shrink-0 snap-center md:w-auto"
+              // Same height for every card in the row, whatever badges or sale text they show
+              className="flex w-[85%] shrink-0 snap-center md:w-auto"
             >
               <PricingCard
                 plan={plan}

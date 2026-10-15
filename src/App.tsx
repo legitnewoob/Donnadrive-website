@@ -80,6 +80,7 @@ const App = () => (
         <PlanGate />
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/contact" element={<BookDemo />} />
           <Route path="/book-demo" element={<BookDemo />} />
           <Route path="/route-optimization" element={<RouteOptimization />} />
           <Route path="/smart-calendar" element={<SmartCalendar />} />

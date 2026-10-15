@@ -28,7 +28,7 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
   const [userName, setUserName] = useState("");
   const [authToken, setAuthToken] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { plans } = useDisplayPlans();
+  const { plans, trialDays } = useDisplayPlans();
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
@@ -160,7 +160,7 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
           </DialogTitle>
           <DialogDescription className="text-base mt-2">
             {step === "signin" && "Sign in with Google to continue."}
-            {step === "plan" && "Start free. Upgrade when you're ready. No contracts."}
+            {step === "plan" && "Paid plans start with a free trial. No contracts, cancel anytime."}
             {step === "success" && (isReturning
               ? `Redirecting to ${isSuperAdmin() ? "the admin panel" : "your dashboard"}...`
               : `Your account is ready. Redirecting to ${isSuperAdmin() ? "the admin panel" : "your dashboard"}...`
@@ -190,6 +190,11 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
                 <p className="text-muted-foreground text-sm mb-6">
                   We use Google to verify your identity. You'll choose a plan next.
                 </p>
+                {trialDays > 0 && (
+                  <p className="text-center text-xs font-semibold text-green-700">
+                    🎉 Paid plans start with a {trialDays}-day free trial. Cancel anytime.
+                  </p>
+                )}
               </div>
 
               <Button
@@ -251,6 +256,11 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
                       <p className="text-sm text-muted-foreground mt-0.5">
                         {plan.subtitle}
                       </p>
+                      {plan.trialDays > 0 && (
+                        <p className="mt-1 text-xs font-semibold text-green-700">
+                          {plan.trialDays}-day free trial · cancel anytime
+                        </p>
+                      )}
                     </div>
                     <div className="text-right shrink-0">
                       {plan.sale && (

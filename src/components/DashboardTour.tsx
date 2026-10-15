@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ArrowRight, ArrowLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -111,22 +111,35 @@ export default function DashboardTour() {
     };
   }, []);
 
-  const measureTarget = useCallback(() => {
+  const tipRef = useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = useState<Placement | null>(null);
+
+  // The same target can exist in both the desktop sidebar and the mobile
+  // bottom bar; use whichever one is actually showing.
+  const findTarget = useCallback(
+    () => Array.from(document.querySelectorAll<HTMLElement>(STEPS[step].selector)).find((node) => node.offsetParent !== null),
+    [step]
+  );
+
+  // Bring each step's target on screen once. Scrolling again on every scroll event
+  // fights the person's own scrolling.
+  useEffect(() => {
     if (!active) return;
-    // The same target can exist in both the desktop sidebar and the mobile
-    // bottom bar; use whichever one is actually showing.
-    const el = Array.from(document.querySelectorAll<HTMLElement>(STEPS[step].selector))
-      .find((node) => node.offsetParent !== null);
-    if (el) {
-      const r = el.getBoundingClientRect();
-      setRect(r);
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    } else {
+    const el = findTarget();
+    if (!el) {
       // Skip invisible/missing elements
       if (step < STEPS.length - 1) setStep((s) => s + 1);
       else close();
+      return;
     }
-  }, [active, step]);
+    scrollToTarget(el);
+  }, [active, step, findTarget]);
+
+  const measureTarget = useCallback(() => {
+    if (!active) return;
+    const el = findTarget();
+    if (el) setRect(el.getBoundingClientRect());
+  }, [active, findTarget]);
 
   useEffect(() => {
     measureTarget();
@@ -137,6 +150,13 @@ export default function DashboardTour() {
       window.removeEventListener("scroll", measureTarget, true);
     };
   }, [measureTarget]);
+
+  // Place the tooltip once its real size is known, so it always fits on screen
+  useLayoutEffect(() => {
+    if (!active || !tipRef.current) return;
+    const { offsetWidth, offsetHeight } = tipRef.current;
+    setPlacement(placeTooltip(rect, STEPS[step].position, offsetWidth, offsetHeight));
+  }, [active, rect, step]);
 
   function close() {
     setActive(false);
@@ -157,16 +177,16 @@ export default function DashboardTour() {
   const current = STEPS[step];
   const pad = 8;
 
-  const spotStyle: React.CSSProperties = rect
-    ? {
-        top: rect.top - pad,
-        left: rect.left - pad,
-        width: rect.width + pad * 2,
-        height: rect.height + pad * 2,
-      }
+  // Keep the highlight on screen when the target is taller than the screen
+  const spot = rect && {
+    top: Math.max(rect.top - pad, 4),
+    left: Math.max(rect.left - pad, 4),
+    bottom: Math.min(rect.bottom + pad, window.innerHeight - 4),
+    right: Math.min(rect.right + pad, window.innerWidth - 4),
+  };
+  const spotStyle: React.CSSProperties = spot
+    ? { top: spot.top, left: spot.left, width: spot.right - spot.left, height: Math.max(spot.bottom - spot.top, 0) }
     : { display: "none" };
-
-  const tooltipStyle = getTooltipPosition(rect, current.position, pad);
 
   return createPortal(
     <div ref={overlayRef} className="fixed inset-0 z-[9999]" style={{ pointerEvents: "auto" }}>
@@ -175,12 +195,12 @@ export default function DashboardTour() {
         <defs>
           <mask id="tour-mask">
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            {rect && (
+            {spot && (
               <rect
-                x={rect.left - pad}
-                y={rect.top - pad}
-                width={rect.width + pad * 2}
-                height={rect.height + pad * 2}
+                x={spot.left}
+                y={spot.top}
+                width={spot.right - spot.left}
+                height={Math.max(spot.bottom - spot.top, 0)}
                 rx="12"
                 fill="black"
               />
@@ -204,14 +224,24 @@ export default function DashboardTour() {
 
       {/* Tooltip */}
       <div
-        className="absolute bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 max-w-xs transition-all duration-300 ease-out"
-        style={{ ...tooltipStyle, pointerEvents: "auto" }}
+        ref={tipRef}
+        role="dialog"
+        aria-label={current.title}
+        className="absolute bg-white rounded-2xl shadow-2xl border border-slate-200 p-5 transition-[top,left] duration-300 ease-out"
+        style={{
+          width: `min(${TOOLTIP_WIDTH}px, calc(100vw - ${EDGE * 2}px))`,
+          // Hidden for the first frame, until it has been measured and placed
+          ...(placement ? { top: placement.top, left: placement.left } : { top: 0, left: 0, visibility: "hidden" }),
+          pointerEvents: "auto",
+        }}
       >
-        {/* Arrow */}
-        <div
-          className="absolute w-3 h-3 bg-white border border-slate-200 rotate-45"
-          style={getArrowStyle(current.position)}
-        />
+        {/* Arrow, only when the tooltip sits right beside its target */}
+        {placement?.side && (
+          <div
+            className="absolute w-3 h-3 bg-white border border-slate-200 rotate-45"
+            style={getArrowStyle(placement.side, placement.arrowAt)}
+          />
+        )}
 
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="font-bold text-slate-900 text-sm">{current.title}</h3>
@@ -252,49 +282,98 @@ export default function DashboardTour() {
   );
 }
 
-function getTooltipPosition(
-  rect: DOMRect | null,
-  position: TourStep["position"],
-  pad: number
-): React.CSSProperties {
-  if (!rect) return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
-
-  const gap = 16;
-  const tooltipWidth = 320;
-
-  switch (position) {
-    case "bottom":
-      return {
-        top: rect.bottom + pad + gap,
-        left: Math.max(16, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16)),
-      };
-    case "top":
-      return {
-        bottom: window.innerHeight - rect.top + pad + gap,
-        left: Math.max(16, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16)),
-      };
-    case "left":
-      return {
-        top: rect.top + rect.height / 2 - 60,
-        right: window.innerWidth - rect.left + pad + gap,
-      };
-    case "right":
-      return {
-        top: rect.top + rect.height / 2 - 60,
-        left: rect.right + pad + gap,
-      };
+/**
+ * Scroll the target into the part of the screen below the sticky header. A section
+ * taller than half the screen goes to the top, leaving room for the tooltip below.
+ */
+function scrollToTarget(el: HTMLElement) {
+  // Things in the fixed bottom bar or header are always on screen
+  for (let node: HTMLElement | null = el; node; node = node.parentElement) {
+    if (getComputedStyle(node).position === "fixed") return;
   }
+  const header = Array.from(document.querySelectorAll<HTMLElement>("header")).find(
+    (h) => h.offsetParent !== null && getComputedStyle(h).position === "sticky"
+  );
+  const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+  const r = el.getBoundingClientRect();
+  const room = window.innerHeight - headerBottom;
+  const offset = r.height > room * 0.5 ? 16 : (room - r.height) / 2;
+  window.scrollTo({ top: window.scrollY + r.top - headerBottom - offset, behavior: "smooth" });
 }
 
-function getArrowStyle(position: TourStep["position"]): React.CSSProperties {
-  switch (position) {
+const TOOLTIP_WIDTH = 320;
+// Space kept between the tooltip and the screen edges
+const EDGE = 12;
+
+type Side = TourStep["position"];
+
+interface Placement {
+  top: number;
+  left: number;
+  /** Which side of the target it sits on; null when pinned to the screen edge instead */
+  side: Side | null;
+  /** Where along the tooltip's edge the arrow points */
+  arrowAt: number;
+}
+
+const clamp = (n: number, min: number, max: number) => Math.min(Math.max(n, min), Math.max(min, max));
+
+/**
+ * Put the tooltip on the preferred side of its target if it fits, otherwise the
+ * opposite side, otherwise any side. If none fits (a phone with a tall target),
+ * pin it to whichever screen edge is away from the target so Next is always reachable.
+ */
+function placeTooltip(rect: DOMRect | null, preferred: Side, w: number, h: number): Placement {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const centred = { top: (vh - h) / 2, left: (vw - w) / 2, side: null, arrowAt: 0 };
+  if (!rect) return centred;
+
+  const gap = 20;
+  const opposite: Record<Side, Side> = { top: "bottom", bottom: "top", left: "right", right: "left" };
+  // On narrow screens there's no room beside anything, so only try above and below
+  const narrow = vw < 640;
+  const order: Side[] = narrow
+    ? preferred === "top" ? ["top", "bottom"] : ["bottom", "top"]
+    : [preferred, opposite[preferred], ...(["bottom", "top", "right", "left"] as Side[]).filter((s) => s !== preferred && s !== opposite[preferred])];
+
+  const midX = rect.left + rect.width / 2;
+  const midY = rect.top + rect.height / 2;
+  const leftCentred = clamp(midX - w / 2, EDGE, vw - w - EDGE);
+  const topCentred = clamp(midY - h / 2, EDGE, vh - h - EDGE);
+
+  for (const side of order) {
+    let top: number;
+    let left: number;
+    if (side === "bottom") { top = rect.bottom + gap; left = leftCentred; }
+    else if (side === "top") { top = rect.top - gap - h; left = leftCentred; }
+    else if (side === "right") { top = topCentred; left = rect.right + gap; }
+    else { top = topCentred; left = rect.left - gap - w; }
+
+    const fits = top >= EDGE && top + h <= vh - EDGE && left >= EDGE && left + w <= vw - EDGE;
+    if (fits) {
+      const vertical = side === "top" || side === "bottom";
+      const arrowAt = vertical ? clamp(midX - left, 20, w - 20) : clamp(midY - top, 20, h - 20);
+      return { top, left, side, arrowAt };
+    }
+  }
+
+  // Nothing fits beside it: pin to the bottom of the screen, or the top if the target is down there
+  const visibleTop = Math.max(rect.top, 0);
+  const visibleBottom = Math.min(rect.bottom, vh);
+  const targetLow = (visibleTop + visibleBottom) / 2 > vh / 2;
+  return { top: targetLow ? EDGE : vh - h - EDGE, left: (vw - w) / 2, side: null, arrowAt: 0 };
+}
+
+function getArrowStyle(side: Side, at: number): React.CSSProperties {
+  switch (side) {
     case "bottom":
-      return { top: -7, left: "50%", transform: "translateX(-50%) rotate(45deg)", borderRight: "none", borderBottom: "none" };
+      return { top: -7, left: at, transform: "translateX(-50%) rotate(45deg)", borderRight: "none", borderBottom: "none" };
     case "top":
-      return { bottom: -7, left: "50%", transform: "translateX(-50%) rotate(45deg)", borderLeft: "none", borderTop: "none" };
+      return { bottom: -7, left: at, transform: "translateX(-50%) rotate(45deg)", borderLeft: "none", borderTop: "none" };
     case "left":
-      return { right: -7, top: "50%", transform: "translateY(-50%) rotate(45deg)", borderLeft: "none", borderBottom: "none" };
+      return { right: -7, top: at, transform: "translateY(-50%) rotate(45deg)", borderLeft: "none", borderBottom: "none" };
     case "right":
-      return { left: -7, top: "50%", transform: "translateY(-50%) rotate(45deg)", borderRight: "none", borderTop: "none" };
+      return { left: -7, top: at, transform: "translateY(-50%) rotate(45deg)", borderRight: "none", borderTop: "none" };
   }
 }

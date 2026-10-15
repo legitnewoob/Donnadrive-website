@@ -1,4 +1,5 @@
-﻿import {
+﻿import { useDisplayPlans } from "@/lib/pricing";
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -33,14 +34,21 @@ const faqs = [
     answer:
       "No. Everything happens through WhatsApp, so your learners already know how to use it.",
   },
-  {
-    question: "Is there a free trial?",
-    answer:
-      "Yes. Every ADI gets a 30-day free trial with no credit card required.",
-  },
 ];
 
 const FAQ = () => {
+  // Trial length comes from the admin panel, so the answer always matches pricing
+  const { trialDays } = useDisplayPlans();
+  const allFaqs = [
+    ...faqs,
+    {
+      question: "Is there a free trial?",
+      answer:
+        trialDays > 0
+          ? `Yes. The ADI and Driving School plans start with a ${trialDays}-day free trial. You add a card at sign-up but aren't charged until the trial ends, and you can cancel any time before then. PDIs use Donna free while training.`
+          : "PDIs use Donna free while training. Paid plans are billed monthly and you can cancel any time.",
+    },
+  ];
   return (
     <section
       id="faq"
@@ -83,7 +91,7 @@ const FAQ = () => {
             collapsible
             className="space-y-4"
           >
-            {faqs.map((faq, index) => (
+            {allFaqs.map((faq, index) => (
               <motion.div
                 key={faq.question}
                 initial={{

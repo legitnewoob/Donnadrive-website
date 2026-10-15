@@ -30,6 +30,10 @@ const PricingCard = ({ plan, index }: Props) => {
         }}
         className={`
           relative
+          flex
+          h-full
+          w-full
+          flex-col
           rounded-[36px]
           border
           bg-white
@@ -38,7 +42,7 @@ const PricingCard = ({ plan, index }: Props) => {
           duration-300
 
           ${plan.popular
-            ? "border-primary shadow-2xl lg:scale-105"
+            ? "border-primary shadow-2xl ring-1 ring-primary"
             : "border-border shadow-sm"
           }
         `}
@@ -74,13 +78,29 @@ const PricingCard = ({ plan, index }: Props) => {
             {plan.period}
           </span>
         </div>
-        {plan.sale && (
-          <p className="mt-2 inline-flex rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600">
-            {plan.sale.label}
+        {(plan.sale || plan.trialDays > 0) && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {plan.trialDays > 0 && (
+              <span className="inline-flex rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                {plan.trialDays}-day free trial
+              </span>
+            )}
+            {plan.sale && (
+              <span className="inline-flex rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600">
+                {plan.sale.label}
+              </span>
+            )}
+          </div>
+        )}
+        {plan.trialDays > 0 && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Free for {plan.trialDays} days, then {plan.sale ? gbp(plan.sale.amount) : plan.price}
+            {plan.period}. Cancel before it ends and you won't be charged.
           </p>
         )}
 
-        <div className="mt-10 space-y-4">
+        {/* Features fill the space so every card's button lines up at the bottom */}
+        <div className="mt-10 flex-1 space-y-4">
           {plan.features.map((feature: string) => (
             <div
               key={feature}

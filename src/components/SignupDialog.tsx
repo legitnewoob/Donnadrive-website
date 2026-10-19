@@ -75,7 +75,7 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
 
         localStorage.setItem("dd_token", result.token);
         if (result.apiKey) localStorage.setItem("dd_apiKey", result.apiKey);
-        setAccess({ staffRole: null, superAdmin: false, ...result.access, needsPlan: !!result.needsPlan });
+        setAccess({ staffRole: null, superAdmin: false, ...result.access, needsPlan: !!result.needsPlan, school: result.school ?? null });
         setAuthToken(result.token);
         window.dispatchEvent(new Event("dd_auth_change"));
 
@@ -96,7 +96,7 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
           setStep("plan");
         } else {
           setStep("success");
-          setTimeout(() => navigate("/dashboard"), 1500);
+          setTimeout(() => navigate(homePath()), 1500);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");

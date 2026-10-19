@@ -1,4 +1,4 @@
-import { setAccess } from "./access";
+import { setAccess, type SchoolInfo } from "./access";
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -18,6 +18,7 @@ export async function googleSignup(credential: string, plan: string) {
     instructor: { name: string; email: string; plan: string; subscriptionStatus: string | null };
     access?: { staffRole: "admin" | "support" | null; superAdmin: boolean; permissions: string[] };
     needsPlan?: boolean;
+    school?: SchoolInfo | null;
     isNew: boolean;
   };
 }
@@ -73,7 +74,7 @@ export async function getProfile(token: string) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to fetch profile");
   if (data.instructor?.access) {
-    setAccess({ ...data.instructor.access, needsPlan: !!data.instructor.needsPlan, schoolOwner: data.instructor.school?.role === "owner" });
+    setAccess({ ...data.instructor.access, needsPlan: !!data.instructor.needsPlan, school: data.instructor.school ?? null });
   }
   return data.instructor as {
     name: string;
@@ -84,7 +85,7 @@ export async function getProfile(token: string) {
     phoneNumberId: string | null;
     onboardingComplete: boolean;
     onboardingStatus: { phoneAssigned: boolean; subscriptionActive: boolean; calendarConnected: boolean; calendarTokenExpired?: boolean };
-    school?: { role: "owner" | "manager" | "member"; name: string | null } | null;
+    school?: SchoolInfo | null;
     access?: { staffRole: "admin" | "support" | null; superAdmin: boolean; permissions: string[] };
     comp?: { plan: string; until: string | null } | null;
     needsPlan?: boolean;

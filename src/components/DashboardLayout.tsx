@@ -19,7 +19,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
 import { START_TOUR_EVENT } from "@/components/DashboardTour";
 import { getSetupStatus, getProfile, SETUP_CHANGED_EVENT } from "@/lib/api";
-import { isSchoolOwner } from "@/lib/access";
+import { isSchoolOwner, getSchoolInfo, type SchoolInfo } from "@/lib/access";
 
 const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
 
@@ -64,6 +64,9 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
   const [isStaff, setIsStaff] = useState(false);
   // School owners don't run Donna themselves: just their school, team and account
   const [owner, setOwner] = useState(isSchoolOwner);
+  // Instructors teaching for a school: their school's name under the logo (remembered from sign-in)
+  const [school, setSchool] = useState<SchoolInfo | null>(getSchoolInfo);
+  const home = owner ? "/school" : school ? "/school-dashboard" : "/dashboard";
 
   useEffect(() => {
     const token = localStorage.getItem("dd_token");
@@ -72,6 +75,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
       .then((p) => {
         setSeesTeam(p.school?.role === "owner" || p.school?.role === "manager");
         setOwner(p.school?.role === "owner");
+        setSchool(p.school ?? null);
         setIsStaff(!!p.access?.staffRole);
       })
       .catch(() => {});
@@ -99,10 +103,10 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
 
   function startTour() {
     setMobileOpen(false);
-    if (pathname === "/dashboard") {
+    if (pathname === home) {
       window.dispatchEvent(new Event(START_TOUR_EVENT));
     } else {
-      navigate("/dashboard?tour=1");
+      navigate(`${home}?tour=1`);
     }
   }
 
@@ -122,7 +126,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
     { label: "Account", short: "Account", icon: UserCircle, path: "/account", inBottomBar: true },
   ];
   const instructorItems: NavItem[] = [
-    { label: "Dashboard", short: "Home", icon: LayoutDashboard, path: "/dashboard", inBottomBar: true },
+    { label: "Dashboard", short: "Home", icon: LayoutDashboard, path: home, inBottomBar: true },
     { label: "Learners", short: "Learners", icon: Users, path: "/learners", inBottomBar: true },
     { label: "Lesson Types", short: "Lessons", icon: BookOpen, path: "/lesson-types" },
     ...(seesTeam ? [{ label: "Team", short: "Team", icon: Building2, path: "/team" }] : []),
@@ -134,7 +138,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
   const email = signedInEmail();
   const byPath = (path: string) => navItems.find((item) => item.path === path)!;
   // Everyday pages on top; settings and help pinned at the bottom; account last
-  const mainItems = (owner ? ["/school", "/team"] : ["/dashboard", "/learners", ...(seesTeam ? ["/team"] : []), "/lesson-types"]).map(byPath);
+  const mainItems = (owner ? ["/school", "/team"] : [home, "/learners", ...(seesTeam ? ["/team"] : []), "/lesson-types"]).map(byPath);
   const settingsItem = owner ? null : byPath("/settings");
 
   const itemClass = (active: boolean) =>
@@ -167,8 +171,14 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
 
     return (
       <>
-        <div className={`${mobile ? "px-6 pb-4" : "p-6"} flex items-center`}>
+        <div className={`${mobile ? "px-6 pb-4" : "p-6"}`}>
           <img src={donnaDriveLogo} alt="Donna Drive" className="h-10 w-auto rounded-lg" />
+          {school && !owner && school.name && (
+            <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5 text-xs font-medium text-sky-800">
+              <Building2 className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{school.name}</span>
+            </div>
+          )}
         </div>
 
         <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 space-y-1">

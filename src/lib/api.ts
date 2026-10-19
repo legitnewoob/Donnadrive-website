@@ -461,7 +461,7 @@ export interface SchoolMember {
 }
 
 export interface SchoolOverview {
-  school: { id: string; name: string; seatLimit: number; includedSeats: number; extraSeats: number; planAmount: number; extraSeatAmount: number; canBuySeats: boolean; seatsUnavailable?: "no_subscription" | "not_set_up" | null; trialEndsAt?: string | null };
+  school: { id: string; name: string; seatLimit: number; includedSeats: number; extraSeats: number; planAmount: number; extraSeatAmount: number; canBuySeats: boolean; seatsUnavailable?: "no_subscription" | "not_set_up" | null; trialEndsAt?: string | null; seatsCheckout?: "seats_only" | "plan_and_seats" | null };
   role: "owner" | "manager" | "member";
   roleLabel: string | null;
   permissions: string[];
@@ -490,6 +490,9 @@ async function schoolRequest<T>(token: string | null, path: string, init: Reques
 }
 
 export const getSchool = (token: string) => schoolRequest<SchoolOverview>(token, "");
+// Owner without a subscription: pay for seats through Stripe Checkout
+export const startSeatsCheckout = (token: string, extraSeats: number) =>
+  schoolRequest<{ url: string }>(token, "/seats/checkout", { method: "POST", body: JSON.stringify({ extraSeats }) });
 export const setSchoolDonna = (token: string, enabled: boolean) =>
   schoolRequest<SchoolOverview>(token, "/donna", { method: "PUT", body: JSON.stringify({ enabled }) });
 export const renameSchool = (token: string, name: string) =>

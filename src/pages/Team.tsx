@@ -319,6 +319,11 @@ export default function Team() {
                 <p className="text-sm text-muted-foreground">
                   {data.school.includedSeats} included in your plan · extra seats {gbp(data.school.extraSeatAmount)}/month each
                 </p>
+                {data.school.canBuySeats && data.school.trialEndsAt && (
+                  <p className="mt-1 text-sm text-sky-800">
+                    On your free trial: a new seat is {gbp(data.school.extraSeatAmount)} now, then joins your monthly payment when the trial ends.
+                  </p>
+                )}
                 {!data.school.canBuySeats && (
                   <p className="mt-1 text-sm text-amber-800">
                     {data.school.seatsUnavailable === "no_subscription"
@@ -381,21 +386,40 @@ export default function Team() {
               {seatChange !== null && seatChange > data.school.extraSeats ? "Add an instructor seat?" : "Remove an extra seat?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {seatChange !== null && (
+              {seatChange !== null && (data.school.trialEndsAt ? (
+                // On the free trial: new seats are paid for now; the monthly payment starts when the trial ends
+                seatChange > data.school.extraSeats ? (
+                  <>
+                    We'll charge <strong>{gbp((seatChange - data.school.extraSeats) * data.school.extraSeatAmount)} now</strong> for the new seat
+                    {seatChange - data.school.extraSeats === 1 ? "" : "s"}, so you can invite another instructor straight away. When your free
+                    trial ends on <strong>{new Date(data.school.trialEndsAt).toLocaleDateString("en-GB", { day: "numeric", month: "long" })}</strong>,
+                    you'll pay <strong>{monthlyCost(data.school, seatChange)}/month</strong>
+                    {costBreakdown(data.school, seatChange)}.
+                  </>
+                ) : (
+                  <>
+                    You'll have {data.school.includedSeats + seatChange} instructor seats. After your free trial you'll pay{" "}
+                    <strong>{monthlyCost(data.school, seatChange)}/month</strong>
+                    {costBreakdown(data.school, seatChange)}. What you paid for the seat during the trial isn't refunded.
+                  </>
+                )
+              ) : (
                 <>
                   You'll have {data.school.includedSeats + seatChange} instructor seats and pay{" "}
                   <strong>{monthlyCost(data.school, seatChange)}/month</strong>
                   {costBreakdown(data.school, seatChange)}. The difference for this month is charged or credited
                   on your next invoice.
                 </>
-              )}
+              ))}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={savingSeats}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={(e) => { e.preventDefault(); confirmSeats(); }} disabled={savingSeats}>
               {savingSeats && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirm
+              {seatChange !== null && data.school.trialEndsAt && seatChange > data.school.extraSeats
+                ? `Pay ${gbp((seatChange - data.school.extraSeats) * data.school.extraSeatAmount)} and add`
+                : "Confirm"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

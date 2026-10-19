@@ -7,8 +7,20 @@ export interface Access {
   superAdmin: boolean;
   /** Signed in but hasn't picked a plan yet */
   needsPlan: boolean;
-  /** Owns a driving school: gets the school home instead of an instructor's dashboard */
-  schoolOwner?: boolean;
+  /**
+   * Their driving school, if any. Owners get the school home; instructors in a
+   * school get the school instructor dashboard. Kept here so the right page and
+   * the school's name show straight away, without waiting for the API.
+   */
+  school?: SchoolInfo | null;
+}
+
+export interface SchoolInfo {
+  role: "owner" | "manager" | "member";
+  name: string | null;
+  ownerName?: string | null;
+  ownerEmail?: string | null;
+  donnaEnabled?: boolean;
 }
 
 const KEY = "dd_access";
@@ -25,15 +37,15 @@ export function getAccess(): Access | null {
 export function setAccess(access: Partial<Access> | null | undefined) {
   if (!access) return;
   // Callers that don't know about the school keep what we already had
-  const schoolOwner = access.schoolOwner ?? getAccess()?.schoolOwner ?? false;
-  const next = JSON.stringify({ staffRole: access.staffRole ?? null, superAdmin: !!access.superAdmin, needsPlan: !!access.needsPlan, schoolOwner });
+  const school = access.school !== undefined ? access.school : getAccess()?.school ?? null;
+  const next = JSON.stringify({ staffRole: access.staffRole ?? null, superAdmin: !!access.superAdmin, needsPlan: !!access.needsPlan, school });
   if (localStorage.getItem(KEY) === next) return;
   localStorage.setItem(KEY, next);
   window.dispatchEvent(new Event("dd_auth_change"));
 }
 
 // Instructor-only pages; a super admin opening one goes to the admin panel
-const INSTRUCTOR_PAGES = ["/dashboard", "/school", "/learners", "/lesson-types", "/settings", "/team", "/account"];
+const INSTRUCTOR_PAGES = ["/dashboard", "/school", "/school-dashboard", "/learners", "/lesson-types", "/settings", "/team", "/account"];
 // An instructor's own Donna pages, which a school owner (who doesn't run Donna) doesn't use
 const OWN_DONNA_PAGES = ["/dashboard", "/learners", "/lesson-types", "/settings"];
 
@@ -47,7 +59,12 @@ export function isInstructorPage(pathname: string, search: string) {
 export const isSuperAdmin = () => !!getAccess()?.superAdmin;
 export const isStaff = () => !!getAccess()?.staffRole;
 export const needsPlan = () => !!getAccess()?.needsPlan;
-export const isSchoolOwner = () => !!getAccess()?.schoolOwner;
+export const getSchoolInfo = () => getAccess()?.school ?? null;
+export const isSchoolOwner = () => getSchoolInfo()?.role === "owner";
+/** Teaches for a driving school (an instructor or a manager), so has their own Donna */
+export const isSchoolInstructor = () => ["member", "manager"].includes(getSchoolInfo()?.role ?? "");
+/** Each kind of account has its own home */
+export const dashboardPath = () => (isSchoolOwner() ? "/school" : isSchoolInstructor() ? "/school-dashboard" : "/dashboard");
 
 /**
  * Where someone on the wrong home belongs: school owners use the school home,
@@ -56,11 +73,12 @@ export const isSchoolOwner = () => !!getAccess()?.schoolOwner;
  */
 export function homeRedirect(pathname: string, search: string): string | null {
   if (isSchoolOwner()) {
-    if (!OWN_DONNA_PAGES.includes(pathname)) return null;
+    if (!OWN_DONNA_PAGES.includes(pathname) && pathname !== "/school-dashboard") return null;
     if (pathname === "/learners" && new URLSearchParams(search).has("instructor")) return null;
     return "/school";
   }
-  return pathname === "/school" ? "/dashboard" : null;
+  const homes = ["/dashboard", "/school", "/school-dashboard"];
+  return homes.includes(pathname) && pathname !== dashboardPath() ? dashboardPath() : null;
 }
 
 /** After picking the free plan: let them into the dashboard without waiting for a refresh */
@@ -70,7 +88,7 @@ export function markPlanChosen() {
 }
 
 /** Where to send someone after they sign in */
-export const homePath = () => (isSuperAdmin() ? "/admin" : isSchoolOwner() ? "/school" : "/dashboard");
+export const homePath = () => (isSuperAdmin() ? "/admin" : dashboardPath());
 
 export function signOut() {
   localStorage.removeItem("dd_token");

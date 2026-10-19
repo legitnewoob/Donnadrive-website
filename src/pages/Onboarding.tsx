@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import SignupDialog from "@/components/SignupDialog";
 import mascot from "@/assets/mascot-smile.png";
-import { homePath } from "@/lib/access";
+import { homePath, getSchoolInfo, type SchoolInfo } from "@/lib/access";
 import {
   CheckCircle2,
   Phone,
@@ -58,6 +58,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import DashboardLayout from "@/components/DashboardLayout";
 import DashboardTour from "@/components/DashboardTour";
+import SchoolCard from "@/components/SchoolCard";
 import {
   exchangeAuthCode,
   getProfile,
@@ -104,12 +105,17 @@ interface Profile {
     calendarConnected: boolean;
     calendarTokenExpired?: boolean;
   };
-  school?: { role: "owner" | "manager" | "member"; name: string | null } | null;
+  school?: SchoolInfo | null;
 }
 
 type DashboardData = Awaited<ReturnType<typeof getDashboard>>;
 
-export default function Onboarding() {
+/**
+ * An instructor's dashboard. `variant="school"` is the same dashboard for
+ * instructors who teach for a driving school (at /school-dashboard), with their
+ * school shown up front; everyone else uses /dashboard.
+ */
+export default function Onboarding({ variant }: { variant?: "school" } = {}) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -184,9 +190,12 @@ export default function Onboarding() {
           getSettings(currentToken).catch(() => null),
         ]);
 
-        // Driving school owners don't run Donna themselves: they have the school home
-        if (profileData.school?.role === "owner") {
-          navigate("/school", { replace: true });
+        // Each kind of account has its own home: owners don't run Donna themselves,
+        // and instructors in a school get the school version of this page
+        const role = profileData.school?.role;
+        const home = role === "owner" ? "/school" : role ? "/school-dashboard" : "/dashboard";
+        if (home !== (variant === "school" ? "/school-dashboard" : "/dashboard")) {
+          navigate(home, { replace: true });
           return;
         }
 
@@ -416,6 +425,9 @@ export default function Onboarding() {
 
   if (!profile) return null;
 
+  // Known from sign-in (so it shows straight away), refreshed by the profile
+  const schoolInfo = variant === "school" ? profile.school ?? getSchoolInfo() : null;
+
   const hasPhone = !!profile.phoneNumber;
   const calendarConnected = profile.onboardingStatus.calendarConnected;
   const calendarTokenExpired = profile.onboardingStatus.calendarTokenExpired;
@@ -435,13 +447,20 @@ export default function Onboarding() {
   return (
     <DashboardLayout
       title={`Welcome, ${firstName}!`}
-      subtitle={`${PLAN_LABELS[profile.plan] || profile.plan} plan${profile.subscriptionStatus === "trialing" ? " — 30-day free trial" : ""}`}
+      subtitle={
+        schoolInfo
+          ? `${schoolInfo.role === "manager" ? "Manager" : "Instructor"} at ${schoolInfo.name || "your driving school"}`
+          : `${PLAN_LABELS[profile.plan] || profile.plan} plan${profile.subscriptionStatus === "trialing" ? " — 30-day free trial" : ""}`
+      }
       initials={initials}
     >
       <DashboardTour />
 
+      {/* Teaching for a driving school: whose account this is */}
+      {schoolInfo && <SchoolCard school={schoolInfo} onManageTeam={schoolInfo.role === "manager" ? () => navigate("/team") : undefined} />}
+
       {/* Driving school owner: team at a glance */}
-      {school && (
+      {school && !schoolInfo && (
         <Card className="mb-4 border-sky-200">
           <CardContent className="flex items-center gap-3 py-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100">

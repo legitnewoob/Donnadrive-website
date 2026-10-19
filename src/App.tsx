@@ -103,10 +103,11 @@ const App = () => (
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
-          <Route path="/dashboard" element={<Onboarding />} />
+          <Route path="/dashboard" element={<Onboarding key="dashboard" />} />
           {/* Old address: checkout, emails and the Portal used it */}
           <Route path="/get-onboard" element={<OldDashboardRedirect />} />
           <Route path="/school" element={<SchoolHome />} />
+          <Route path="/school-dashboard" element={<Onboarding key="school-dashboard" variant="school" />} />
           <Route path="/learners" element={<Learners />} />
           <Route path="/lesson-types" element={<LessonTypes />} />
           <Route path="/settings" element={<DonnaSettings />} />

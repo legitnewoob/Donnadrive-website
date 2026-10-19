@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import type { SchoolInfo } from "@/lib/access";
 import {
   Loader2,
   AlertCircle,
@@ -67,7 +68,7 @@ interface Profile {
   };
   timezone?: string;
   createdAt?: string;
-  school?: { role: "owner" | "manager" | "member"; name: string | null } | null;
+  school?: SchoolInfo | null;
 }
 
 interface Invoice {

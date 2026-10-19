@@ -40,6 +40,7 @@ import {
   cancelSchoolInvite,
   removeSchoolMember,
   setSchoolSeats,
+  startSeatsCheckout,
   setSchoolMemberRole,
   type SchoolOverview,
   type SchoolMember,
@@ -93,6 +94,13 @@ export default function Team() {
       return;
     }
     load();
+    // Back from paying for seats: Stripe tells us a moment later, so check again shortly
+    if (new URLSearchParams(window.location.search).get("seats") === "added") {
+      window.history.replaceState({}, "", "/team");
+      toast.success("Payment done. Your new seats will appear in a moment.");
+      const timers = [3000, 8000].map((ms) => setTimeout(load, ms));
+      return () => timers.forEach(clearTimeout);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -144,6 +152,17 @@ export default function Team() {
   async function confirmSeats() {
     if (seatChange === null) return;
     setSavingSeats(true);
+    // No subscription yet: pay for the seats on Stripe's page, then come back here
+    if (data?.school.seatsCheckout) {
+      try {
+        const { url } = await startSeatsCheckout(token!, seatChange - data.school.extraSeats);
+        window.location.href = url;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Couldn't open the payment page");
+        setSavingSeats(false);
+      }
+      return;
+    }
     try {
       const d = await setSchoolSeats(token!, seatChange);
       setData(d);
@@ -260,6 +279,10 @@ export default function Team() {
                   <Button size="sm" onClick={() => setSeatChange(data.school.extraSeats + 1)}>
                     <Plus className="mr-1 h-4 w-4" /> Add a seat · {gbp(data.school.extraSeatAmount)}/month
                   </Button>
+                ) : can("school.billing") && data.school.seatsCheckout ? (
+                  <Button size="sm" onClick={() => setSeatChange(data.school.extraSeats + 1)}>
+                    <Plus className="mr-1 h-4 w-4" /> Add a seat · {gbp(data.school.extraSeatAmount)}/month
+                  </Button>
                 ) : can("school.billing") && (
                   <Button size="sm" variant="outline" onClick={() => navigate("/contact")}>Contact us to add seats</Button>
                 )}
@@ -324,15 +347,15 @@ export default function Team() {
                     On your free trial: a new seat is {gbp(data.school.extraSeatAmount)} now, then joins your monthly payment when the trial ends.
                   </p>
                 )}
-                {!data.school.canBuySeats && (
-                  <p className="mt-1 text-sm text-amber-800">
-                    {data.school.seatsUnavailable === "no_subscription"
-                      ? "Extra seats are added to your monthly subscription, and your school isn't on a paid subscription yet. Contact us and we'll add seats for you."
-                      : "Adding seats isn't available right now. Contact us and we'll add seats for you."}
-                  </p>
+                {!data.school.canBuySeats && !data.school.seatsCheckout && (
+                  <p className="mt-1 text-sm text-amber-800">Adding seats isn't available right now. Contact us and we'll add seats for you.</p>
                 )}
               </div>
-              {!data.school.canBuySeats ? (
+              {data.school.seatsCheckout ? (
+                <Button className="shrink-0" onClick={() => setSeatChange(data.school.extraSeats + 1)}>
+                  <Plus className="mr-1 h-4 w-4" /> Add a seat
+                </Button>
+              ) : !data.school.canBuySeats ? (
                 <Button variant="outline" className="shrink-0" onClick={() => navigate("/contact")}>Contact us</Button>
               ) : (
               <div className="flex items-center gap-2">
@@ -386,7 +409,21 @@ export default function Team() {
               {seatChange !== null && seatChange > data.school.extraSeats ? "Add an instructor seat?" : "Remove an extra seat?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {seatChange !== null && (data.school.trialEndsAt ? (
+              {seatChange !== null && (data.school.seatsCheckout ? (
+                // No subscription yet: seats are paid for at checkout
+                data.school.seatsCheckout === "seats_only" ? (
+                  <>
+                    You'll pay <strong>{gbp((seatChange - data.school.extraSeats) * data.school.extraSeatAmount)}/month</strong> for
+                    {seatChange - data.school.extraSeats === 1 ? " the extra seat" : ` ${seatChange - data.school.extraSeats} extra seats`} by card. Your plan
+                    itself stays free. We'll take you to our secure payment page.
+                  </>
+                ) : (
+                  <>
+                    This starts your Driving School subscription: <strong>{monthlyCost(data.school, seatChange)}/month</strong>
+                    {costBreakdown(data.school, seatChange)}. We'll take you to our secure payment page.
+                  </>
+                )
+              ) : data.school.trialEndsAt ? (
                 // On the free trial: new seats are paid for now; the monthly payment starts when the trial ends
                 seatChange > data.school.extraSeats ? (
                   <>
@@ -417,9 +454,11 @@ export default function Team() {
             <AlertDialogCancel disabled={savingSeats}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={(e) => { e.preventDefault(); confirmSeats(); }} disabled={savingSeats}>
               {savingSeats && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {seatChange !== null && data.school.trialEndsAt && seatChange > data.school.extraSeats
-                ? `Pay ${gbp((seatChange - data.school.extraSeats) * data.school.extraSeatAmount)} and add`
-                : "Confirm"}
+              {data.school.seatsCheckout
+                ? "Continue to payment"
+                : seatChange !== null && data.school.trialEndsAt && seatChange > data.school.extraSeats
+                  ? `Pay ${gbp((seatChange - data.school.extraSeats) * data.school.extraSeatAmount)} and add`
+                  : "Confirm"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

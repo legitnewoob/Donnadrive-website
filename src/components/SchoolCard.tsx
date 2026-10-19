@@ -48,7 +48,7 @@ export default function SchoolCard({ school, onManageTeam }: { school: SchoolInf
             </Row>
           )}
           <Row icon={CreditCard}>Your school pays for Donna Drive, so there's nothing for you to pay.</Row>
-          <Row icon={Eye}>Your school can see your learners and lessons, but can't change them.</Row>
+          <Row icon={Eye}>Your school can see your learners and lessons, and can update your lesson types, prices and learner notes.</Row>
           <Row icon={Power}>
             {schoolOn ? (
               "Your school has Donna switched on."

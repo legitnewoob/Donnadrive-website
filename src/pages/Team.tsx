@@ -7,16 +7,13 @@ import {
   Copy,
   X,
   Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Phone,
-  Calendar,
   Power,
   Pencil,
   UserPlus,
   Plus,
   Minus,
   ShieldCheck,
+  ChevronRight,
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,10 +35,8 @@ import {
   renameSchool,
   inviteInstructor,
   cancelSchoolInvite,
-  removeSchoolMember,
   setSchoolSeats,
   startSeatsCheckout,
-  setSchoolMemberRole,
   type SchoolOverview,
   type SchoolMember,
 } from "@/lib/api";
@@ -69,7 +64,6 @@ export default function Team() {
   const [email, setEmail] = useState("");
   const [inviting, setInviting] = useState(false);
   const [lastLink, setLastLink] = useState<string | null>(null);
-  const [removing, setRemoving] = useState<SchoolMember | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState("");
   // Seat change waiting for the owner to confirm the new price
@@ -137,18 +131,6 @@ export default function Team() {
     }
   }
 
-  async function handleRemove() {
-    if (!removing) return;
-    try {
-      await removeSchoolMember(token!, removing.id);
-      toast.success(`${removing.name} has been removed from your school`);
-      setRemoving(null);
-      await load();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't remove the instructor");
-    }
-  }
-
   async function confirmSeats() {
     if (seatChange === null) return;
     setSavingSeats(true);
@@ -175,15 +157,6 @@ export default function Team() {
     }
   }
 
-  async function handleRole(member: SchoolMember, role: "manager" | "instructor") {
-    try {
-      const r = await setSchoolMemberRole(token!, member.id, role);
-      toast.success(`${member.name} is now ${role === "manager" ? "a manager" : "an instructor"}`);
-      setData((d) => d && { ...d, members: d.members.map((m) => (m.id === member.id ? { ...m, role: r.role as SchoolMember["role"], roleLabel: r.roleLabel } : m)) });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't change the role");
-    }
-  }
 
   async function handleRename() {
     try {
@@ -311,25 +284,6 @@ export default function Team() {
                 <Button size="sm" variant="outline" onClick={() => copy(lastLink)}><Copy className="mr-1 h-3.5 w-3.5" /> Copy</Button>
               </div>
             )}
-            {data.invites.length > 0 && (
-              <ul className="divide-y rounded-lg border">
-                {data.invites.map((inv) => (
-                  <li key={inv.id} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-                    <Mail className="h-4 w-4 shrink-0 text-slate-400" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{inv.email}</p>
-                      <p className="text-xs text-muted-foreground">Invited · expires {new Date(inv.expiresAt).toLocaleDateString("en-GB")}</p>
-                    </div>
-                    <Button size="sm" variant="ghost" onClick={() => copy(inv.link)} aria-label={`Copy invite link for ${inv.email}`}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => handleCancelInvite(inv.id)} aria-label={`Cancel invite for ${inv.email}`}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
           </CardContent>
         </Card>
 
@@ -380,26 +334,14 @@ export default function Team() {
           </Card>
         )}
 
-        {/* Instructors */}
-        <div>
-          <h3 className="mb-3 flex items-center gap-2 font-semibold"><Users className="h-4 w-4" /> Instructors ({data.members.length})</h3>
-          {data.members.length === 0 ? (
-            <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">No instructors yet. Invite your first one above.</CardContent></Card>
-          ) : (
-            <div className="grid gap-3 md:grid-cols-2">
-              {data.members.map((m) => (
-                <MemberCard
-                  key={m.id}
-                  member={m}
-                  onView={() => navigate(`/learners?instructor=${m.id}`)}
-                  // Managers remove instructors; only the owner removes a manager
-                  onRemove={can("school.remove") && (m.role !== "manager" || can("school.roles")) ? () => setRemoving(m) : undefined}
-                  onRole={can("school.roles") ? (role) => handleRole(m, role) : undefined}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Instructors and pending invites, one row each */}
+        <InstructorTable
+          members={data.members}
+          invites={data.invites}
+          onOpen={(m) => navigate(`/team/${m.id}`)}
+          onCopy={(link) => copy(link)}
+          onCancel={can("school.invite") ? handleCancelInvite : undefined}
+        />
       </div>
 
       <AlertDialog open={seatChange !== null} onOpenChange={(open) => !open && setSeatChange(null)}>
@@ -464,124 +406,121 @@ export default function Team() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!removing} onOpenChange={(open) => !open && setRemoving(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove {removing?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Their WhatsApp number will be released and Donna will stop booking for them. They keep their account, learners
-              and history on the free plan. This frees a seat.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemove} className="bg-red-600 hover:bg-red-700">Remove</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </DashboardLayout>
   );
 }
 
-function Check({ done, label, icon: Icon }: { done: boolean; label: string; icon: React.ElementType }) {
-  return (
-    <span className={`inline-flex items-center gap-1 text-xs ${done ? "text-green-700" : "text-slate-400"}`}>
-      {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
-      {label}
-    </span>
-  );
-}
-
-function MemberCard({
-  member: m,
-  onView,
-  onRemove,
-  onRole,
+/** Instructors (joined) and invites (waiting) as a compact table; a row opens the instructor. */
+function InstructorTable({
+  members,
+  invites,
+  onOpen,
+  onCopy,
+  onCancel,
 }: {
-  member: SchoolMember;
-  onView: () => void;
-  onRemove?: () => void;
-  onRole?: (role: "manager" | "instructor") => void;
+  members: SchoolMember[];
+  invites: SchoolOverview["invites"];
+  onOpen: (m: SchoolMember) => void;
+  onCopy: (link: string) => void;
+  onCancel?: (id: string) => void;
 }) {
-  const ready = m.setup.complete || !!m.phoneNumber;
+  const total = members.length + invites.length;
   return (
-    <Card>
-      <CardContent className="space-y-3 py-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-xs font-semibold text-white">
-            {m.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1.5 truncate font-medium">
-              {m.name}
-              {m.role === "manager" && (
-                <Badge variant="secondary" className="bg-violet-100 text-violet-700 hover:bg-violet-100">
-                  <ShieldCheck className="mr-1 h-3 w-3" /> Manager
-                </Badge>
-              )}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">{m.email}</p>
-          </div>
-          {m.phoneNumber ? (
-            <Badge
-              variant="outline"
-              className={m.donnaEnabled ? "border-green-300 text-green-700" : "border-red-300 text-red-700"}
-            >
-              <Power className="mr-1 h-3 w-3" /> {m.donnaEnabled ? "Donna on" : "Donna off"}
-            </Badge>
-          ) : (
-            <Badge variant="secondary">Setting up</Badge>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-x-4 gap-y-1">
-          <Check done={ready} label="Settings" icon={AlertCircle} />
-          <Check done={!!m.phoneNumber} label={m.phoneNumber || "Number"} icon={Phone} />
-          <Check done={m.calendarConnected} label="Calendar" icon={Calendar} />
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <Stat value={m.learners} label="Learners" />
-          <Stat value={m.lessonsThisWeek} label="This week" />
-          <Stat value={m.upcomingLessons} label="Upcoming" />
-        </div>
-
-        {onRole && (
-          <div className="flex items-center justify-between gap-2 rounded-lg border px-3 py-2">
-            <div className="min-w-0">
-              <p className="text-sm font-medium">Role</p>
-              <p className="text-[11px] text-muted-foreground">
-                {m.role === "manager" ? "Can invite and remove instructors and see everyone's learners" : "Sees only their own learners"}
-              </p>
-            </div>
-            <select
-              aria-label={`Role for ${m.name}`}
-              value={m.role === "manager" ? "manager" : "instructor"}
-              onChange={(e) => onRole(e.target.value as "manager" | "instructor")}
-              className="h-8 shrink-0 rounded-md border bg-white px-2 text-sm"
-            >
-              <option value="instructor">Instructor</option>
-              <option value="manager">Manager</option>
-            </select>
-          </div>
+    <div>
+      <h3 className="mb-3 flex items-center gap-2 font-semibold">
+        <Users className="h-4 w-4" /> Instructors ({members.length}){invites.length > 0 && <span className="text-sm font-normal text-muted-foreground">· {invites.length} invited</span>}
+      </h3>
+      <Card className="overflow-hidden">
+        {total === 0 ? (
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">No instructors yet. Invite your first one above.</CardContent>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="hidden border-b bg-slate-50 text-left text-xs font-medium text-muted-foreground sm:table-header-group">
+              <tr>
+                <th className="px-4 py-2.5 font-medium">Instructor</th>
+                <th className="px-3 py-2.5 font-medium">Status</th>
+                <th className="px-3 py-2.5 text-right font-medium">Learners</th>
+                <th className="px-3 py-2.5 text-right font-medium">This week</th>
+                <th className="px-3 py-2.5 text-right font-medium">Upcoming</th>
+                <th className="w-10" />
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {members.map((m) => (
+                <tr key={m.id} onClick={() => onOpen(m)} className="cursor-pointer hover:bg-slate-50">
+                  <td className="px-4 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-[11px] font-semibold text-white">
+                        {m.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="flex items-center gap-1.5 truncate font-medium">
+                          {m.name}
+                          {m.role === "manager" && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-violet-600" aria-label="Manager" />}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                        {/* Phones: the numbers sit under the name */}
+                        <p className="mt-0.5 text-xs text-muted-foreground sm:hidden">
+                          {m.learners} learner{m.learners === 1 ? "" : "s"} · {m.lessonsThisWeek} this week · {m.upcomingLessons} upcoming
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 align-middle"><MemberStatus member={m} /></td>
+                  <td className="hidden px-3 py-3 text-right tabular-nums sm:table-cell">{m.learners}</td>
+                  <td className="hidden px-3 py-3 text-right tabular-nums sm:table-cell">{m.lessonsThisWeek}</td>
+                  <td className="hidden px-3 py-3 text-right tabular-nums sm:table-cell">{m.upcomingLessons}</td>
+                  <td className="pr-3 text-slate-400"><ChevronRight className="h-4 w-4" /></td>
+                </tr>
+              ))}
+              {invites.map((inv) => (
+                <tr key={inv.id} className="bg-slate-50/40">
+                  <td className="px-4 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-slate-300 text-slate-400">
+                        <Mail className="h-3.5 w-3.5" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{inv.email}</p>
+                        <p className="text-xs text-muted-foreground">Expires {new Date(inv.expiresAt).toLocaleDateString("en-GB")}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3"><Badge variant="outline" className="border-amber-300 text-amber-700">Invited</Badge></td>
+                  <td colSpan={3} className="hidden px-3 py-3 text-right sm:table-cell">
+                    <Button size="sm" variant="ghost" onClick={() => onCopy(inv.link)} aria-label={`Copy invite link for ${inv.email}`}>
+                      <Copy className="mr-1 h-3.5 w-3.5" /> Copy link
+                    </Button>
+                  </td>
+                  <td className="pr-2">
+                    <div className="flex justify-end">
+                      <Button size="icon" variant="ghost" className="h-8 w-8 sm:hidden" onClick={() => onCopy(inv.link)} aria-label={`Copy invite link for ${inv.email}`}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      {onCancel && (
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onCancel(inv.id)} aria-label={`Cancel invite for ${inv.email}`}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
-
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="flex-1" onClick={onView}>View learners</Button>
-          {onRemove && (
-            <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={onRemove}>Remove</Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="rounded-lg bg-slate-50 py-2">
-      <p className="text-lg font-bold">{value}</p>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-    </div>
+/** Ready with Donna on or off, or how far through setting up they are. */
+export function MemberStatus({ member: m }: { member: SchoolMember }) {
+  const steps = [m.setup?.complete, !!m.phoneNumber, m.calendarConnected].filter(Boolean).length;
+  if (steps < 3) return <Badge variant="secondary" className="whitespace-nowrap">Setting up · {steps}/3</Badge>;
+  return m.donnaEnabled ? (
+    <Badge variant="outline" className="whitespace-nowrap border-green-300 text-green-700"><Power className="mr-1 h-3 w-3" /> Donna on</Badge>
+  ) : (
+    <Badge variant="outline" className="whitespace-nowrap border-red-300 text-red-700"><Power className="mr-1 h-3 w-3" /> Donna off</Badge>
   );
 }

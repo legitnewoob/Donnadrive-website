@@ -461,7 +461,7 @@ export interface SchoolMember {
 }
 
 export interface SchoolOverview {
-  school: { id: string; name: string; seatLimit: number; includedSeats: number; extraSeats: number; planAmount: number; extraSeatAmount: number; canBuySeats: boolean };
+  school: { id: string; name: string; seatLimit: number; includedSeats: number; extraSeats: number; planAmount: number; extraSeatAmount: number; canBuySeats: boolean; seatsUnavailable?: "no_subscription" | "not_set_up" | null };
   role: "owner" | "manager" | "member";
   roleLabel: string | null;
   permissions: string[];

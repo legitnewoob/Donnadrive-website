@@ -256,10 +256,12 @@ export default function Team() {
                 <p className="flex-1">
                   All {seats.limit} seats are in use. {can("school.billing") ? "Add a seat for another instructor, or remove one to free a seat." : "Ask the owner to add a seat, or remove an instructor to free one."}
                 </p>
-                {data.school.canBuySeats && (
+                {data.school.canBuySeats ? (
                   <Button size="sm" onClick={() => setSeatChange(data.school.extraSeats + 1)}>
                     <Plus className="mr-1 h-4 w-4" /> Add a seat · {gbp(data.school.extraSeatAmount)}/month
                   </Button>
+                ) : can("school.billing") && (
+                  <Button size="sm" variant="outline" onClick={() => navigate("/contact")}>Contact us to add seats</Button>
                 )}
               </div>
             ) : (
@@ -308,8 +310,8 @@ export default function Team() {
           </CardContent>
         </Card>
 
-        {/* Seats */}
-        {data.school.canBuySeats && can("school.billing") && (
+        {/* Seats: the owner can add more on top of the ones included */}
+        {can("school.billing") && (
           <Card>
             <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
               <div className="min-w-0 flex-1">
@@ -317,7 +319,17 @@ export default function Team() {
                 <p className="text-sm text-muted-foreground">
                   {data.school.includedSeats} included in your plan · extra seats {gbp(data.school.extraSeatAmount)}/month each
                 </p>
+                {!data.school.canBuySeats && (
+                  <p className="mt-1 text-sm text-amber-800">
+                    {data.school.seatsUnavailable === "no_subscription"
+                      ? "Extra seats are added to your monthly subscription, and your school isn't on a paid subscription yet. Contact us and we'll add seats for you."
+                      : "Adding seats isn't available right now. Contact us and we'll add seats for you."}
+                  </p>
+                )}
               </div>
+              {!data.school.canBuySeats ? (
+                <Button variant="outline" className="shrink-0" onClick={() => navigate("/contact")}>Contact us</Button>
+              ) : (
               <div className="flex items-center gap-2">
                 <Button
                   size="icon"
@@ -335,6 +347,7 @@ export default function Team() {
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
+              )}
             </CardContent>
           </Card>
         )}

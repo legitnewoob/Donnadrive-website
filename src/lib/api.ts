@@ -222,8 +222,11 @@ export async function getLearnerDetail(token: string, phone: string, instructor?
   };
 }
 
-export async function updateLearnerNotes(token: string, phone: string, notes: string) {
-  const res = await fetch(`${API_BASE}/api/dashboard/learners/${encodeURIComponent(phone)}/notes`, {
+// `instructor`: a school owner acting for one of their instructors
+const forInstructor = (instructor?: string) => (instructor ? `?instructor=${encodeURIComponent(instructor)}` : "");
+
+export async function updateLearnerNotes(token: string, phone: string, notes: string, instructor?: string) {
+  const res = await fetch(`${API_BASE}/api/dashboard/learners/${encodeURIComponent(phone)}/notes${forInstructor(instructor)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ notes }),
@@ -377,8 +380,8 @@ export async function previewRoute(
 
 // ─── Lesson Types ───────────────────────────────────────────────────────────
 
-export async function getLessonTypes(token: string) {
-  const res = await fetch(`${API_BASE}/api/dashboard/lesson-types`, {
+export async function getLessonTypes(token: string, instructor?: string) {
+  const res = await fetch(`${API_BASE}/api/dashboard/lesson-types${forInstructor(instructor)}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await res.json();
@@ -389,8 +392,8 @@ export async function getLessonTypes(token: string) {
   }>;
 }
 
-export async function createLessonType(token: string, body: { name: string; price: number; description?: string }) {
-  const res = await fetch(`${API_BASE}/api/dashboard/lesson-types`, {
+export async function createLessonType(token: string, body: { name: string; price: number; description?: string }, instructor?: string) {
+  const res = await fetch(`${API_BASE}/api/dashboard/lesson-types${forInstructor(instructor)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),
@@ -400,8 +403,8 @@ export async function createLessonType(token: string, body: { name: string; pric
   return data.data;
 }
 
-export async function updateLessonType(token: string, id: string, body: Record<string, unknown>) {
-  const res = await fetch(`${API_BASE}/api/dashboard/lesson-types/${id}`, {
+export async function updateLessonType(token: string, id: string, body: Record<string, unknown>, instructor?: string) {
+  const res = await fetch(`${API_BASE}/api/dashboard/lesson-types/${id}${forInstructor(instructor)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),
@@ -411,8 +414,8 @@ export async function updateLessonType(token: string, id: string, body: Record<s
   return data.data;
 }
 
-export async function deleteLessonType(token: string, id: string) {
-  const res = await fetch(`${API_BASE}/api/dashboard/lesson-types/${id}`, {
+export async function deleteLessonType(token: string, id: string, instructor?: string) {
+  const res = await fetch(`${API_BASE}/api/dashboard/lesson-types/${id}${forInstructor(instructor)}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -490,6 +493,11 @@ async function schoolRequest<T>(token: string | null, path: string, init: Reques
 }
 
 export const getSchool = (token: string) => schoolRequest<SchoolOverview>(token, "");
+export type LearnerSummary = Awaited<ReturnType<typeof getLearners>>[number];
+export type SchoolLearner = LearnerSummary & { instructor: { id: string; name: string } };
+// Every learner across the school's instructors (owner or manager)
+export const getSchoolLearners = (token: string) => schoolRequest<SchoolLearner[]>(token, "/learners");
+
 // Owner without a subscription: pay for seats through Stripe Checkout
 export const startSeatsCheckout = (token: string, extraSeats: number) =>
   schoolRequest<{ url: string }>(token, "/seats/checkout", { method: "POST", body: JSON.stringify({ extraSeats }) });

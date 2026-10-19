@@ -310,7 +310,8 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* WhatsApp Number */}
+        {/* WhatsApp Number: school owners don't run Donna, their instructors each get one */}
+        {profile.school?.role !== "owner" && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -343,6 +344,7 @@ export default function ProfilePage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Subscription */}
         <Card>

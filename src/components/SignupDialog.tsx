@@ -52,7 +52,7 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
               return;
             }
             setStep("success");
-            setTimeout(() => navigate(homePath()), 1200);
+            setTimeout(() => goTo(homePath()), 1200);
           })
           .catch(() => {
             localStorage.removeItem("dd_token");
@@ -89,7 +89,7 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
           setUserName(result.instructor.name.split(" ")[0]);
           setIsReturning(!result.isNew);
           setStep("success");
-          setTimeout(() => navigate("/admin"), 1200);
+          setTimeout(() => goTo("/admin"), 1200);
           return;
         }
 
@@ -101,7 +101,7 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
           setStep("plan");
         } else {
           setStep("success");
-          setTimeout(() => navigate(homePath()), 1500);
+          setTimeout(() => goTo(homePath()), 1500);
         }
       } catch (err) {
         if (err instanceof WaitlistError && onWaitlist) {
@@ -139,7 +139,7 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
         await chooseFreePlan(token);
         markPlanChosen();
         setStep("success");
-        setTimeout(() => navigate("/dashboard"), 1500);
+        setTimeout(() => goTo("/dashboard"), 1500);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Couldn't choose the plan.");
         setStep("error");
@@ -153,6 +153,13 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
     handleClose();
     navigate(`/dashboard?plan=${plan.slug}`);
   }
+
+  // This dialog is shared by the whole site and stays mounted across pages, so it
+  // has to close itself when it sends someone on
+  const goTo = (path: string) => {
+    navigate(path);
+    handleClose();
+  };
 
   const handleClose = () => {
     setStep("signin");

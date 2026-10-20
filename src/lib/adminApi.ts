@@ -201,7 +201,8 @@ export interface WaitlistRow {
   id: string;
   name: string;
   email: string;
-  place: number;
+  /** Live place among people still waiting; null once invited, signed up or removed */
+  place: number | null;
   position: number;
   referralCode: string;
   referrals: number;

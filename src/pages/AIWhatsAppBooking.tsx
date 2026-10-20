@@ -1,3 +1,4 @@
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -148,11 +149,7 @@ const AIWhatsAppBooking = () => {
               Donna handles your WhatsApp bookings while you focus on teaching.
             </p>
             <div className="flex flex-row gap-2 sm:gap-3 justify-center pt-4">
-              <Link to="/book-demo">
-                <Button variant="accent" size="lg" className="text-xs sm:text-base px-4 sm:px-8 py-2 sm:py-3">
-                  Book a Demo
-                </Button>
-              </Link>
+              <PrimaryCTA variant="accent" size="lg" className="text-xs sm:text-base px-4 sm:px-8 py-2 sm:py-3" />
             </div>
           </motion.div>
         </div>
@@ -506,14 +503,9 @@ const AIWhatsAppBooking = () => {
               Ready to Let Donna Handle Your Bookings?
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              Book a demo and we'll set everything up for you on a free onboarding call.
+              Sign up in minutes and Donna starts answering your learners on WhatsApp straight away.
             </p>
-            <Link to="/book-demo">
-              <Button variant="default" size="lg" className="text-base px-8 py-3">
-                Book Your Demo
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
+            <PrimaryCTA variant="default" size="lg" className="text-base px-8 py-3" />
           </motion.div>
         </div>
       </section>

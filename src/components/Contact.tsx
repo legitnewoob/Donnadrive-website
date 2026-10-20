@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail } from "lucide-react";
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 
 const Contact = () => {
   return (
@@ -18,14 +19,10 @@ const Contact = () => {
             Ready to Get Your Evenings Back?
           </h2>
           <p className="text-primary-foreground/90 text-base sm:text-lg mb-8">
-            Book a demo and see how Donna can handle your bookings.
+            See how Donna can handle your bookings.
           </p>
           
-          <Link to="/book-demo">
-            <Button variant="accent" size="lg" className="text-base px-8 py-3 mb-8">
-              Book a Demo
-            </Button>
-          </Link>
+          <PrimaryCTA variant="accent" size="lg" className="text-base px-8 py-3 mb-8" />
 
           <div className="flex items-center justify-center gap-2 text-primary-foreground/70 text-sm mb-8">
             <Mail className="w-4 h-4" />

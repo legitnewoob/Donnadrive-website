@@ -11,16 +11,19 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { googleSignup, chooseFreePlan, getProfile } from "@/lib/api";
+import { googleSignup, chooseFreePlan, getProfile, pendingInvite, WaitlistError } from "@/lib/api";
+import { isClosed, useLaunch, type WaitlistBlock } from "@/lib/launch";
 import { useDisplayPlans, gbp, type DisplayPlan } from "@/lib/pricing";
 import { homePath, isSuperAdmin, setAccess, markPlanChosen } from "@/lib/access";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Sign-up is closed and this Google account has no account yet: show the waitlist instead */
+  onWaitlist?: (block: WaitlistBlock) => void;
 }
 
-export default function SignupDialog({ open, onOpenChange }: Props) {
+export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) {
   const [step, setStep] = useState<"signin" | "plan" | "success" | "error">("signin");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -29,6 +32,8 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
   const [authToken, setAuthToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const { plans, trialDays } = useDisplayPlans();
+  // While the waitlist is on this dialog is only for signing in (or using an invite)
+  const signInOnly = isClosed(useLaunch()) && !pendingInvite();
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
@@ -99,7 +104,20 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
           setTimeout(() => navigate(homePath()), 1500);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+        if (err instanceof WaitlistError && onWaitlist) {
+          handleClose();
+          onWaitlist(err.block);
+          return;
+        }
+        setError(
+          err instanceof WaitlistError
+            ? err.block.onList
+              ? "You're on the waitlist. We'll email you as soon as it's your turn."
+              : "We're not open yet. Join the waitlist from the home page and we'll email you."
+            : err instanceof Error
+              ? err.message
+              : "Something went wrong. Please try again."
+        );
         setStep("error");
       } finally {
         setLoading(false);
@@ -151,13 +169,13 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
       <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl gap-3 overflow-y-auto rounded-3xl p-5 sm:gap-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="pr-6 text-2xl sm:pr-0 sm:text-3xl">
-            {step === "signin" && "Get started"}
+            {step === "signin" && (signInOnly ? "Sign in" : "Get started")}
             {step === "plan" && `Welcome${userName ? `, ${userName}` : ""}! Choose your plan`}
             {step === "success" && (isReturning ? `Welcome back${userName ? `, ${userName}` : ""}!` : "All set!")}
             {step === "error" && "Something went wrong"}
           </DialogTitle>
           <DialogDescription className="mt-1 text-sm sm:mt-2 sm:text-base">
-            {step === "signin" && "Sign in with Google to continue."}
+            {step === "signin" && (signInOnly ? "Sign in with Google to open your dashboard." : "Sign in with Google to continue.")}
             {step === "plan" && "Paid plans start with a free trial. No contracts, cancel anytime."}
             {step === "success" && (isReturning
               ? `Redirecting to ${isSuperAdmin() ? "the admin panel" : "your dashboard"}...`
@@ -186,9 +204,11 @@ export default function SignupDialog({ open, onOpenChange }: Props) {
                   </svg>
                 </div>
                 <p className="text-muted-foreground text-sm mb-3 sm:mb-6">
-                  We use Google to verify your identity. You'll choose a plan next.
+                  {signInOnly
+                    ? "Use the Google account you signed up with."
+                    : "We use Google to verify your identity. You'll choose a plan next."}
                 </p>
-                {trialDays > 0 && (
+                {trialDays > 0 && !signInOnly && (
                   <p className="text-center text-xs font-semibold text-green-700">
                     🎉 Paid plans start with a {trialDays}-day free trial. Cancel anytime.
                   </p>

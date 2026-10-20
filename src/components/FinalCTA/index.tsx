@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Typewriter } from "react-simple-typewriter";
 import donnaMascot from "@/assets/mascot-wink.png";
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 
 const features = [
     {
@@ -97,15 +98,7 @@ const FinalCTA = () => {
                         {/* Buttons */}
 
                         <div className="mt-12 flex flex-col justify-center gap-4 sm:flex-row">
-                            <Link to="/book-demo">
-                                <Button
-                                    size="lg"
-                                    className="h-14 rounded-xl px-10 text-base"
-                                >
-                                    Book Your Live Demo
-                                    <ArrowRight className="ml-2 h-5 w-5" />
-                                </Button>
-                            </Link>
+                            <PrimaryCTA size="lg" className="h-14 rounded-xl px-10 text-base" />
 
                             <Button
                                 variant="outline"

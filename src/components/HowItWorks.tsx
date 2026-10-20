@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MessageCircle, Calendar, CheckCircle } from "lucide-react";
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 
 const HowItWorks = () => {
   const steps = [
@@ -72,11 +73,7 @@ const HowItWorks = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5, ease: "easeOut", delay: 0.3 }}
           >
-            <Link to="/book-demo">
-              <Button variant="accent" size="lg" className="text-base px-8 py-3">
-                Book a Demo
-              </Button>
-            </Link>
+            <PrimaryCTA variant="accent" size="lg" className="text-base px-8 py-3" />
           </motion.div>
         </div>
       </div>

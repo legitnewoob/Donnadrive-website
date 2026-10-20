@@ -592,3 +592,26 @@ export async function getReferral(token: string): Promise<Referral> {
   if (!res.ok) throw new Error(data.error || "Couldn't load your referral link");
   return data.data;
 }
+
+const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
+
+/**
+ * Open the Portal already signed in. Sends a one-time code (2 minutes, single
+ * use), never the sign-in token or API key, which would sit in browser history
+ * and logs if put in a URL. Without a session it just opens the Portal.
+ */
+export async function openPortal(e?: { preventDefault: () => void }) {
+  e?.preventDefault();
+  const token = localStorage.getItem("dd_token");
+  let url = PORTAL_URL;
+  if (token) {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/handoff`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (res.ok && data.code) url = `${PORTAL_URL}?auth_code=${encodeURIComponent(data.code)}`;
+    } catch {
+      /* open it signed out */
+    }
+  }
+  window.location.href = url;
+}

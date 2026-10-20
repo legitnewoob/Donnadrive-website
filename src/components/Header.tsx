@@ -14,7 +14,7 @@ import LaunchBanner from "@/components/launch/LaunchBanner";
 import { useLaunchActions } from "@/components/launch/LaunchProvider";
 import { isClosed, useLaunch } from "@/lib/launch";
 import { getAccess, signOut } from "@/lib/access";
-import { getProfile } from "@/lib/api";
+import { getProfile, openPortal } from "@/lib/api";
 
 const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
 
@@ -66,14 +66,6 @@ const Header = () => {
     };
   }, [checkAuth]);
 
-  function getPortalUrl() {
-    const params = new URLSearchParams();
-    const token = localStorage.getItem("dd_token");
-    const apiKey = localStorage.getItem("dd_apiKey");
-    if (token) params.set("token", token);
-    if (apiKey) params.set("apiKey", apiKey);
-    return `${PORTAL_URL}?${params.toString()}`;
-  }
 
   return (
     <>
@@ -195,7 +187,8 @@ const Header = () => {
                   </button>
                   <div className="w-px h-6 bg-primary/15" />
                   <a
-                    href={getPortalUrl()}
+                    href={PORTAL_URL}
+                    onClick={openPortal}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
                   >
                     <Smartphone className="h-4 w-4" />
@@ -347,7 +340,8 @@ const Header = () => {
                         </SheetClose>
                         <SheetClose asChild>
                           <a
-                            href={getPortalUrl()}
+                            href={PORTAL_URL}
+                    onClick={openPortal}
                             className="text-lg font-medium hover:text-primary flex items-center gap-2"
                           >
                             <Smartphone className="h-5 w-5" />

@@ -499,10 +499,10 @@ function WaitlistBody() {
                 return (
                   <li key={r.id} className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-3 py-2.5 text-sm md:grid-cols-[28px_56px_minmax(0,2fr)_minmax(0,1fr)_72px_80px_96px_36px]">
                     <Checkbox aria-label={`Select ${r.email}`} checked={selected.has(r.id)} disabled={!canInvite} onCheckedChange={() => toggle(r.id)} />
-                    <span className="hidden font-semibold tabular-nums md:block">#{r.place}</span>
+                    <span className="hidden font-semibold tabular-nums md:block">{r.place ? `#${r.place}` : <span className="text-muted-foreground">—</span>}</span>
                     <div className="min-w-0">
                       <p className="truncate font-medium">
-                        <span className="tabular-nums text-muted-foreground md:hidden">#{r.place} </span>
+                        {r.place && <span className="tabular-nums text-muted-foreground md:hidden">#{r.place} </span>}
                         {r.name}
                         {r.priority && <Star className="ml-1 inline h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-label="Priority" />}
                       </p>

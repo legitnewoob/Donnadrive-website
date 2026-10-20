@@ -60,24 +60,9 @@ function LaunchCard({ settings, onSaved, canEdit }: { settings: LaunchSettings; 
   const [confirmMode, setConfirmMode] = useState<LaunchSettings["mode"] | null>(null);
   const [announce, setAnnounce] = useState(false);
   const [busy, setBusy] = useState(false);
-  // Folded to a one-line summary by default; remembers if it was left open
-  const [expanded, setExpanded] = useState(() => {
-    try {
-      return localStorage.getItem("dd_admin_launch_open") === "1";
-    } catch {
-      return false;
-    }
-  });
-  function toggle() {
-    setExpanded((v) => {
-      try {
-        localStorage.setItem("dd_admin_launch_open", v ? "0" : "1");
-      } catch {
-        /* private mode */
-      }
-      return !v;
-    });
-  }
+  // Only the sign-up switch shows until "More settings" is opened
+  const [expanded, setExpanded] = useState(false);
+  const toggle = () => setExpanded((v) => !v);
 
   useEffect(() => {
     setForm({ date: settings.date || "", message: settings.message || "", invitePromoCode: settings.invitePromoCode || "", maxFreeMonths: String(settings.maxFreeMonths) });
@@ -151,29 +136,28 @@ function LaunchCard({ settings, onSaved, canEdit }: { settings: LaunchSettings; 
 
       </div>
 
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={expanded}
-        className={`mt-3 flex w-full flex-wrap items-center gap-x-2 gap-y-1 border-t px-4 py-3 text-left text-sm transition-colors hover:bg-slate-50 ${expanded ? "" : "rounded-b-xl"}`}
-      >
-        <span className="font-medium text-slate-800">Launch date, banner and perks</span>
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t px-4 py-3">
         <span className="text-xs text-muted-foreground">
           {settings.date ? `Launching ${launchDay(settings.date)}` : "No launch date"}
           {" · "}
-          {settings.invitePromoCode ? `Perk ${settings.invitePromoCode}` : "No invite perk"}
+          {settings.invitePromoCode ? `Invite perk ${settings.invitePromoCode}` : "No invite perk"}
+          {settings.message ? " · Custom banner" : ""}
         </span>
-        <ChevronDown className={`ml-auto h-4 w-4 text-slate-400 transition-transform duration-300 ease-in-out ${expanded ? "rotate-180" : ""}`} />
-      </button>
+        <Button type="button" variant="outline" size="sm" className="ml-auto h-8" onClick={toggle} aria-expanded={expanded} aria-controls="launch-details">
+          {expanded ? "Fewer settings" : "More settings"}
+          <ChevronDown className={`ml-1.5 h-4 w-4 transition-transform duration-300 ease-out ${expanded ? "rotate-180" : ""}`} />
+        </Button>
+      </div>
 
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
+            id="launch-details"
             key="launch-details"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
             className="overflow-hidden"
           >
       <div className="space-y-5 px-4 pb-4 pt-1">

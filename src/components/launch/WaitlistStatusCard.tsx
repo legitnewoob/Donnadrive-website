@@ -72,12 +72,18 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
 function Questions({ entry, onSaved }: { entry: WaitlistEntry; onSaved: (e: WaitlistEntry) => void }) {
   const [area, setArea] = useState(entry.area || "");
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const savedTimer = useRef<ReturnType<typeof setTimeout>>();
   const token = entry.token!;
 
   async function save(data: Parameters<typeof updateWaitlistProfile>[1]) {
     setSaving(true);
+    setSaved(false);
     try {
       onSaved({ ...(await updateWaitlistProfile(token, data)), token });
+      setSaved(true);
+      clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => setSaved(false), 2000);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't save that");
     } finally {
@@ -92,9 +98,21 @@ function Questions({ entry, onSaved }: { entry: WaitlistEntry; onSaved: (e: Wait
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="font-semibold text-slate-900">Help us get you in sooner</p>
-          <p className="text-xs text-muted-foreground">We invite people who tell us a little about themselves first. All optional.</p>
+          <p className="text-xs text-muted-foreground">We invite people who tell us a little about themselves first. All optional, and your answers save as you go.</p>
         </div>
-        <span className="shrink-0 text-xs text-muted-foreground">{saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : `${answered}/3`}</span>
+        <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground" aria-live="polite">
+          {saving ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving
+            </>
+          ) : saved ? (
+            <span className="flex items-center gap-1 font-medium text-green-700">
+              <Check className="h-3.5 w-3.5" /> Saved
+            </span>
+          ) : (
+            `${answered}/3`
+          )}
+        </span>
       </div>
 
       <div className="space-y-2">

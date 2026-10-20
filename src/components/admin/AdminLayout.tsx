@@ -13,6 +13,7 @@ import {
   Loader2,
   Lock,
   LogOut,
+  Hourglass,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export function useStaff() {
 const NAV = [
   { label: "Overview", icon: LayoutDashboard, path: "/admin", permission: "admin.view" },
   { label: "Customers", icon: Users, path: "/admin/customers", permission: "admin.view" },
+  { label: "Waitlist", icon: Hourglass, path: "/admin/waitlist", permission: "admin.waitlist" },
   { label: "Pricing", icon: Tag, path: "/admin/pricing", permission: "admin.pricing" },
   { label: "Sales & codes", icon: BadgePercent, path: "/admin/sales", permission: "admin.sales" },
   { label: "Phone numbers", icon: Phone, path: "/admin/numbers", permission: "admin.numbers" },
@@ -58,7 +60,7 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
 
   useEffect(() => {
     if (!localStorage.getItem("dd_token")) {
-      navigate("/");
+      navigate("/login", { replace: true });
       return;
     }
     adminApi

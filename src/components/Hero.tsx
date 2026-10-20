@@ -1,3 +1,4 @@
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 ﻿import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -66,18 +67,10 @@ const Hero = () => {
 
             <div className="mx-auto flex w-full max-w-xs flex-col gap-3 mt-10 sm:mx-0 sm:max-w-none sm:flex-row sm:gap-5 justify-center lg:justify-start">
 
-              <Link to="/book-demo" className="w-full sm:w-auto">
-
-                <Button
-                  size="lg"
-                  className="w-full sm:w-auto rounded-xl bg-white text-[#F86C4F] hover:bg-white/90 h-14 px-10 text-base font-semibold shadow-xl"
-                >
-
-                  Book a Demo
-
-                </Button>
-
-              </Link>
+              <PrimaryCTA
+                size="lg"
+                className="w-full sm:w-auto rounded-xl bg-white text-[#F86C4F] hover:bg-white/90 h-14 px-10 text-base font-semibold shadow-xl"
+              />
 
               <a href="#how-it-works" className="w-full sm:w-auto">
 

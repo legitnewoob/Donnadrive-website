@@ -9,7 +9,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, LayoutDashboard, Smartphone, ShieldCheck, LogOut, Sparkles } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
-import SignupDialog from "@/components/SignupDialog";
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
+import LaunchBanner from "@/components/launch/LaunchBanner";
+import { useLaunchActions } from "@/components/launch/LaunchProvider";
+import { isClosed, useLaunch } from "@/lib/launch";
 import { getAccess, signOut } from "@/lib/access";
 import { getProfile } from "@/lib/api";
 
@@ -20,7 +23,9 @@ const Header = () => {
   const navigate = useNavigate();
   const isHome = pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [signupOpen, setSignupOpen] = useState(false);
+  const { openSignIn } = useLaunchActions();
+  // While the waitlist is on, "Join the waitlist" leads and signing in is a quiet link
+  const closed = isClosed(useLaunch());
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   // Staff get an Admin panel button; super admins aren't customers, so only that
   const [staff, setStaff] = useState(false);
@@ -73,8 +78,9 @@ const Header = () => {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-5">
-          <div className="flex items-center justify-between rounded-2xl border border-white/15 bg-white/90 md:bg-white/10 md:backdrop-blur-xl shadow-lg px-6 py-3 will-change-transform">
+        <LaunchBanner />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5">
+          <div className="flex items-center justify-between rounded-2xl border border-white/15 bg-white/90 md:bg-white/10 md:backdrop-blur-xl shadow-lg px-4 sm:px-6 py-3 will-change-transform">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3">
               <img
@@ -197,13 +203,29 @@ const Header = () => {
                   </a>
                 </div>
               ) : (
-                <Button
-                  size="lg"
-                  className="hidden sm:inline-flex rounded-xl bg-white text-primary hover:bg-white/90 px-7 shadow-lg"
-                  onClick={() => setSignupOpen(true)}
-                >
-                  Get Started
-                </Button>
+                <>
+                  {closed && (
+                    <button
+                      onClick={openSignIn}
+                      className="hidden sm:inline text-sm font-medium text-black/70 hover:text-black transition-colors"
+                    >
+                      Sign in
+                    </button>
+                  )}
+                  <PrimaryCTA
+                    size="lg"
+                    openLabel="Get Started"
+                    className="hidden sm:inline-flex rounded-xl bg-white text-primary hover:bg-white/90 px-7 shadow-lg"
+                  />
+                  {/* Phones: a compact version beside the menu */}
+                  {closed && (
+                    <PrimaryCTA
+                      size="sm"
+                      closedLabel="Join waitlist"
+                      className="sm:hidden rounded-xl h-9 px-3.5 shadow"
+                    />
+                  )}
+                </>
               )}
 
               {/* Mobile Menu */}
@@ -319,11 +341,22 @@ const Header = () => {
                         </SheetClose>
                       </>
                     ) : (
-                      <SheetClose asChild>
-                        <Button className="w-full mt-4 rounded-xl" onClick={() => setSignupOpen(true)}>
-                          Get Started
-                        </Button>
-                      </SheetClose>
+                      <div className="mt-4 space-y-3">
+                        {/* Close the menu as the dialog opens */}
+                        <div onClickCapture={() => setMobileOpen(false)}>
+                          <PrimaryCTA openLabel="Get Started" className="w-full h-12 rounded-xl text-base" />
+                        </div>
+                        {closed && (
+                          <p className="text-center text-sm text-muted-foreground">
+                            Already have an account?{" "}
+                            <SheetClose asChild>
+                              <button onClick={openSignIn} className="font-medium text-slate-900 underline underline-offset-2">
+                                Sign in
+                              </button>
+                            </SheetClose>
+                          </p>
+                        )}
+                      </div>
                     )}
                   </nav>
                 </SheetContent>
@@ -332,11 +365,6 @@ const Header = () => {
           </div>
         </div>
       </header>
-
-      <SignupDialog
-        open={signupOpen}
-        onOpenChange={setSignupOpen}
-      />
     </>
   );
 };

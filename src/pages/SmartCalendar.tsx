@@ -1,3 +1,4 @@
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -139,11 +140,7 @@ const SmartCalendar = () => {
             </div>
 
             <div className="pt-4">
-              <Link to="/book-demo">
-                <Button variant="accent" size="lg" className="text-base px-8 py-3">
-                  Book a Demo
-                </Button>
-              </Link>
+              <PrimaryCTA variant="accent" size="lg" className="text-base px-8 py-3" />
             </div>
           </motion.div>
         </div>
@@ -298,11 +295,7 @@ const SmartCalendar = () => {
             <p className="text-primary-foreground/90 text-lg mb-8">
               Set up in 5 minutes. Let Donna handle the booking chaos.
             </p>
-            <Link to="/book-demo">
-              <Button variant="accent" size="lg" className="text-base px-8 py-3">
-                Book a Demo
-              </Button>
-            </Link>
+            <PrimaryCTA variant="accent" size="lg" className="text-base px-8 py-3" />
           </motion.div>
         </div>
       </section>

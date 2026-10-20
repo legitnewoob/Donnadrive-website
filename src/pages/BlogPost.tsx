@@ -1,3 +1,4 @@
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 import { useParams, Link, Navigate } from 'react-router-dom'
 import { ArrowLeft, Clock, ChevronRight, ArrowRight } from 'lucide-react'
 import { Helmet } from 'react-helmet'
@@ -96,13 +97,9 @@ export default function BlogPost() {
           <div className="text-2xl mb-2">🤖</div>
           <h2 className="text-xl font-bold text-white mb-2">See Donna Drive in Action</h2>
           <p className="text-white/80 mb-5 text-sm leading-relaxed max-w-md mx-auto">
-            Donna handles your WhatsApp bookings, sends reminders, and keeps your diary organised — automatically. Book a free demo to see how it works.
+            Donna handles your WhatsApp bookings, sends reminders, and keeps your diary organised — automatically.
           </p>
-          <Link to="/book-demo">
-            <Button variant="secondary" className="font-semibold">
-              Book a Free Demo <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+          <PrimaryCTA variant="secondary" className="font-semibold" />
         </div>
 
         {/* Back link */}

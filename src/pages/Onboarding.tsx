@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import SignupDialog from "@/components/SignupDialog";
+import { useLaunchActions } from "@/components/launch/LaunchProvider";
 import mascot from "@/assets/mascot-smile.png";
 import { homePath, getSchoolInfo, type SchoolInfo } from "@/lib/access";
 import {
@@ -121,7 +121,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [signedOut, setSignedOut] = useState(false);
-  const [signInOpen, setSignInOpen] = useState(false);
+  const { openSignIn } = useLaunchActions();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -390,7 +390,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             Your dashboard lives on the Donna Drive website. Sign in with the same Google account you use for the Portal.
           </p>
           <div className="flex flex-col gap-2">
-            <Button size="lg" className="w-full" onClick={() => setSignInOpen(true)}>
+            <Button size="lg" className="w-full" onClick={openSignIn}>
               Sign in with Google
             </Button>
             <Button variant="ghost" className="w-full" onClick={() => navigate("/")}>
@@ -398,10 +398,6 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             </Button>
           </div>
         </div>
-        <SignupDialog
-          open={signInOpen}
-          onOpenChange={setSignInOpen}
-        />
       </div>
     );
   }

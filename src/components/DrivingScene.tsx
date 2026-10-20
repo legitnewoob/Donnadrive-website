@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MessageCircle, Calendar, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 
 const chips = [
   {
@@ -218,14 +219,7 @@ const DrivingScene = () => {
           </p>
 
           <div className="mt-8 hidden md:block">
-            <Link to="/book-demo">
-              <Button
-                size="lg"
-                className="rounded-xl h-14 px-10 text-base font-semibold shadow-lg"
-              >
-                Book a Demo
-              </Button>
-            </Link>
+            <PrimaryCTA size="lg" className="rounded-xl h-14 px-10 text-base font-semibold shadow-lg" />
           </div>
 
           {/* Feature chips */}

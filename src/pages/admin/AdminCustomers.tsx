@@ -19,6 +19,7 @@ import {
   Building2,
   Users,
   Undo2,
+  Trash2,
 } from "lucide-react";
 import AdminLayout, { StatusBadge, useStaff } from "@/components/admin/AdminLayout";
 import { Input } from "@/components/ui/input";
@@ -247,6 +248,8 @@ function CustomerSheet({
   const [trialDays, setTrialDays] = useState("14");
   const [comp, setComp] = useState({ plan: "adi", until: "", note: "" });
   const [confirmSuspend, setConfirmSuspend] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteText, setDeleteText] = useState("");
 
   const load = useCallback(() => {
     if (!id) return;
@@ -444,6 +447,26 @@ function CustomerSheet({
               </Action>
             )}
 
+            {!c.deletedAt && can("admin.customers") && !c.superAdmin && !isSelf && (
+              <Action
+                title="Delete account"
+                icon={Trash2}
+                hint="The same as them deleting it themselves. They can sign up again with the same Google account and start fresh."
+              >
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-red-200 text-red-600 hover:bg-red-50"
+                  onClick={() => {
+                    setDeleteText("");
+                    setConfirmDelete(true);
+                  }}
+                >
+                  Delete
+                </Button>
+              </Action>
+            )}
+
             {c.history.length > 0 && (
               <section>
                 <h3 className="mb-2 text-sm font-semibold">History</h3>
@@ -475,6 +498,38 @@ function CustomerSheet({
                 onClick={() => c && act("suspend", () => adminApi.suspend(c.id), "Account suspended")}
               >
                 Suspend
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {c?.name}'s account?</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-2">
+                  <p>This can't be undone. It's the same as them pressing "Delete account" on their dashboard:</p>
+                  <ul className="list-disc space-y-1 pl-5">
+                    <li>their Stripe subscription is cancelled</li>
+                    <li>their WhatsApp number goes back to the pool</li>
+                    <li>their name, email, Google sign-in and calendar connection are removed</li>
+                  </ul>
+                  <p>If they sign in again with Google, they start a brand new account.</p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-1.5">
+              <label htmlFor="confirm-delete" className="text-sm font-medium">Type DELETE to confirm</label>
+              <Input id="confirm-delete" value={deleteText} onChange={(e) => setDeleteText(e.target.value)} autoComplete="off" placeholder="DELETE" />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 hover:bg-red-700"
+                disabled={deleteText !== "DELETE" || !!busy}
+                onClick={() => c && act("delete", () => adminApi.deleteCustomer(c.id), `${c.name}'s account deleted`)}
+              >
+                Delete account
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

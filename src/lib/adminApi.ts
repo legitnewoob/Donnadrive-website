@@ -263,6 +263,7 @@ export const adminApi = {
   removeComp: (id: string) => send<CustomerRow>("DELETE", `/customers/${id}/comp`),
   suspend: (id: string) => send<CustomerRow>("POST", `/customers/${id}/suspend`),
   reactivate: (id: string) => send<CustomerRow>("POST", `/customers/${id}/reactivate`),
+  deleteCustomer: (id: string) => send<{ id: string; deleted: boolean }>("POST", `/customers/${id}/delete`, { confirmation: "DELETE" }),
 
   staff: () => get<StaffMember[]>("/staff").then((r) => r.data),
   setStaff: (email: string, role: StaffRole | null) => send<StaffMember>("PUT", "/staff", { email, role }),

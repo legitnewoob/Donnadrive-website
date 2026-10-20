@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
 import { START_TOUR_EVENT } from "@/components/DashboardTour";
-import { getSetupStatus, getProfile, SETUP_CHANGED_EVENT } from "@/lib/api";
+import { getSetupStatus, getProfile, SETUP_CHANGED_EVENT, openPortal } from "@/lib/api";
 import { isSchoolOwner, getSchoolInfo, type SchoolInfo } from "@/lib/access";
 
 const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
@@ -110,14 +110,6 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
     }
   }
 
-  function getPortalUrl() {
-    const params = new URLSearchParams();
-    const token = localStorage.getItem("dd_token");
-    const apiKey = localStorage.getItem("dd_apiKey");
-    if (token) params.set("token", token);
-    if (apiKey) params.set("apiKey", apiKey);
-    return `${PORTAL_URL}?${params.toString()}`;
-  }
 
   type NavItem = { label: string; short: string; icon: React.ElementType; path: string; tour?: string; inBottomBar?: boolean };
   const ownerItems: NavItem[] = [
@@ -191,7 +183,8 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
           ))}
           {!owner && (
             <a
-              href={getPortalUrl()}
+              href={PORTAL_URL}
+                    onClick={openPortal}
               data-tour="portal-link"
               className={itemClass(false)}
             >
@@ -267,7 +260,8 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
             </div>
             {!owner && (
               <a
-                href={getPortalUrl()}
+                href={PORTAL_URL}
+                    onClick={openPortal}
                 data-tour="portal-link"
                 className="flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
               >
@@ -288,7 +282,8 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
             {!owner && (
               <>
                 <a
-                  href={getPortalUrl()}
+                  href={PORTAL_URL}
+                    onClick={openPortal}
                   title="Open Portal"
                   className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-2"
                 >

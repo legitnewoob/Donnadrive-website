@@ -6,7 +6,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, LayoutDashboard, Smartphone, ShieldCheck, LogOut, Sparkles } from "lucide-react";
+import { Menu, LayoutDashboard, Smartphone, ShieldCheck, LogOut, Sparkles, LogIn } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
 import PrimaryCTA from "@/components/launch/PrimaryCTA";
@@ -204,19 +204,34 @@ const Header = () => {
                 </div>
               ) : (
                 <>
-                  {closed && (
-                    <button
-                      onClick={openSignIn}
-                      className="hidden sm:inline text-sm font-medium text-black/70 hover:text-black transition-colors"
-                    >
-                      Sign in
-                    </button>
+                  {closed ? (
+                    // Same split pill as signed-in "Dashboard | Portal": the waitlist leads, signing in sits beside it
+                    <div className="hidden sm:flex items-center bg-white rounded-xl shadow-lg overflow-hidden">
+                      <PrimaryCTA
+                        closedLabel={
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            Join the waitlist
+                          </>
+                        }
+                        className="h-auto gap-2 rounded-none bg-transparent px-4 py-2.5 text-sm font-semibold text-primary shadow-none hover:bg-primary/5"
+                      />
+                      <div className="w-px h-6 bg-primary/15" />
+                      <button
+                        onClick={openSignIn}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+                      >
+                        <LogIn className="h-4 w-4" />
+                        Sign in
+                      </button>
+                    </div>
+                  ) : (
+                    <PrimaryCTA
+                      size="lg"
+                      openLabel="Get Started"
+                      className="hidden sm:inline-flex rounded-xl bg-white text-primary hover:bg-white/90 px-7 shadow-lg"
+                    />
                   )}
-                  <PrimaryCTA
-                    size="lg"
-                    openLabel="Get Started"
-                    className="hidden sm:inline-flex rounded-xl bg-white text-primary hover:bg-white/90 px-7 shadow-lg"
-                  />
                   {/* Phones: a compact version beside the menu */}
                   {closed && (
                     <PrimaryCTA

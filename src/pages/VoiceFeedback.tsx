@@ -1,3 +1,4 @@
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 import Header from "../components/Header";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -85,11 +86,7 @@ const VoiceFeedback = () => {
             <p className="text-sm sm:text-base lg:text-lg text-primary-foreground/90 max-w-3xl mx-auto leading-relaxed">
               After every lesson, simply speak your feedback to Donna via WhatsApp. She transcribes it, stores it securely, and reminds you what to focus on next time — so you always pick up right where you left off.
             </p>
-            <Link to="/book-demo">
-              <Button variant="accent" size="lg" className="text-sm sm:text-base px-6 py-3 mt-3">
-                Join the Waitlist
-              </Button>
-            </Link>
+            <PrimaryCTA variant="accent" size="lg" className="text-sm sm:text-base px-6 py-3 mt-3" />
             
             <div className="pt-4 sm:pt-6 flex justify-center">
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary-foreground/20 rounded-full flex items-center justify-center">
@@ -310,11 +307,7 @@ const VoiceFeedback = () => {
             <p className="text-sm sm:text-base lg:text-lg text-primary-foreground/90">
               Speak once — Donna remembers everything for you.
             </p>
-            <Link to="/book-demo">
-              <Button variant="accent" size="lg" className="text-sm sm:text-base px-6 py-3">
-                Join the Waitlist for Early Access
-              </Button>
-            </Link>
+            <PrimaryCTA variant="accent" size="lg" className="text-sm sm:text-base px-6 py-3" />
           </motion.div>
         </div>
       </section>

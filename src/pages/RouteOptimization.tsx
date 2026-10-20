@@ -1,3 +1,4 @@
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -12,7 +13,7 @@ const RouteOptimization = () => {
     <>
       <Helmet>
         <title>Route Optimization for Driving Instructors — Donna Drive</title>
-        <meta name="description" content="Save time and fuel with Donna Drive's smart route optimization. Auto-arrange lesson bookings by location so you teach more and drive less. Book a demo." />
+        <meta name="description" content="Save time and fuel with Donna Drive's smart route optimization. Auto-arrange lesson bookings by location so you teach more and drive less." />
       </Helmet>
       
       <div className="min-h-screen bg-background pb-24 lg:pb-0">
@@ -59,11 +60,7 @@ const RouteOptimization = () => {
                   </div>
                 </div>
 
-                <Link to="/book-demo">
-                  <Button variant="accent" size="lg" className="w-full sm:w-auto">
-                    See Route Optimization — Book a Demo
-                  </Button>
-                </Link>
+                <PrimaryCTA variant="accent" size="lg" className="w-full sm:w-auto" />
               </motion.div>
 
               {/* Before/After Images */}
@@ -303,11 +300,7 @@ const RouteOptimization = () => {
               <p className="text-base sm:text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
                 See route optimization in action and discover how much time you could save.
               </p>
-              <Link to="/book-demo">
-                <Button variant="accent" size="lg">
-                  Book a Demo
-                </Button>
-              </Link>
+              <PrimaryCTA variant="accent" size="lg" />
               <p className="text-xs sm:text-sm text-muted-foreground mt-3">
                 Early access offer: 1 month free for pre-order users.
               </p>
@@ -392,11 +385,7 @@ const RouteOptimization = () => {
 
         {/* Mobile sticky CTA */}
         <div className="fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 border-t border-border lg:hidden z-40">
-          <Link to="/book-demo" className="block">
-            <Button variant="accent" size="lg" className="w-full">
-              Book a Demo
-            </Button>
-          </Link>
+          <PrimaryCTA variant="accent" size="lg" className="w-full" />
         </div>
       </div>
     </>

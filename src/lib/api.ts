@@ -1,16 +1,56 @@
 import { setAccess, type SchoolInfo } from "./access";
+import { referralCode, type WaitlistBlock } from "./launch";
+
+// A launch invite opened on /join, used by the next Google sign-up
+const INVITE_KEY = "dd_invite";
+export const pendingInvite = () => {
+  try {
+    return sessionStorage.getItem(INVITE_KEY);
+  } catch {
+    return null;
+  }
+};
+export const setPendingInvite = (token: string) => {
+  try {
+    sessionStorage.setItem(INVITE_KEY, token);
+  } catch {
+    /* private mode */
+  }
+};
+const clearPendingInvite = () => {
+  try {
+    sessionStorage.removeItem(INVITE_KEY);
+  } catch {
+    /* private mode */
+  }
+};
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
-export async function googleSignup(credential: string, plan: string) {
+/** Thrown when sign-up is closed and this Google account has no account yet. */
+export class WaitlistError extends Error {
+  constructor(public block: WaitlistBlock) {
+    super("We're not open yet");
+  }
+}
+
+/**
+ * invite: a launch-waitlist invite token; ref: who referred them. Both are
+ * picked up from the visit automatically when not given.
+ */
+export async function googleSignup(credential: string, plan: string, opts: { invite?: string | null; ref?: string | null } = {}) {
   const res = await fetch(`${API_BASE}/api/auth/google-signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ credential, plan }),
+    body: JSON.stringify({ credential, plan, invite: opts.invite ?? pendingInvite(), ref: opts.ref ?? referralCode() }),
   });
 
   const data = await res.json();
+  if (res.status === 403 && data.code === "WAITLIST") {
+    throw new WaitlistError({ onList: !!data.onList, place: data.place ?? null, status: data.status ?? null, name: data.name || "", email: data.email || "" });
+  }
   if (!res.ok) throw new Error(data.error || "Signup failed");
+  clearPendingInvite();
   return data as {
     success: boolean;
     token: string;
@@ -534,4 +574,21 @@ export async function sendContactMessage(body: { name: string; email: string; me
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || "Couldn't send your message");
+}
+
+export interface Referral {
+  code: string;
+  url: string;
+  signedUp: number;
+  rewarded: number;
+  freeMonths: number;
+  maxFreeMonths: number;
+}
+
+/** Their "give a month, get a month" link and how it's going. */
+export async function getReferral(token: string): Promise<Referral> {
+  const res = await fetch(`${API_BASE}/api/dashboard/referral`, { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Couldn't load your referral link");
+  return data.data;
 }

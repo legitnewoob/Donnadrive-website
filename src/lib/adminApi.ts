@@ -68,6 +68,7 @@ export interface Overview {
   signups: Array<{ date: string; count: number }>;
   signupsLast30: number;
   funnel: Array<{ key: string; label: string; count: number }>;
+  waitlist?: { total: number; waiting: number; invited: number; joined: number } | null;
   donnaOff: number;
   schools: { total: number; instructors: number; seats: number; extraSeats: number };
   numbers: { available: number; assigned: number; reserved: number };
@@ -196,6 +197,60 @@ function qs(params: Record<string, string | number | undefined>) {
   return s ? `?${s}` : "";
 }
 
+export interface WaitlistRow {
+  id: string;
+  name: string;
+  email: string;
+  place: number;
+  position: number;
+  referralCode: string;
+  referrals: number;
+  priority: boolean;
+  status: "waiting" | "invited" | "joined" | "removed";
+  type: "adi" | "pdi" | "school" | null;
+  schoolSize: string | null;
+  area: string;
+  currentTool: string[];
+  marketingConsent: boolean;
+  joinedAt: string;
+  source: { utm_source?: string; utm_medium?: string; utm_campaign?: string; referrer?: string; landingPath?: string };
+  invite: { sentAt: string; expiresAt: string; expired: boolean; remindedAt: string | null; usedAt: string | null; promoCode: string | null } | null;
+  unsubscribed: boolean;
+}
+
+export interface WaitlistStats {
+  total: number;
+  waiting: number;
+  invited: number;
+  joined: number;
+  removed: number;
+  conversion: number | null;
+  byType: Record<string, number>;
+  perDay: Array<{ date: string; count: number }>;
+  topReferrers: Array<{ name: string; email: string; referrals: number }>;
+}
+
+export interface LaunchSettings {
+  mode: "waitlist" | "invite" | "open";
+  date: string | null;
+  message: string;
+  invitePromoCode: string | null;
+  maxFreeMonths: number;
+  promoCodes: Array<{ code: string; label: string }>;
+}
+
+async function download(path: string, filename: string) {
+  const token = localStorage.getItem("dd_token");
+  const res = await fetch(`${API_BASE}/api/admin${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) throw new AdminError("Couldn't download the file", res.status);
+  const url = URL.createObjectURL(await res.blob());
+  const a = Object.assign(document.createElement("a"), { href: url, download: filename });
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export const adminApi = {
   me: () => get<StaffMe>("/me").then((r) => r.data),
   overview: () => get<Overview>("/overview").then((r) => r.data),
@@ -228,6 +283,16 @@ export const adminApi = {
   deactivatePromoCode: (id: string) => send<PromoCode>("DELETE", `/promo-codes/${id}`),
 
   audit: (p: { page?: number; action?: string }) => get<AuditEntry[]>(`/audit${qs(p)}`),
+
+  waitlist: (p: { status?: string; type?: string; search?: string; area?: string; page?: number; limit?: number }) =>
+    request<{ data: WaitlistRow[]; total: number; page: number; limit: number; stats: WaitlistStats }>(`/waitlist${qs(p)}`),
+  inviteWaitlist: (body: { ids?: string[]; next?: number; type?: string }) =>
+    send<{ invited: number; emailed: number; failed: string[] }>("POST", "/waitlist/invite", body),
+  removeFromWaitlist: (id: string) => send<WaitlistRow>("POST", `/waitlist/${id}/remove`),
+  exportWaitlist: () => download("/waitlist.csv", `waitlist-${new Date().toISOString().slice(0, 10)}.csv`),
+  launch: () => get<LaunchSettings>("/launch").then((r) => r.data),
+  updateLaunch: (body: Partial<Omit<LaunchSettings, "promoCodes">>) => send<LaunchSettings>("PUT", "/launch", body),
+  announceLaunch: () => send<{ sent: number; of: number }>("POST", "/launch/announce"),
 
   numbers: (status?: string) => get<PoolNumber[]>(`/phone-numbers${qs({ status, limit: 200 })}`),
   addNumber: (body: { phoneNumber: string; phoneNumberId: string; region?: string; label?: string; whatsappToken?: string }) =>

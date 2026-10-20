@@ -30,6 +30,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import DashboardLayout from "@/components/DashboardLayout";
+import ReferralCard from "@/components/ReferralCard";
 import {
   getProfile,
   updateProfile,
@@ -451,6 +452,9 @@ export default function ProfilePage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Referrals: for anyone who pays for Donna Drive (a school's instructors don't) */}
+        {!["member", "manager"].includes(profile.school?.role ?? "") && <ReferralCard token={localStorage.getItem("dd_token") || ""} />}
       </div>
 
       {/* Danger Zone */}

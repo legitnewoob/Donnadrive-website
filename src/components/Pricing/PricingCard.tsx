@@ -1,8 +1,7 @@
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import SignupDialog from "../SignupDialog";
 import type { DisplayPlan } from "@/lib/pricing";
 import { gbp } from "@/lib/pricing";
 
@@ -13,7 +12,6 @@ interface Props {
 
 const PricingCard = ({ plan, index }: Props) => {
   const Icon = plan.icon;
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <>
@@ -112,19 +110,13 @@ const PricingCard = ({ plan, index }: Props) => {
           ))}
         </div>
 
-        <Button
+        <PrimaryCTA
           className="mt-6 w-full h-12 rounded-xl sm:mt-10"
           variant={plan.popular ? "default" : "outline"}
-          onClick={() => setDialogOpen(true)}
-        >
-          {plan.button}
-        </Button>
+          openLabel={plan.button}
+          audience={plan.slug === "driving-school" ? "school" : plan.slug === "pdi" ? "pdi" : "adi"}
+        />
       </motion.div>
-
-      <SignupDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
     </>
   );
 };

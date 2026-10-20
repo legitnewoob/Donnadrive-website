@@ -1,3 +1,4 @@
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -205,11 +206,7 @@ const Portal = () => {
               The Donna Portal replaces the spreadsheet — students, calendar, and activity, all in one app built for instructors.
             </p>
             <div className="pt-2">
-              <Link to="/book-demo">
-                <Button variant="accent" size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-2.5 sm:py-3">
-                  Book a Demo
-                </Button>
-              </Link>
+              <PrimaryCTA variant="accent" size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-2.5 sm:py-3" />
             </div>
           </motion.div>
         </div>
@@ -441,11 +438,7 @@ const Portal = () => {
             <p className="text-primary-foreground/90 text-sm sm:text-base lg:text-lg mb-6">
               See the real Portal set up for your school.
             </p>
-            <Link to="/book-demo">
-              <Button variant="accent" size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-2.5 sm:py-3">
-                Book a Demo
-              </Button>
-            </Link>
+            <PrimaryCTA variant="accent" size="lg" className="text-sm sm:text-base px-6 sm:px-8 py-2.5 sm:py-3" />
           </motion.div>
         </div>
       </section>

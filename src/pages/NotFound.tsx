@@ -1,3 +1,4 @@
+import PrimaryCTA from "@/components/launch/PrimaryCTA";
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -62,11 +63,7 @@ const NotFound = () => {
                   </Link>
                 </Button>
               ) : (
-                <Button asChild size="lg" variant="outline" className="h-12 rounded-xl border-white/40 bg-white/10 px-6 text-base text-white hover:bg-white/20 hover:text-white">
-                  <Link to="/book-demo">
-                    <MessageCircle className="mr-2 h-4 w-4" /> Book a demo
-                  </Link>
-                </Button>
+                <PrimaryCTA size="lg" variant="outline" className="h-12 rounded-xl border-white/40 bg-white/10 px-6 text-base text-white hover:bg-white/20 hover:text-white" />
               )}
             </div>
           </motion.div>

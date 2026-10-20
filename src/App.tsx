@@ -37,6 +37,11 @@ import AdminSales from "./pages/admin/AdminSales";
 import AdminStaff from "./pages/admin/AdminStaff";
 import AdminNumbers from "./pages/admin/AdminNumbers";
 import AdminAudit from "./pages/admin/AdminAudit";
+import AdminWaitlist from "./pages/admin/AdminWaitlist";
+import WaitlistPage, { WaitlistMe } from "./pages/Waitlist";
+import InviteLanding from "./pages/InviteLanding";
+import Login from "./pages/Login";
+import { LaunchProvider } from "./components/launch/LaunchProvider";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +96,7 @@ const App = () => (
         <LogoutHandler />
         <AccessRedirect />
         <PlanGate />
+        <LaunchProvider>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/contact" element={<BookDemo />} />
@@ -101,6 +107,11 @@ const App = () => (
           <Route path="/voice-feedback" element={<VoiceFeedback />} />
           <Route path="/ai-whatsapp-booking" element={<AIWhatsAppBooking />} />
           <Route path="/thank-you" element={<ThankYou />} />
+          {/* Launch waitlist */}
+          <Route path="/waitlist" element={<WaitlistPage />} />
+          <Route path="/waitlist/me" element={<WaitlistMe />} />
+          <Route path="/join" element={<InviteLanding />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
@@ -126,9 +137,11 @@ const App = () => (
           <Route path="/admin/staff" element={<AdminStaff />} />
           <Route path="/admin/numbers" element={<AdminNumbers />} />
           <Route path="/admin/audit" element={<AdminAudit />} />
+          <Route path="/admin/waitlist" element={<AdminWaitlist />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </LaunchProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { CalendarDays, Download, Loader2, Megaphone, Rocket, Search, Send, Star, Trash2, X } from "lucide-react";
+import { CalendarDays, ChevronDown, Download, Loader2, Megaphone, Rocket, Search, Send, Star, Trash2, X } from "lucide-react";
 import AdminLayout, { useStaff } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +59,24 @@ function LaunchCard({ settings, onSaved, canEdit }: { settings: LaunchSettings; 
   const [confirmMode, setConfirmMode] = useState<LaunchSettings["mode"] | null>(null);
   const [announce, setAnnounce] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Folded to a one-line summary by default; remembers if it was left open
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      return localStorage.getItem("dd_admin_launch_open") === "1";
+    } catch {
+      return false;
+    }
+  });
+  function toggle() {
+    setExpanded((v) => {
+      try {
+        localStorage.setItem("dd_admin_launch_open", v ? "0" : "1");
+      } catch {
+        /* private mode */
+      }
+      return !v;
+    });
+  }
 
   useEffect(() => {
     setForm({ date: settings.date || "", message: settings.message || "", invitePromoCode: settings.invitePromoCode || "", maxFreeMonths: String(settings.maxFreeMonths) });
@@ -101,10 +119,31 @@ function LaunchCard({ settings, onSaved, canEdit }: { settings: LaunchSettings; 
 
   return (
     <section className="rounded-xl border bg-white">
-      <h2 className="flex items-center gap-2 border-b px-4 py-3 font-semibold">
-        <Rocket className="h-4 w-4 text-violet-600" /> Launch settings
-        {!canEdit && <span className="ml-auto text-xs font-normal text-muted-foreground">Only admins can change these</span>}
+      <h2>
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={expanded}
+          className={`flex w-full flex-wrap items-center gap-x-2 gap-y-1 px-4 py-3 text-left font-semibold hover:bg-slate-50 ${expanded ? "border-b" : "rounded-xl"}`}
+        >
+          <Rocket className="h-4 w-4 text-violet-600" /> Launch settings
+          <span className="flex flex-wrap items-center gap-1.5 text-xs font-normal">
+            <span className={`rounded-full px-2 py-0.5 font-semibold ${settings.mode === "open" ? "bg-green-100 text-green-700" : "bg-violet-100 text-violet-700"}`}>
+              {MODES.find((m) => m.value === settings.mode)?.label}
+            </span>
+            <span className="text-muted-foreground">
+              {settings.date ? `Launching ${launchDay(settings.date)}` : "No launch date"}
+              {" · "}
+              {settings.invitePromoCode ? `Perk ${settings.invitePromoCode}` : "No invite perk"}
+            </span>
+          </span>
+          <span className="ml-auto flex items-center gap-2">
+            {!canEdit && <span className="hidden text-xs font-normal text-muted-foreground sm:inline">Only admins can change these</span>}
+            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${expanded ? "rotate-180" : ""}`} />
+          </span>
+        </button>
       </h2>
+      {expanded && (
       <div className="space-y-5 p-4">
         <div>
           <Label className="text-xs">Sign-up</Label>
@@ -214,6 +253,7 @@ function LaunchCard({ settings, onSaved, canEdit }: { settings: LaunchSettings; 
           </div>
         )}
       </div>
+      )}
 
       <Dialog open={!!confirmMode} onOpenChange={(o) => !o && setConfirmMode(null)}>
         <DialogContent>

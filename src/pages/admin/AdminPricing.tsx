@@ -108,7 +108,7 @@ export default function AdminPricing() {
 
 function PlanEditor({ plan, noticeDays, onSaved }: { plan: AdminPlan; noticeDays: number; onSaved: () => void }) {
   const isSchool = plan.slug === "driving-school";
-  const isFree = plan.slug === "pdi";
+  // £0 = a free plan (no checkout). Driving schools are always paid: seats are billed on the plan.
   const initial = () => ({
     name: plan.name,
     subtitle: plan.subtitle,
@@ -126,6 +126,8 @@ function PlanEditor({ plan, noticeDays, onSaved }: { plan: AdminPlan; noticeDays
 
   useEffect(() => setF(initial()), [plan]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const priceNow = toPence(f.price || "0");
+  const freeNow = !isSchool && priceNow === 0;
   const set = (k: keyof ReturnType<typeof initial>) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
 
   function diff() {
@@ -136,8 +138,8 @@ function PlanEditor({ plan, noticeDays, onSaved }: { plan: AdminPlan; noticeDays
     const features = f.features.split("\n").map((x) => x.trim()).filter(Boolean);
     if (features.join("\n") !== plan.features.join("\n")) out.features = features;
     if (f.popular !== plan.popular) out.popular = f.popular;
-    if (!isFree && Number(f.trialDays) !== plan.trialDays) out.trialDays = Number(f.trialDays);
-    if (!isFree && toPence(f.price) !== plan.amount) out.amount = toPence(f.price);
+    if (!freeNow && Number(f.trialDays) !== plan.trialDays) out.trialDays = Number(f.trialDays);
+    if (!Number.isNaN(priceNow) && priceNow !== plan.amount) out.amount = priceNow;
     if (isSchool && Number(f.includedSeats) !== plan.includedSeats) out.includedSeats = Number(f.includedSeats);
     if (isSchool && toPence(f.seatPrice) !== plan.extraSeatAmount) out.extraSeatAmount = toPence(f.seatPrice);
     return out;
@@ -175,7 +177,7 @@ function PlanEditor({ plan, noticeDays, onSaved }: { plan: AdminPlan; noticeDays
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
           <h2 className="font-semibold">{PLAN_LABELS[plan.slug]}</h2>
-          <p className="text-xs text-muted-foreground">{isFree ? "Free" : `${gbp(plan.amount)}/${plan.interval}`}{isSchool ? ` · ${plan.includedSeats} seats + ${gbp(plan.extraSeatAmount)} each` : ""}</p>
+          <p className="text-xs text-muted-foreground">{plan.amount === 0 ? "Free" : `${gbp(plan.amount)}/${plan.interval}${plan.trialDays > 0 ? ` · ${plan.trialDays}-day trial` : " · no trial"}`}{isSchool ? ` · ${plan.includedSeats} seats + ${gbp(plan.extraSeatAmount)} each` : ""}</p>
         </div>
         <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Star className={`h-3.5 w-3.5 ${f.popular ? "fill-violet-500 text-violet-500" : ""}`} /> Popular
@@ -184,18 +186,24 @@ function PlanEditor({ plan, noticeDays, onSaved }: { plan: AdminPlan; noticeDays
       </div>
 
       <div className="flex-1 space-y-3 p-4">
-        {!isFree && (
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="text-xs">Price (£/{plan.interval})</Label>
-              <Input type="number" min={1} step="0.01" value={f.price} onChange={set("price")} />
-            </div>
-            <div>
-              <Label className="text-xs">Free trial (days)</Label>
-              <Input type="number" min={0} max={90} value={f.trialDays} onChange={set("trialDays")} />
-            </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Price (£/{plan.interval})</Label>
+            <Input type="number" min={isSchool ? 1 : 0} step="0.01" value={f.price} onChange={set("price")} />
           </div>
-        )}
+          <div>
+            <Label className="text-xs">Free trial (days)</Label>
+            <Input type="number" min={0} max={90} value={freeNow ? "" : f.trialDays} placeholder={freeNow ? "—" : undefined} disabled={freeNow} onChange={set("trialDays")} />
+          </div>
+          <p className="col-span-2 text-xs text-muted-foreground">
+            {freeNow
+              ? "£0 makes this plan free: people pick it without paying."
+              : Number(f.trialDays) > 0
+                ? `Checkout with a ${f.trialDays}-day free trial, then ${gbp(priceNow || 0)}/${plan.interval}.`
+                : `No trial: people pay ${gbp(priceNow || 0)} at checkout.`}
+            {!isSchool && !freeNow && " Set £0 to make it free."}
+          </p>
+        </div>
         {isSchool && (
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -239,10 +247,25 @@ function PlanEditor({ plan, noticeDays, onSaved }: { plan: AdminPlan; noticeDays
             <AlertDialogTitle>Change the {PLAN_LABELS[plan.slug]} price?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
-                {changes.amount !== undefined && <p>Plan: <strong>{gbp(plan.amount)} → {gbp(changes.amount)}</strong> a {plan.interval}.</p>}
+                {changes.amount !== undefined && (
+                  <p>
+                    Plan: <strong>{plan.amount === 0 ? "Free" : gbp(plan.amount)} → {changes.amount === 0 ? "Free" : gbp(changes.amount)}</strong>
+                    {changes.amount > 0 && ` a ${plan.interval}`}.
+                  </p>
+                )}
+                {changes.amount !== undefined && plan.amount === 0 && changes.amount > 0 && (
+                  <p className="rounded-lg bg-sky-50 p-2 text-sky-900">
+                    New sign-ups on this plan go through checkout
+                    {(changes.trialDays ?? plan.trialDays) > 0 ? ` with a ${changes.trialDays ?? plan.trialDays}-day free trial` : " and pay straight away"}.
+                    Anyone already on it for free keeps it free (marked as comped in Customers; remove the comp to make them pay).
+                  </p>
+                )}
+                {changes.amount === 0 && (
+                  <p className="rounded-lg bg-sky-50 p-2 text-sky-900">The plan becomes free: people pick it without checkout. This only works if nobody is paying for it.</p>
+                )}
                 {changes.extraSeatAmount !== undefined && <p>Extra seat: <strong>{gbp(plan.extraSeatAmount)} → {gbp(changes.extraSeatAmount)}</strong> a {plan.interval}.</p>}
                 <p>New sign-ups pay the new price straight away, and the website updates within a minute.</p>
-                {rise ? (
+                {plan.amount === 0 || changes.amount === 0 ? null : rise ? (
                   <p className="flex gap-2 rounded-lg bg-amber-50 p-2 text-amber-900">
                     <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" />
                     Existing subscribers are emailed now and move to the new price from their first renewal after {date(effective.toISOString())}.

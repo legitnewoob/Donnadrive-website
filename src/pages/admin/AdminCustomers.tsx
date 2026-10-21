@@ -409,6 +409,7 @@ function CustomerSheet({
                       <div>
                         <Label className="text-xs">Plan</Label>
                         <select value={comp.plan} onChange={(e) => setComp({ ...comp, plan: e.target.value })} className={`${selectClass} w-full`}>
+                          <option value="pdi">PDI</option>
                           <option value="adi">ADI</option>
                           <option value="driving-school">Driving School</option>
                         </select>

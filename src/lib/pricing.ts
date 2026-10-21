@@ -33,6 +33,14 @@ export interface LivePricing {
   sale: { name: string; bannerText: string; endsAt: string; plans: string[] } | null;
 }
 
+/**
+ * A plan priced at £0 is free: no checkout. Anything with a price goes through
+ * checkout (with a trial when it has trial days). If prices couldn't load, the
+ * built-in PDI plan counts as free.
+ */
+export const isFreePlan = (plan: { slug: string; amount: number | null }) =>
+  plan.amount != null ? plan.amount === 0 : plan.slug === "pdi";
+
 /** "£10", "£12.50" */
 export const gbp = (pence: number) => `£${(pence / 100).toFixed(pence % 100 ? 2 : 0)}`;
 
@@ -84,6 +92,6 @@ export function useDisplayPlans(): { plans: DisplayPlan[]; sale: LivePricing["sa
       extraSeatAmount: live.extraSeatAmount,
     };
   });
-  const trialDays = Math.max(0, ...plans.map((p) => p.trialDays));
+  const trialDays = Math.max(0, ...plans.filter((p) => !isFreePlan(p)).map((p) => p.trialDays));
   return { plans, sale: data?.sale ?? null, trialDays };
 }

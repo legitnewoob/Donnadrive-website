@@ -385,7 +385,8 @@ export default function ProfilePage() {
                   Manage instructors
                 </Button>
               )}
-              {profile.plan !== "pdi" && !["member", "manager"].includes(profile.school?.role ?? "") && (
+              {/* Anyone with a Stripe subscription (any priced plan, PDI included) */}
+              {profile.subscriptionStatus && !["member", "manager"].includes(profile.school?.role ?? "") && (
                 <Button
                   variant="outline"
                   size="sm"

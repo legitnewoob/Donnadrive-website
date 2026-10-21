@@ -79,12 +79,12 @@ export async function createCheckoutSession(token: string, plan: string, { embed
   return data as { success: boolean; url: string | null; clientSecret: string | null };
 }
 
-/** Pick the free plan (paid plans are picked by finishing checkout) */
-export async function chooseFreePlan(token: string) {
+/** Pick a free plan, one priced at £0 (paid plans are picked by finishing checkout) */
+export async function chooseFreePlan(token: string, plan = "pdi") {
   const res = await fetch(`${API_BASE}/api/auth/choose-plan`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ plan: "pdi" }),
+    body: JSON.stringify({ plan }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Couldn't choose the plan");
@@ -130,7 +130,7 @@ export async function getProfile(token: string) {
     comp?: { plan: string; until: string | null } | null;
     needsPlan?: boolean;
     /** Picked a paid plan but didn't finish paying */
-    pendingPlan?: "adi" | "driving-school" | null;
+    pendingPlan?: string | null;
   };
 }
 

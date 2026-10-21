@@ -1,4 +1,4 @@
-﻿import { useDisplayPlans } from "@/lib/pricing";
+﻿import { useDisplayPlans, isFreePlan } from "@/lib/pricing";
 import {
   Accordion,
   AccordionContent,
@@ -38,15 +38,23 @@ const faqs = [
 
 const FAQ = () => {
   // Trial length comes from the admin panel, so the answer always matches pricing
-  const { trialDays } = useDisplayPlans();
+  const { plans } = useDisplayPlans();
+  const paid = plans.filter((p) => !isFreePlan(p));
+  const withTrial = paid.filter((p) => p.trialDays > 0);
+  const free = plans.filter(isFreePlan);
+  const names = (list: typeof plans) => list.map((p) => p.title).join(list.length > 2 ? ", " : " and ").replace(/, ([^,]*)$/, " and $1");
+  const trials = [...new Set(withTrial.map((p) => p.trialDays))];
   const allFaqs = [
     ...faqs,
     {
       question: "Is there a free trial?",
       answer:
-        trialDays > 0
-          ? `Yes. The ADI and Driving School plans start with a ${trialDays}-day free trial. You add a card at sign-up but aren't charged until the trial ends, and you can cancel any time before then. PDIs use Donna free while training.`
-          : "PDIs use Donna free while training. Paid plans are billed monthly and you can cancel any time.",
+        (withTrial.length
+          ? `Yes. ${withTrial.length === paid.length ? "Every paid plan starts" : `The ${names(withTrial)} plan${withTrial.length > 1 ? "s start" : " starts"}`} with ${
+              trials.length === 1 ? `a ${trials[0]}-day free trial` : "a free trial"
+            }. You add a card at sign-up but aren't charged until the trial ends, and you can cancel any time before then.`
+          : "Paid plans are billed monthly and you can cancel any time.") +
+        (free.length ? ` The ${names(free)} plan${free.length > 1 ? "s are" : " is"} free.` : ""),
     },
   ];
   return (

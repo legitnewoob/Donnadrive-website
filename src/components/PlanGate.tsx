@@ -6,14 +6,15 @@ import { ArrowLeft, Check, Loader2, Lock, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { chooseFreePlan, createCheckoutSession, getProfile } from "@/lib/api";
-import { useDisplayPlans, gbp, type DisplayPlan } from "@/lib/pricing";
+import { useDisplayPlans, gbp, type DisplayPlan, isFreePlan } from "@/lib/pricing";
 import { getAccess, isInstructorPage, markPlanChosen, signOut } from "@/lib/access";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
 // Loaded once; without a key, payment falls back to Stripe's own page
 const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
 
-type PaidSlug = "adi" | "driving-school";
+// Any plan with a price (checked against live prices when picked)
+type PaidSlug = string;
 
 /**
  * Someone who signed in but hasn't picked a plan sees their dashboard blurred
@@ -56,7 +57,7 @@ export default function PlanGate() {
         if (!p.needsPlan) return;
         // ?plan= from the sign-up dialog, or a payment they didn't finish
         const asked = params.get("plan");
-        const resume = (asked === "adi" || asked === "driving-school" ? asked : p.pendingPlan) || null;
+        const resume = (asked && ["pdi", "adi", "driving-school"].includes(asked) ? asked : p.pendingPlan) || null;
         if (resume) {
           setPaying(resume);
           setResumed(!asked);
@@ -104,15 +105,15 @@ function ChooseStep({ name, onPaid }: { name: string; onPaid: (slug: PaidSlug) =
   const [busy, setBusy] = useState(false);
 
   async function pick(plan: DisplayPlan) {
-    if (plan.slug !== "pdi") {
-      onPaid(plan.slug as PaidSlug);
+    if (!isFreePlan(plan)) {
+      onPaid(plan.slug);
       return;
     }
     const token = localStorage.getItem("dd_token");
     if (!token) return;
     setBusy(true);
     try {
-      await chooseFreePlan(token);
+      await chooseFreePlan(token, plan.slug);
       markPlanChosen();
       // The dashboard loaded while locked; load it again now it's open
       window.location.reload();
@@ -173,8 +174,8 @@ function ChooseStep({ name, onPaid }: { name: string; onPaid: (slug: PaidSlug) =
                 ))}
               </ul>
               <Button className="mt-3 w-full md:mt-5" size="sm" variant={plan.popular ? "default" : "outline"} disabled={busy} onClick={() => pick(plan)}>
-                {busy && plan.slug === "pdi" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {plan.slug === "pdi" ? "Continue free" : plan.button}
+                {busy && isFreePlan(plan) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isFreePlan(plan) ? "Continue free" : plan.button}
               </Button>
             </div>
           );

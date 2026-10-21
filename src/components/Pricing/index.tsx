@@ -1,12 +1,21 @@
 ﻿import { motion } from "framer-motion";
 
 import PricingCard from "./PricingCard";
-import { useDisplayPlans } from "@/lib/pricing";
+import { useDisplayPlans, isFreePlan } from "@/lib/pricing";
 import donnaSurprised from "@/assets/mascot-surprised.png";
 import RoundaboutMapBackground from "@/components/RoundaboutMapBackground";
 
 const Pricing = () => {
-  const { plans, sale, trialDays } = useDisplayPlans();
+  const { plans, sale } = useDisplayPlans();
+  // Trial wording that's true for every plan, even when their trials differ
+  const paid = plans.filter((p) => !isFreePlan(p));
+  const lengths = [...new Set(paid.filter((p) => p.trialDays > 0).map((p) => p.trialDays))];
+  const allTrial = paid.length > 0 && paid.every((p) => p.trialDays > 0);
+  const trialBadge = !lengths.length
+    ? null
+    : lengths.length === 1
+      ? `${lengths[0]}-day free trial on ${allTrial ? "every paid plan" : "selected plans"}`
+      : `Free trial on ${allTrial ? "every paid plan" : "selected plans"}`;
 
   return (
     <section
@@ -44,7 +53,7 @@ const Pricing = () => {
           </h2>
 
           <p className="mt-4 text-base text-muted-foreground leading-7 md:mt-6 md:text-lg md:leading-8">
-            Start free. Upgrade when you're ready.
+            {plans.some(isFreePlan) ? "Start free. Upgrade when you're ready." : allTrial ? "Every plan starts with a free trial." : "Simple monthly pricing."}{" "}
             No contracts. Cancel anytime.
           </p>
 
@@ -57,9 +66,9 @@ const Pricing = () => {
                 </span>
               </div>
             )}
-            {trialDays > 0 && (
+            {trialBadge && (
               <div className="inline-flex rounded-2xl bg-green-100 px-4 py-2 text-xs font-semibold text-green-700 sm:rounded-full sm:px-5 sm:text-sm">
-                🎉 {trialDays}-day free trial on paid plans • Cancel anytime
+                🎉 {trialBadge} • Cancel anytime
               </div>
             )}
           </div>

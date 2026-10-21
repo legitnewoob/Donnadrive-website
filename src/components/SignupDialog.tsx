@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { googleSignup, chooseFreePlan, getProfile, pendingInvite, WaitlistError } from "@/lib/api";
 import { isClosed, useLaunch, type WaitlistBlock } from "@/lib/launch";
-import { useDisplayPlans, gbp, type DisplayPlan } from "@/lib/pricing";
+import { useDisplayPlans, gbp, isFreePlan, type DisplayPlan } from "@/lib/pricing";
 import { homePath, isSuperAdmin, setAccess, markPlanChosen } from "@/lib/access";
 
 interface Props {
@@ -133,10 +133,10 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
     const token = authToken || localStorage.getItem("dd_token");
     if (!token) return;
 
-    if (plan.slug === "pdi") {
+    if (isFreePlan(plan)) {
       setLoading(true);
       try {
-        await chooseFreePlan(token);
+        await chooseFreePlan(token, plan.slug);
         markPlanChosen();
         setStep("success");
         setTimeout(() => goTo("/dashboard"), 1500);
@@ -217,7 +217,7 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
                 </p>
                 {trialDays > 0 && !signInOnly && (
                   <p className="text-center text-xs font-semibold text-green-700">
-                    🎉 Paid plans start with a {trialDays}-day free trial. Cancel anytime.
+                    🎉 Paid plans start with a free trial. Cancel anytime.
                   </p>
                 )}
               </div>

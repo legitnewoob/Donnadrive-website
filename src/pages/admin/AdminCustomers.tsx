@@ -118,7 +118,7 @@ export default function AdminCustomers() {
             {STATUSES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
           <select aria-label="Staff" value={staff} onChange={(e) => setParam("staff", e.target.value)} className={selectClass}>
-            <option value="">Everyone</option>
+            <option value="">Customers</option>
             <option value="true">Staff only</option>
           </select>
         </div>

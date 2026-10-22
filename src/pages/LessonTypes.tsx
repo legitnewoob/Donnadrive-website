@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
-import { getLessonTypes, createLessonType, updateLessonType, deleteLessonType, notifySetupChanged } from "@/lib/api";
+import { getLessonTypes, createLessonType, updateLessonType, deleteLessonType, notifySetupChanged, formatDuration } from "@/lib/api";
+import LessonLengthSelect from "@/components/LessonLengthSelect";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +27,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2, BookOpen } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, BookOpen, Clock } from "lucide-react";
+
+const QUICK_LENGTHS = [60, 90, 120];
 
 type LessonTypeItem = Awaited<ReturnType<typeof getLessonTypes>>[number];
 
@@ -37,7 +41,13 @@ export default function LessonTypes() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<LessonTypeItem | null>(null);
-  const [form, setForm] = useState({ name: "", price: "", description: "" });
+  const [form, setForm] = useState<{ name: string; price: string; description: string; durationMin: number | null }>({
+    name: "",
+    price: "",
+    description: "",
+    durationMin: null,
+  });
+  const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<LessonTypeItem | null>(null);
@@ -52,46 +62,62 @@ export default function LessonTypes() {
     try {
       const data = await getLessonTypes(token!);
       setTypes(data);
-    } catch {
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't load lesson types");
     } finally {
       setLoading(false);
     }
   }
 
+  // Lengths other active lesson types already use (each needs its own)
+  const takenLengths = (except?: string) =>
+    types.filter((t) => t.active && t.durationMin && t._id !== except).map((t) => t.durationMin as number);
+
   function openCreate() {
     setEditing(null);
-    setForm({ name: "", price: "", description: "" });
+    const free = QUICK_LENGTHS.find((m) => !takenLengths().includes(m)) ?? null;
+    setForm({ name: "", price: "", description: "", durationMin: free });
+    setFormError("");
     setDialogOpen(true);
   }
 
   function openEdit(t: LessonTypeItem) {
     setEditing(t);
-    setForm({ name: t.name, price: String(t.price), description: t.description });
+    setForm({ name: t.name, price: String(t.price), description: t.description, durationMin: t.durationMin });
+    setFormError("");
     setDialogOpen(true);
   }
 
   async function handleSave() {
     const price = parseFloat(form.price);
     if (!form.name.trim() || isNaN(price) || price < 0) return;
+    if (!form.durationMin) {
+      setFormError("Choose how long this lesson is.");
+      return;
+    }
     setSaving(true);
+    setFormError("");
     try {
       if (editing) {
         await updateLessonType(token!, editing._id, {
           name: form.name.trim(),
           price,
+          durationMin: form.durationMin,
           description: form.description.trim(),
         });
       } else {
         await createLessonType(token!, {
           name: form.name.trim(),
           price,
+          durationMin: form.durationMin,
           description: form.description.trim(),
         });
       }
       await load();
       notifySetupChanged();
       setDialogOpen(false);
-    } catch {
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : "Couldn't save");
     } finally {
       setSaving(false);
     }
@@ -102,7 +128,8 @@ export default function LessonTypes() {
       await updateLessonType(token!, t._id, { active: !t.active });
       notifySetupChanged();
       setTypes((prev) => prev.map((x) => (x._id === t._id ? { ...x, active: !x.active } : x)));
-    } catch {
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't save");
     }
   }
 
@@ -114,7 +141,8 @@ export default function LessonTypes() {
       notifySetupChanged();
       setTypes((prev) => prev.filter((x) => x._id !== deleteTarget._id));
       setDeleteTarget(null);
-    } catch {
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't delete");
     } finally {
       setDeleting(false);
     }
@@ -159,6 +187,15 @@ export default function LessonTypes() {
                       <div className="min-w-0">
                         <h3 className="font-semibold text-slate-900 truncate">{t.name}</h3>
                         <p className="text-2xl font-bold text-slate-900 mt-1">&pound;{t.price}</p>
+                        {t.durationMin ? (
+                          <p className="mt-1 inline-flex items-center gap-1 text-sm text-slate-600">
+                            <Clock className="h-3.5 w-3.5" /> {formatDuration(t.durationMin)}
+                          </p>
+                        ) : (
+                          <button type="button" onClick={() => openEdit(t)} className="mt-1 text-sm font-medium text-amber-700 underline">
+                            Set a length
+                          </button>
+                        )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(t)}>
@@ -214,6 +251,35 @@ export default function LessonTypes() {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="lesson-length">Length</Label>
+              <div className="flex flex-wrap items-center gap-2">
+                {QUICK_LENGTHS.map((m) => {
+                  const used = takenLengths(editing?._id).includes(m);
+                  return (
+                    <Button
+                      key={m}
+                      type="button"
+                      size="sm"
+                      variant={form.durationMin === m ? "default" : "outline"}
+                      disabled={used}
+                      title={used ? "Another lesson type already has this length" : undefined}
+                      onClick={() => setForm((f) => ({ ...f, durationMin: m }))}
+                    >
+                      {formatDuration(m)}
+                    </Button>
+                  );
+                })}
+                <LessonLengthSelect
+                  id="lesson-length"
+                  value={form.durationMin}
+                  taken={takenLengths(editing?._id)}
+                  onChange={(m) => setForm((f) => ({ ...f, durationMin: m }))}
+                  className="w-28"
+                />
+              </div>
+              <p className="text-xs text-slate-500">Donna fits lessons into your day by length. Each lesson type needs a different length.</p>
+            </div>
+            <div className="space-y-2">
               <Label>Description (optional)</Label>
               <Textarea
                 placeholder="What this lesson covers..."
@@ -223,9 +289,10 @@ export default function LessonTypes() {
               />
             </div>
           </div>
+          {formError && <p role="alert" className="text-sm text-red-600">{formError}</p>}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving || !form.name.trim() || !form.price}>
+            <Button onClick={handleSave} disabled={saving || !form.name.trim() || !form.price || !form.durationMin}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editing ? "Save" : "Create"}
             </Button>
           </DialogFooter>

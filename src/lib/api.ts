@@ -314,11 +314,27 @@ export interface RouteSettings {
   serviceArea: { radius: number | null; unit: "miles" | "km"; postcodeDistricts: string[] };
   suggestOtherDays: boolean;
   lookAheadDays: number;
+  /** Packed mode: the most driving allowed between two lessons (minutes) */
+  bufferMin: number;
+  /** Added to every real drive for traffic and parking (minutes) */
+  driveVarianceMin: number;
+}
+
+export type DayHours = { start: string; end: string } | null;
+export interface Lunch {
+  enabled: boolean;
+  durationMin: number;
+  windowFrom: string;
+  windowTo: string;
 }
 
 export interface BotSettings {
   /** Master switch: off = Donna stops replying and booking */
   donnaEnabled: boolean;
+  /** "fixed": the instructor picks start times; "packed": Donna fits lessons into dayHours */
+  scheduleMode: "fixed" | "packed";
+  dayHours: Record<DayKey, DayHours>;
+  lunch: Lunch;
   workingHours: Record<DayKey, string[]>;
   breaks: Array<{ from: string; to: string }>;
   maxLessonsPerDay: number | null;
@@ -392,6 +408,35 @@ export async function updateSettings(
   return data.data as DonnaSettings;
 }
 
+export interface DayPreview {
+  bufferMin: number;
+  dayHours: { start: string; end: string };
+  lunch: Lunch;
+  days: Array<{
+    durationMin: number;
+    name: string | null;
+    count: number;
+    starts: string[];
+    lunch: { from: string; to: string } | null;
+  }>;
+}
+
+/** How many lessons of each length fit a day with these (draft) settings, if every drive takes X. */
+export async function previewDay(
+  token: string,
+  body: { bufferMin?: number; dayHours?: { start: string; end: string }; lunch?: Partial<Lunch> },
+  instructor?: string
+) {
+  const res = await fetch(`${API_BASE}/api/dashboard/day-preview${forInstructor(instructor)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to preview your day");
+  return data.data as DayPreview;
+}
+
 export interface RoutePreview {
   date: string;
   location: string;
@@ -426,13 +471,34 @@ export async function getLessonTypes(token: string, instructor?: string) {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Failed to fetch lesson types");
-  return data.data as Array<{
-    _id: string; name: string; price: number; description: string;
-    active: boolean; sortOrder: number;
-  }>;
+  return data.data as LessonType[];
 }
 
-export async function createLessonType(token: string, body: { name: string; price: number; description?: string }, instructor?: string) {
+export interface LessonType {
+  _id: string;
+  name: string;
+  price: number;
+  /** Lesson length in minutes; null on older types until the instructor sets one */
+  durationMin: number | null;
+  description: string;
+  active: boolean;
+  sortOrder: number;
+}
+
+/** "1h", "1h 30m", "45 min" */
+export function formatDuration(min: number | null | undefined) {
+  if (!min) return "";
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+export async function createLessonType(
+  token: string,
+  body: { name: string; price: number; durationMin: number; description?: string },
+  instructor?: string
+) {
   const res = await fetch(`${API_BASE}/api/dashboard/lesson-types${forInstructor(instructor)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

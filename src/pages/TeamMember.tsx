@@ -30,7 +30,9 @@ import {
   type SchoolMember,
   type SchoolOverview,
   type LearnerSummary,
+  formatDuration,
 } from "@/lib/api";
+import LessonLengthSelect from "@/components/LessonLengthSelect";
 import { MemberStatus } from "@/pages/Team";
 
 type LessonType = Awaited<ReturnType<typeof getLessonTypes>>[number];
@@ -253,7 +255,10 @@ function LessonTypes({
 }) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
+  const [length, setLength] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const taken = (except?: string) =>
+    (types || []).filter((t) => t.active && t.durationMin && t._id !== except).map((t) => t.durationMin as number);
 
   async function run(action: () => Promise<unknown>, done: string) {
     setSaving(true);
@@ -272,9 +277,11 @@ function LessonTypes({
     e.preventDefault();
     const amount = Number(price);
     if (!name.trim() || !(amount > 0)) return toast.error("Give it a name and a price");
-    await run(() => createLessonType(token, { name: name.trim(), price: amount }, instructorId), "Lesson type added");
+    if (!length) return toast.error("Choose how long the lesson is");
+    await run(() => createLessonType(token, { name: name.trim(), price: amount, durationMin: length }, instructorId), "Lesson type added");
     setName("");
     setPrice("");
+    setLength(null);
   }
 
   return (
@@ -293,11 +300,22 @@ function LessonTypes({
             {types.map((t) => (
               <li key={t._id} className="flex items-center gap-3 px-3 py-2.5">
                 <div className="min-w-0 flex-1">
-                  <p className={`truncate text-sm font-medium ${t.active ? "" : "text-muted-foreground line-through"}`}>{t.name}</p>
+                  <p className={`truncate text-sm font-medium ${t.active ? "" : "text-muted-foreground line-through"}`}>
+                    {t.name}
+                    {!editable && t.durationMin ? <span className="ml-1.5 font-normal text-muted-foreground">· {formatDuration(t.durationMin)}</span> : null}
+                  </p>
                   {t.description && <p className="truncate text-xs text-muted-foreground">{t.description}</p>}
                 </div>
                 {editable ? (
                   <>
+                    <LessonLengthSelect
+                      value={t.durationMin}
+                      taken={taken(t._id)}
+                      disabled={saving}
+                      ariaLabel={`Length of ${t.name}`}
+                      className="h-9 w-24 shrink-0 px-2"
+                      onChange={(m) => run(() => updateLessonType(token, t._id, { durationMin: m }, instructorId), `${t.name} is now ${formatDuration(m)}`)}
+                    />
                     <div className="relative w-24 shrink-0">
                       <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">£</span>
                       <Input
@@ -344,6 +362,7 @@ function LessonTypes({
               <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">£</span>
               <Input type="number" min="1" step="0.5" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} className="pl-6" />
             </div>
+            <LessonLengthSelect value={length} taken={taken()} onChange={setLength} className="sm:w-28" ariaLabel="Length of the new lesson type" />
             <Button type="submit" variant="outline" disabled={saving}><Plus className="mr-1 h-4 w-4" /> Add</Button>
           </form>
         )}

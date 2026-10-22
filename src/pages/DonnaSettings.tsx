@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -17,7 +17,10 @@ import {
   XCircle,
   ChevronDown,
   AlertTriangle,
+  Gauge,
 } from "lucide-react";
+import PackingSlider from "@/components/PackingSlider";
+import DayPackPreview from "@/components/DayPackPreview";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +32,10 @@ import {
   getSettings,
   updateSettings,
   previewRoute,
+  previewDay,
   notifySetupChanged,
+  type DayPreview,
+  type DayHours,
   type SetupStatus,
   type DonnaSettings as Settings,
   type RouteSettings,
@@ -222,6 +228,13 @@ export default function DonnaSettings() {
   const [bot, setBot] = useState<BotSettings | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
 
+  // "How tightly should Donna pack your day?": the most driving between lessons
+  const [buffer, setBuffer] = useState(20);
+  const [packDay, setPackDay] = useState<DayKey>("mon");
+  const [dayPreview, setDayPreview] = useState<DayPreview | null>(null);
+  const [dayPreviewLoading, setDayPreviewLoading] = useState(false);
+  const previewRequest = useRef(0);
+
   const [previewDate, setPreviewDate] = useState(tomorrowPlus(2));
   const [previewAddress, setPreviewAddress] = useState("");
   const [preview, setPreview] = useState<RoutePreview | null>(null);
@@ -234,6 +247,9 @@ export default function DonnaSettings() {
     setRoute(s.routeSettings);
     setDistrictsText(s.routeSettings.serviceArea.postcodeDistricts.join(", "));
     setBot(s.botSettings);
+    setBuffer(s.routeSettings.bufferMin ?? 20);
+    const firstOn = DAYS.find((d) => s.botSettings.dayHours?.[d.key]);
+    if (firstOn) setPackDay(firstOn.key);
   }
 
   useEffect(() => {
@@ -271,6 +287,29 @@ export default function DonnaSettings() {
     () => (route ? { ...route, serviceArea: { ...route.serviceArea, postcodeDistricts: districts } } : null),
     [route, districts]
   );
+
+  // Live preview of a packed day, a moment after the slider or hours stop moving
+  const previewHours = bot?.dayHours?.[packDay] ?? null;
+  const previewKey = JSON.stringify([buffer, previewHours, bot?.lunch, bot?.scheduleMode]);
+  useEffect(() => {
+    if (!token || !bot || bot.scheduleMode !== "packed") return;
+    if (!previewHours || previewHours.start >= previewHours.end) {
+      setDayPreview(null);
+      return;
+    }
+    const lunchOk = !bot.lunch.enabled || toMinutes(bot.lunch.windowTo) - toMinutes(bot.lunch.windowFrom) >= bot.lunch.durationMin;
+    if (!lunchOk) return;
+    const id = ++previewRequest.current;
+    setDayPreviewLoading(true);
+    const t = setTimeout(() => {
+      previewDay(token, { bufferMin: buffer, dayHours: previewHours, lunch: bot.lunch })
+        .then((p) => id === previewRequest.current && setDayPreview(p))
+        .catch(() => id === previewRequest.current && setDayPreview(null))
+        .finally(() => id === previewRequest.current && setDayPreviewLoading(false));
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewKey, token]);
 
   function scrollToSection(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -326,6 +365,7 @@ export default function DonnaSettings() {
     setBot((b) => (b ? { ...b, [key]: value } : b));
 
   const routeDirty = !same(routeDraft, saved.routeSettings) || baseAddress.trim() !== saved.baseAddress;
+  const packingKeys = ["scheduleMode", "dayHours", "lunch"] as const;
   const availabilityKeys = ["workingHours", "breaks", "maxLessonsPerDay", "minNoticeHours", "bookingWindowDays", "holiday"] as const;
   const rulesKeys = ["acceptingNewLearners", "allowCancel", "allowReschedule", "cancellationNoticeHours", "lateCancellationFee"] as const;
   const alertKeys = ["reminders", "notifications", "handover"] as const;
@@ -346,6 +386,10 @@ export default function DonnaSettings() {
         setBaseAddress(next.baseAddress);
         setRoute(next.routeSettings);
         setDistrictsText(next.routeSettings.serviceArea.postcodeDistricts.join(", "));
+      }
+      if (body.routeSettings?.bufferMin !== undefined) {
+        setBuffer(next.routeSettings.bufferMin);
+        setRoute((r) => (r ? { ...r, bufferMin: next.routeSettings.bufferMin } : r));
       }
       if (body.botSettings) {
         setBot((b) => (b ? { ...b, ...pick(next.botSettings, Object.keys(body.botSettings || {}) as (keyof BotSettings)[]) } : b));
@@ -379,8 +423,47 @@ export default function DonnaSettings() {
   const hoursUnconfirmed = !!setup && !setup.hasNumber && setup.required.some((r) => r.key === "workingHours" && !r.done);
   const availabilityDirty = dirtyFor(availabilityKeys) || hoursUnconfirmed;
 
+  const packed = bot.scheduleMode === "packed";
+  const lunchTooShort =
+    bot.lunch.enabled && toMinutes(bot.lunch.windowTo) - toMinutes(bot.lunch.windowFrom) < bot.lunch.durationMin;
+  const badDays = DAYS.filter(({ key }) => {
+    const h = bot.dayHours[key];
+    return h && (!h.start || !h.end || toMinutes(h.end) - toMinutes(h.start) < 30);
+  });
+  const packingDirty = dirtyFor(packingKeys) || buffer !== saved.routeSettings.bufferMin;
+
+  function packingBody(): Parameters<typeof updateSettings>[1] {
+    return { routeSettings: { bufferMin: buffer }, botSettings: pick(bot!, packingKeys) };
+  }
+
+  function savePacking() {
+    if (lunchTooShort) return toast.error("Make the lunch window at least as long as lunch.");
+    if (badDays.length) return toast.error(`${badDays[0].label}: the day must end at least 30 minutes after it starts.`);
+    return save("packing", packingBody());
+  }
+
+  const setDayHours = (day: DayKey, hours: DayHours) => setBotField("dayHours", { ...bot.dayHours, [day]: hours });
+
+  function toggleWorkDay(day: DayKey, on: boolean) {
+    const restore = saved!.botSettings.dayHours?.[day] || bot!.dayHours.mon || { start: "09:00", end: "17:00" };
+    setDayHours(day, on ? { ...restore } : null);
+    if (on) setPackDay(day);
+  }
+
+  function copyMondayHours() {
+    const mon = bot!.dayHours.mon;
+    setBotField("dayHours", {
+      ...bot!.dayHours,
+      tue: mon && { ...mon },
+      wed: mon && { ...mon },
+      thu: mon && { ...mon },
+      fri: mon && { ...mon },
+    });
+  }
+
   const sections = [
     { id: "route", label: "Route", dirty: routeDirty },
+    { id: "packing", label: "Your day", dirty: packingDirty, keys: packingKeys },
     { id: "availability", label: "Availability", dirty: availabilityDirty, keys: availabilityKeys },
     { id: "rules", label: "Rules", dirty: dirtyFor(rulesKeys), keys: rulesKeys },
     { id: "alerts", label: "Reminders", dirty: dirtyFor(alertKeys), keys: alertKeys },
@@ -393,6 +476,7 @@ export default function DonnaSettings() {
     const body = routeDirty ? routeBody() : {};
     const botKeys = dirtySections.flatMap((x) => x.keys ?? []);
     if (botKeys.length) body.botSettings = pick(bot!, botKeys);
+    if (buffer !== saved!.routeSettings.bufferMin) body.routeSettings = { ...(body.routeSettings || {}), bufferMin: buffer };
     return save(routeDirty ? "all" : "bot", body);
   }
 
@@ -510,6 +594,15 @@ export default function DonnaSettings() {
             </div>
           </Field>
 
+          {packed ? (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+              Donna is packing your day, so how much driving she allows is set by the slider under{" "}
+              <button type="button" className="font-medium text-sky-700 hover:underline" onClick={() => scrollToSection("packing")}>
+                Your day
+              </button>
+              .
+            </p>
+          ) : (
           <Field label="How tightly should Donna pack your day?">
             <Segmented
               value={route.preset === "custom" ? ("custom" as RoutePreset) : route.preset}
@@ -522,6 +615,7 @@ export default function DonnaSettings() {
                 : PRESETS.find((p) => p.key === route.preset)?.blurb}
             </p>
           </Field>
+          )}
 
           <button
             type="button"
@@ -533,7 +627,7 @@ export default function DonnaSettings() {
 
           {showAdvanced && (
             <div className="grid gap-5 sm:grid-cols-2 rounded-xl border bg-slate-50 p-4">
-              <Field label="Lesson length" help="Used to check you can make the next lesson on time.">
+              <Field label="Default lesson length" help="For lessons without a lesson type, and lessons booked before lesson types had lengths.">
                 <select
                   value={route.lessonDurationMin}
                   onChange={(e) => setRouteField("lessonDurationMin", Number(e.target.value))}
@@ -546,6 +640,7 @@ export default function DonnaSettings() {
                   ))}
                 </select>
               </Field>
+              {!packed && (<>
               <Field
                 label="Allowed lateness between lessons (min)"
                 help="With back-to-back lessons there's no gap to travel; this is how many minutes over you'll accept."
@@ -569,6 +664,7 @@ export default function DonnaSettings() {
                   disabled={route.preset === "off"}
                 />
               </Field>
+              </>)}
               <Field label="Count the drive from and to home" help="For your first and last lesson of the day.">
                 <Segmented
                   value={route.homeLegWeight}
@@ -675,6 +771,132 @@ export default function DonnaSettings() {
           </div>
         </Section>
 
+        {/* ── Your day: how tightly Donna packs it ─────────────────────────── */}
+        <Section
+          id="packing"
+          icon={Gauge}
+          title="How tightly should Donna pack your day?"
+          description="Donna fits as many lessons as she can between your start and finish, leaves time to drive between them, and keeps your lunch."
+          dirty={packingDirty}
+          saving={saving === "packing" || saving === "all" || saving === "bot"}
+          onSave={savePacking}
+          onReset={() => {
+            setBot((b) => (b ? { ...b, ...pick(saved.botSettings, packingKeys) } : b));
+            setBuffer(saved.routeSettings.bufferMin);
+          }}
+        >
+          <Field label="How should Donna plan your day?">
+            <Segmented
+              value={bot.scheduleMode}
+              options={[
+                { key: "packed", label: "Donna packs my day" },
+                { key: "fixed", label: "I'll pick start times" },
+              ]}
+              onChange={(v) => setBotField("scheduleMode", v)}
+            />
+            <p className="text-xs text-slate-500">
+              {packed
+                ? "You set your hours; Donna works out the start times for each lesson length."
+                : "You choose the exact start times under Availability. Donna only offers those."}
+            </p>
+          </Field>
+
+          {packed && (
+            <>
+              <Field
+                label="Most driving between lessons"
+                help={`Donna leaves up to ${buffer} minutes after each lesson to drive to the next. When the next learner is closer she starts sooner, with 5 minutes spare for traffic and parking.`}
+              >
+                <PackingSlider value={buffer} onChange={setBuffer} />
+              </Field>
+
+              <Field label="Working hours">
+                <div className="space-y-2">
+                  {DAYS.map(({ key, label }) => (
+                    <DayHoursRow
+                      key={key}
+                      label={label}
+                      hours={bot.dayHours[key]}
+                      onToggle={(on) => toggleWorkDay(key, on)}
+                      onChange={(h) => setDayHours(key, h)}
+                    />
+                  ))}
+                  <Button variant="ghost" size="sm" onClick={copyMondayHours} className="text-sky-700 px-0">
+                    Copy Monday's hours to Tue–Fri
+                  </Button>
+                </div>
+              </Field>
+
+              <div className="rounded-xl border p-4 space-y-4">
+                <SwitchRow
+                  label="Lunch break"
+                  help="Donna places it wherever it fits the most lessons, inside your lunch window."
+                  checked={bot.lunch.enabled}
+                  onChange={(v) => setBotField("lunch", { ...bot.lunch, enabled: v })}
+                />
+                {bot.lunch.enabled && (
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <Field label="Lunch length">
+                      <select
+                        value={bot.lunch.durationMin}
+                        onChange={(e) => setBotField("lunch", { ...bot.lunch, durationMin: Number(e.target.value) })}
+                        className="h-10 w-full rounded-md border bg-white px-3 text-base sm:text-sm"
+                      >
+                        {[15, 20, 30, 45, 60, 75, 90].map((m) => (
+                          <option key={m} value={m}>{m} minutes</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Not before">
+                      <Input
+                        type="time"
+                        step={300}
+                        value={bot.lunch.windowFrom}
+                        onChange={(e) => setBotField("lunch", { ...bot.lunch, windowFrom: e.target.value })}
+                      />
+                    </Field>
+                    <Field label="Finished by">
+                      <Input
+                        type="time"
+                        step={300}
+                        value={bot.lunch.windowTo}
+                        aria-invalid={lunchTooShort}
+                        onChange={(e) => setBotField("lunch", { ...bot.lunch, windowTo: e.target.value })}
+                      />
+                    </Field>
+                    {lunchTooShort && (
+                      <p role="alert" className="text-xs text-red-600 sm:col-span-3">
+                        The window is shorter than a {bot.lunch.durationMin}-minute lunch.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-sky-100 bg-sky-50/50 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Your day, packed</p>
+                    <p className="text-xs text-slate-500">Updates as you move the slider, before you save.</p>
+                  </div>
+                  <select
+                    value={packDay}
+                    onChange={(e) => setPackDay(e.target.value as DayKey)}
+                    aria-label="Day to preview"
+                    className="h-9 rounded-md border bg-white px-2 text-sm"
+                  >
+                    {DAYS.filter((d) => bot.dayHours[d.key]).map((d) => (
+                      <option key={d.key} value={d.key}>{d.label}</option>
+                    ))}
+                    {!bot.dayHours[packDay] && <option value={packDay}>{DAYS.find((d) => d.key === packDay)?.label} (off)</option>}
+                  </select>
+                </div>
+                <DayPackPreview preview={bot.dayHours[packDay] ? dayPreview : null} loading={dayPreviewLoading} bufferMin={buffer} />
+              </div>
+            </>
+          )}
+        </Section>
+
         {/* ── Availability ─────────────────────────────────────────────── */}
         <Section
           id="availability"
@@ -687,6 +909,14 @@ export default function DonnaSettings() {
           onSave={() => save("availability", { botSettings: pick(bot, availabilityKeys) })}
           onReset={() => setBot((b) => (b ? { ...b, ...pick(saved.botSettings, availabilityKeys) } : b))}
         >
+          {packed ? (
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+              Your working hours are set under{" "}
+              <button type="button" className="font-medium text-sky-700 hover:underline" onClick={() => scrollToSection("packing")}>
+                How tightly should Donna pack your day?
+              </button>
+            </p>
+          ) : (
           <Field label="Working days and lesson start times" help="Tap a time to turn it on or off." required={!!setup && !setup.hasNumber}>
             <div className="space-y-2">
               {DAYS.map(({ key, label }) => (
@@ -705,6 +935,7 @@ export default function DonnaSettings() {
               </Button>
             </div>
           </Field>
+          )}
 
           <Field label="Breaks" help="Donna won't book lessons that overlap these, every working day.">
             <div className="space-y-2">
@@ -746,7 +977,7 @@ export default function DonnaSettings() {
             </div>
           </Field>
 
-          {clashesByTime.length > 0 && (
+          {!packed && clashesByTime.length > 0 && (
             <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
@@ -1026,6 +1257,58 @@ function SetupBanner({ setup, onGo }: { setup: SetupStatus; onGo: (link: string)
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// Packed mode: one weekday's start and finish
+function DayHoursRow({
+  label,
+  hours,
+  onToggle,
+  onChange,
+}: {
+  label: string;
+  hours: DayHours;
+  onToggle: (on: boolean) => void;
+  onChange: (hours: DayHours) => void;
+}) {
+  const length = hours ? toMinutes(hours.end) - toMinutes(hours.start) : 0;
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-3 py-2">
+      <div className="flex w-20 items-center gap-2">
+        <Switch checked={!!hours} onCheckedChange={onToggle} aria-label={`Work on ${label}`} />
+        <span className={`text-sm font-medium ${hours ? "text-slate-800" : "text-slate-400"}`}>{label}</span>
+      </div>
+      {hours ? (
+        <>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Input
+              type="time"
+              step={300}
+              value={hours.start}
+              aria-label={`${label} start`}
+              onChange={(e) => onChange({ ...hours, start: e.target.value })}
+              className="min-w-0 flex-1 sm:w-32 sm:flex-none"
+            />
+            <span className="text-sm text-slate-400">to</span>
+            <Input
+              type="time"
+              step={300}
+              value={hours.end}
+              aria-label={`${label} finish`}
+              aria-invalid={length < 30}
+              onChange={(e) => onChange({ ...hours, end: e.target.value })}
+              className="min-w-0 flex-1 sm:w-32 sm:flex-none"
+            />
+          </div>
+          <span className={`text-xs ${length < 30 ? "text-red-600" : "text-slate-500"}`}>
+            {length < 30 ? "Ends too early" : `${Math.floor(length / 60)}h${length % 60 ? ` ${length % 60}m` : ""}`}
+          </span>
+        </>
+      ) : (
+        <span className="text-sm text-slate-400">Day off</span>
+      )}
     </div>
   );
 }

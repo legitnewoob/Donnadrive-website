@@ -14,6 +14,7 @@ import {
   Building2,
   ShieldCheck,
   AlertTriangle,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -136,6 +137,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
     { label: "School", short: "Home", icon: LayoutDashboard, path: "/school", inBottomBar: true },
     { label: "Team", short: "Team", icon: Building2, path: "/team", inBottomBar: true },
     { label: "Learners", short: "Learners", icon: Users, path: "/school/learners", inBottomBar: true },
+    { label: "Analytics", short: "Analytics", icon: BarChart3, path: "/school/analytics" },
     { label: "Account", short: "Account", icon: UserCircle, path: "/account", inBottomBar: true },
   ];
   const instructorItems: NavItem[] = [
@@ -145,6 +147,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
     ...(seesTeam ? [{ label: "Team", short: "Team", icon: Building2, path: "/team" }] : []),
     // Managers also see every learner in the school
     ...(seesTeam ? [{ label: "School learners", short: "School", icon: Users, path: "/school/learners" }] : []),
+    ...(seesTeam ? [{ label: "School analytics", short: "Analytics", icon: BarChart3, path: "/school/analytics" }] : []),
     { label: "Donna Settings", short: "Settings", icon: SlidersHorizontal, path: "/settings", tour: "settings-link", inBottomBar: true },
     { label: "Account", short: "Account", icon: UserCircle, path: "/account", inBottomBar: true },
   ];
@@ -153,7 +156,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
   const email = signedInEmail();
   const byPath = (path: string) => navItems.find((item) => item.path === path)!;
   // Everyday pages on top; settings and help pinned at the bottom; account last
-  const mainItems = (owner ? ["/school", "/team", "/school/learners"] : [home, "/learners", ...(seesTeam ? ["/team", "/school/learners"] : []), "/lesson-types"]).map(byPath);
+  const mainItems = (owner ? ["/school", "/team", "/school/learners", "/school/analytics"] : [home, "/learners", ...(seesTeam ? ["/team", "/school/learners", "/school/analytics"] : []), "/lesson-types"]).map(byPath);
   const settingsItem = owner ? null : byPath("/settings");
 
   const itemClass = (active: boolean) =>
@@ -382,7 +385,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
               <SheetTrigger asChild>
                 <button
                   className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors ${
-                    ["/lesson-types", "/team", "/school/learners"].includes(pathname) || pathname.startsWith("/team/") ? "text-slate-900" : "text-slate-500"
+                    ["/lesson-types", "/team", "/school/learners", "/school/analytics"].includes(pathname) || pathname.startsWith("/team/") ? "text-slate-900" : "text-slate-500"
                   }`}
                 >
                   <MoreHorizontal className="h-5 w-5" />

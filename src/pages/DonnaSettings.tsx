@@ -212,6 +212,11 @@ function tomorrowPlus(days: number) {
   return d.toISOString().slice(0, 10);
 }
 
+// The saved longest drive: older settings only have the usual gap, so it's twice that
+function savedMaxDrive(s: Settings) {
+  return s.packing?.maxDriveMin ?? s.routeSettings.maxDriveMin ?? Math.min(60, Math.max(12, 2 * (s.routeSettings.bufferMin ?? 20)));
+}
+
 export default function DonnaSettings() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -229,7 +234,8 @@ export default function DonnaSettings() {
   const [saving, setSaving] = useState<string | null>(null);
 
   // "How tightly should Donna pack your day?": the most driving between lessons
-  const [buffer, setBuffer] = useState(20);
+  // Packed mode: the longest drive between lessons (the slider)
+  const [maxDrive, setMaxDrive] = useState(40);
   const [packDay, setPackDay] = useState<DayKey>("mon");
   const [dayPreview, setDayPreview] = useState<DayPreview | null>(null);
   const [dayPreviewLoading, setDayPreviewLoading] = useState(false);
@@ -247,7 +253,7 @@ export default function DonnaSettings() {
     setRoute(s.routeSettings);
     setDistrictsText(s.routeSettings.serviceArea.postcodeDistricts.join(", "));
     setBot(s.botSettings);
-    setBuffer(s.routeSettings.bufferMin ?? 20);
+    setMaxDrive(savedMaxDrive(s));
     const firstOn = DAYS.find((d) => s.botSettings.dayHours?.[d.key]);
     if (firstOn) setPackDay(firstOn.key);
   }
@@ -290,7 +296,7 @@ export default function DonnaSettings() {
 
   // Live preview of a packed day, a moment after the slider or hours stop moving
   const previewHours = bot?.dayHours?.[packDay] ?? null;
-  const previewKey = JSON.stringify([buffer, previewHours, bot?.lunch, bot?.scheduleMode]);
+  const previewKey = JSON.stringify([maxDrive, previewHours, bot?.lunch, bot?.scheduleMode]);
   useEffect(() => {
     if (!token || !bot || bot.scheduleMode !== "packed") return;
     if (!previewHours || previewHours.start >= previewHours.end) {
@@ -302,7 +308,7 @@ export default function DonnaSettings() {
     const id = ++previewRequest.current;
     setDayPreviewLoading(true);
     const t = setTimeout(() => {
-      previewDay(token, { bufferMin: buffer, dayHours: previewHours, lunch: bot.lunch })
+      previewDay(token, { maxDriveMin: maxDrive, dayHours: previewHours, lunch: bot.lunch })
         .then((p) => id === previewRequest.current && setDayPreview(p))
         .catch(() => id === previewRequest.current && setDayPreview(null))
         .finally(() => id === previewRequest.current && setDayPreviewLoading(false));
@@ -387,9 +393,9 @@ export default function DonnaSettings() {
         setRoute(next.routeSettings);
         setDistrictsText(next.routeSettings.serviceArea.postcodeDistricts.join(", "));
       }
-      if (body.routeSettings?.bufferMin !== undefined) {
-        setBuffer(next.routeSettings.bufferMin);
-        setRoute((r) => (r ? { ...r, bufferMin: next.routeSettings.bufferMin } : r));
+      if (body.routeSettings?.maxDriveMin !== undefined) {
+        setMaxDrive(savedMaxDrive(next));
+        setRoute((r) => (r ? { ...r, maxDriveMin: next.routeSettings.maxDriveMin } : r));
       }
       if (body.botSettings) {
         setBot((b) => (b ? { ...b, ...pick(next.botSettings, Object.keys(body.botSettings || {}) as (keyof BotSettings)[]) } : b));
@@ -430,10 +436,13 @@ export default function DonnaSettings() {
     const h = bot.dayHours[key];
     return h && (!h.start || !h.end || toMinutes(h.end) - toMinutes(h.start) < 30);
   });
-  const packingDirty = dirtyFor(packingKeys) || buffer !== saved.routeSettings.bufferMin;
+  const packingDirty = dirtyFor(packingKeys) || maxDrive !== savedMaxDrive(saved);
+  // The usual gap Donna packs with: from the live preview while the slider moves
+  const usualGap = dayPreview?.bufferMin ?? saved.packing?.bufferMin ?? Math.ceil(maxDrive / 2 / 5) * 5;
+  const gapSource = dayPreview?.bufferSource ?? saved.packing?.bufferSource ?? "default";
 
   function packingBody(): Parameters<typeof updateSettings>[1] {
-    return { routeSettings: { bufferMin: buffer }, botSettings: pick(bot!, packingKeys) };
+    return { routeSettings: { maxDriveMin: maxDrive }, botSettings: pick(bot!, packingKeys) };
   }
 
   function savePacking() {
@@ -476,7 +485,7 @@ export default function DonnaSettings() {
     const body = routeDirty ? routeBody() : {};
     const botKeys = dirtySections.flatMap((x) => x.keys ?? []);
     if (botKeys.length) body.botSettings = pick(bot!, botKeys);
-    if (buffer !== saved!.routeSettings.bufferMin) body.routeSettings = { ...(body.routeSettings || {}), bufferMin: buffer };
+    if (maxDrive !== savedMaxDrive(saved!)) body.routeSettings = { ...(body.routeSettings || {}), maxDriveMin: maxDrive };
     return save(routeDirty ? "all" : "bot", body);
   }
 
@@ -782,7 +791,7 @@ export default function DonnaSettings() {
           onSave={savePacking}
           onReset={() => {
             setBot((b) => (b ? { ...b, ...pick(saved.botSettings, packingKeys) } : b));
-            setBuffer(saved.routeSettings.bufferMin);
+            setMaxDrive(savedMaxDrive(saved));
           }}
         >
           <Field label="How should Donna plan your day?">
@@ -804,10 +813,21 @@ export default function DonnaSettings() {
           {packed && (
             <>
               <Field
-                label="Most driving between lessons"
-                help={`Donna leaves up to ${buffer} minutes after each lesson to drive to the next. When the next learner is closer she starts sooner, with 5 minutes spare for traffic and parking.`}
+                label="What's the longest you'll drive between lessons?"
+                help={`Donna never plans a drive longer than ${maxDrive} minutes between two lessons.`}
               >
-                <PackingSlider value={buffer} onChange={setBuffer} />
+                <PackingSlider value={maxDrive} onChange={setMaxDrive} />
+                <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
+                  <p>
+                    <span className="font-semibold text-slate-800">Donna packs with about {usualGap} min between lessons</span>{" "}
+                    {gapSource === "learned"
+                      ? `(learned from your last ${saved.packing?.bufferSamples ?? ""} drives between lessons).`
+                      : gapSource === "previous"
+                        ? `(your previous setting, until she's seen ${saved.packing?.learnAfter ?? 10} drives between your lessons).`
+                        : `(half your longest drive, until she's seen ${saved.packing?.learnAfter ?? 10} drives between your lessons).`}
+                  </p>
+                  <p>Close learners start sooner, with up to 5 minutes spare for traffic. Learners further out are fitted in when the drive doesn't cost you a lesson (or one, on a quiet day).</p>
+                </div>
               </Field>
 
               <Field label="Working hours">
@@ -891,7 +911,7 @@ export default function DonnaSettings() {
                     {!bot.dayHours[packDay] && <option value={packDay}>{DAYS.find((d) => d.key === packDay)?.label} (off)</option>}
                   </select>
                 </div>
-                <DayPackPreview preview={bot.dayHours[packDay] ? dayPreview : null} loading={dayPreviewLoading} bufferMin={buffer} />
+                <DayPackPreview preview={bot.dayHours[packDay] ? dayPreview : null} loading={dayPreviewLoading} bufferMin={usualGap} />
               </div>
             </>
           )}

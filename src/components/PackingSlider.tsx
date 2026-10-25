@@ -27,7 +27,30 @@ export function packingColor(minutes: number, lightness = 46) {
   return `hsl(${hue.toFixed(1)} ${sat.toFixed(0)}% ${lightness}%)`;
 }
 
-/** "How tightly should Donna pack your day?": the most driving allowed between two lessons. */
+// The longest drive between lessons: 12 to 60 minutes
+export const DRIVE_MIN = 12;
+export const DRIVE_MAX = 60;
+
+const DRIVE_BANDS = [
+  { upTo: 20, label: "Local only" },
+  { upTo: 30, label: "Nearby towns" },
+  { upTo: 45, label: "Wider area" },
+  { upTo: DRIVE_MAX, label: "Up to an hour" },
+];
+
+export function driveLabel(minutes: number) {
+  return (DRIVE_BANDS.find((b) => minutes <= b.upTo) ?? DRIVE_BANDS[DRIVE_BANDS.length - 1]).label;
+}
+
+/** Teal for a small local area, through sky blue, to violet for a wide one. */
+export function driveColor(minutes: number, lightness = 46) {
+  const t = Math.min(1, Math.max(0, (minutes - DRIVE_MIN) / (DRIVE_MAX - DRIVE_MIN)));
+  const hue = lerp(170, 265, t);
+  const sat = lerp(70, 62, t);
+  return `hsl(${hue.toFixed(1)} ${sat.toFixed(0)}% ${lightness}%)`;
+}
+
+/** "What's the longest you'll drive between lessons?" */
 export default function PackingSlider({
   value,
   onChange,
@@ -37,26 +60,26 @@ export default function PackingSlider({
   onChange: (minutes: number) => void;
   disabled?: boolean;
 }) {
-  const color = packingColor(value);
-  const pct = ((value - PACKING_MIN) / (PACKING_MAX - PACKING_MIN)) * 100;
-  const label = packingLabel(value);
+  const color = driveColor(value);
+  const pct = ((value - DRIVE_MIN) / (DRIVE_MAX - DRIVE_MIN)) * 100;
+  const label = driveLabel(value);
 
   return (
     <div className="space-y-2 pt-9">
       <SliderPrimitive.Root
         value={[value]}
-        min={PACKING_MIN}
-        max={PACKING_MAX}
+        min={DRIVE_MIN}
+        max={DRIVE_MAX}
         step={1}
         disabled={disabled}
         onValueChange={([v]) => onChange(v)}
-        aria-label="Most driving between lessons"
+        aria-label="Longest drive between lessons"
         className="relative flex w-full touch-none select-none items-center py-2"
       >
         <SliderPrimitive.Track
           className="relative h-2.5 w-full grow overflow-hidden rounded-full"
           style={{
-            background: `linear-gradient(to right, ${packingColor(PACKING_MIN, 88)}, ${packingColor(24, 88)}, ${packingColor(PACKING_MAX, 88)})`,
+            background: `linear-gradient(to right, ${driveColor(DRIVE_MIN, 88)}, ${driveColor(36, 88)}, ${driveColor(DRIVE_MAX, 88)})`,
           }}
         >
           <SliderPrimitive.Range
@@ -83,8 +106,8 @@ export default function PackingSlider({
         </SliderPrimitive.Thumb>
       </SliderPrimitive.Root>
       <div className="flex justify-between text-[11px] text-slate-500">
-        <span>Packed tight</span>
-        <span>Plenty of room</span>
+        <span>Stay local</span>
+        <span>Go further</span>
       </div>
     </div>
   );

@@ -98,15 +98,15 @@ export default function DayPackPreview({
           <span className="h-2.5 w-4 rounded-sm" style={{ backgroundColor: lessonColor }} /> Lesson
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-4 rounded-sm bg-[repeating-linear-gradient(135deg,#cbd5e1_0_4px,transparent_4px_8px)]" /> Up to {bufferMin} min driving
+          <span className="h-2.5 w-4 rounded-sm bg-[repeating-linear-gradient(135deg,#cbd5e1_0_4px,transparent_4px_8px)]" /> About {bufferMin} min driving
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-4 rounded-sm bg-amber-300" /> Lunch
         </span>
       </div>
       <p className="text-xs text-slate-500">
-        This is the least Donna fits in: it assumes every drive takes the full {bufferMin} minutes. When learners live close
-        together she fits in more.
+        A typical day: it assumes every drive takes about {bufferMin} minutes. When learners live close together she fits in
+        more; a learner further out takes a longer gap.
       </p>
     </div>
   );

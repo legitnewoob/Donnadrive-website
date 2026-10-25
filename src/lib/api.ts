@@ -314,8 +314,10 @@ export interface RouteSettings {
   serviceArea: { radius: number | null; unit: "miles" | "km"; postcodeDistricts: string[] };
   suggestOtherDays: boolean;
   lookAheadDays: number;
-  /** Packed mode: the most driving allowed between two lessons (minutes) */
+  /** Packed mode: the usual gap between lessons from the old slider (Donna now works it out) */
   bufferMin: number;
+  /** Packed mode: the longest drive between two lessons (minutes); null on older settings */
+  maxDriveMin?: number | null;
   /** Added to every real drive for traffic and parking (minutes) */
   driveVarianceMin: number;
 }
@@ -383,6 +385,19 @@ export interface DonnaSettings {
   routeSettings: RouteSettings;
   botSettings: BotSettings;
   presets: Record<string, { enabled?: boolean; maxAddedDriveMin?: number; travelGraceMin?: number; fragmentationPenalty?: string }>;
+  /** Packed mode: the longest drive (set) and the usual gap Donna works out */
+  packing?: Packing;
+}
+
+export interface Packing {
+  maxDriveMin: number;
+  /** The usual gap between lessons Donna packs with (minutes) */
+  bufferMin: number;
+  /** learned: from recent drives; previous: the old slider; default: half the longest drive */
+  bufferSource: "learned" | "previous" | "default";
+  bufferSamples: number;
+  /** Drives Donna needs to see before she learns the usual gap */
+  learnAfter: number;
 }
 
 export async function getSettings(token: string) {
@@ -409,7 +424,10 @@ export async function updateSettings(
 }
 
 export interface DayPreview {
+  /** The usual gap Donna packs with for these settings */
   bufferMin: number;
+  maxDriveMin: number;
+  bufferSource: Packing["bufferSource"];
   dayHours: { start: string; end: string };
   lunch: Lunch;
   days: Array<{
@@ -421,10 +439,10 @@ export interface DayPreview {
   }>;
 }
 
-/** How many lessons of each length fit a day with these (draft) settings, if every drive takes X. */
+/** How many lessons of each length fit a day with these (draft) settings, if every drive takes the usual gap. */
 export async function previewDay(
   token: string,
-  body: { bufferMin?: number; dayHours?: { start: string; end: string }; lunch?: Partial<Lunch> },
+  body: { maxDriveMin?: number; dayHours?: { start: string; end: string }; lunch?: Partial<Lunch> },
   instructor?: string
 ) {
   const res = await fetch(`${API_BASE}/api/dashboard/day-preview${forInstructor(instructor)}`, {

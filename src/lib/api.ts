@@ -633,6 +633,73 @@ export type SchoolLearner = LearnerSummary & { instructor: { id: string; name: s
 // Every learner across the school's instructors (owner or manager)
 export const getSchoolLearners = (token: string) => schoolRequest<SchoolLearner[]>(token, "/learners");
 
+// ─── School analytics (owner and managers) ─────────────────────────────────
+
+type Learnerref = { phone: string; name: string; instructor: { id: string; name: string } };
+export interface SchoolAnalytics {
+  period: { from: string; to: string; prevFrom: string; prevTo: string };
+  allInstructors: Array<{ id: string; name: string }>;
+  cards: {
+    lessons: { value: number; completed: number; change: number | null };
+    hours: { value: number; change: number | null };
+    revenue: { booked: number; collected: number; unpaid: number; change: number | null };
+    learners: { active: number; new: number; change: number | null };
+    cancellations: { rate: number; count: number; late: number; change: number | null };
+    diaryFilled: { value: number; change: number | null };
+    donna: { conversations: number; conversationsChange: number | null; bookedShare: number | null; untracked: number };
+  };
+  instructors: Array<{
+    id: string;
+    name: string;
+    role: "member" | "manager";
+    lessons: number;
+    lessonsChange: number | null;
+    hours: number;
+    bookedValue: number;
+    unpaid: number;
+    diaryFilled: number;
+    cancelRate: number;
+    activeLearners: number;
+    newLearners: number;
+    avgDrive: number | null;
+    avgRating: number | null;
+    conversations: number;
+    donna: "on" | "off" | "paused";
+  }>;
+  charts: {
+    buckets: string[];
+    lessons: Array<{ id: string; name: string; values: number[] }>;
+    revenue: Array<{ booked: number; collected: number }>;
+    learners: Array<{ new: number; returning: number }>;
+    heatmap: { days: string[]; hours: number[]; counts: number[][] };
+  };
+  atRisk: Array<Learnerref & { lastLesson: string; lessons: number }>;
+  unpaidLessons: Array<Learnerref & { bookingId: string; date: string; time: string; amount: number }>;
+  topLearners: Array<Learnerref & { hours: number }>;
+}
+
+const analyticsQuery = (q: { from: string; to: string; instructors?: string[] }) =>
+  `from=${q.from}&to=${q.to}${q.instructors?.length ? `&instructors=${q.instructors.join(",")}` : ""}`;
+
+export const getSchoolAnalytics = (token: string, q: { from: string; to: string; instructors?: string[] }) =>
+  schoolRequest<SchoolAnalytics>(token, `/analytics?${analyticsQuery(q)}`);
+
+/** Downloads one section as a CSV file. */
+export async function downloadSchoolAnalyticsCsv(
+  token: string,
+  section: "instructors" | "at-risk" | "unpaid",
+  q: { from: string; to: string; instructors?: string[] }
+) {
+  const res = await fetch(`${API_BASE}/api/school/analytics.csv?section=${section}&${analyticsQuery(q)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Couldn't download that");
+  const url = URL.createObjectURL(await res.blob());
+  const a = Object.assign(document.createElement("a"), { href: url, download: `${section}-${q.from}-to-${q.to}.csv` });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // Owner without a subscription: pay for seats through Stripe Checkout
 export const startSeatsCheckout = (token: string, extraSeats: number) =>
   schoolRequest<{ url: string }>(token, "/seats/checkout", { method: "POST", body: JSON.stringify({ extraSeats }) });

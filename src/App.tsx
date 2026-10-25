@@ -29,6 +29,7 @@ import JoinSchool from "./pages/JoinSchool";
 import PlanGate from "./components/PlanGate";
 import SchoolHome from "./pages/SchoolHome";
 import SchoolLearners from "./pages/SchoolLearners";
+import SchoolAnalytics from "./pages/SchoolAnalytics";
 import TeamMember from "./pages/TeamMember";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminCustomers from "./pages/admin/AdminCustomers";
@@ -127,6 +128,7 @@ const App = () => (
           <Route path="/team" element={<Team />} />
           <Route path="/team/:id" element={<TeamMember />} />
           <Route path="/school/learners" element={<SchoolLearners />} />
+          <Route path="/school/analytics" element={<SchoolAnalytics />} />
           <Route path="/join/:token" element={<JoinSchool />} />
           <Route path="/account" element={<Profile />} />
           {/* Donna Drive staff */}

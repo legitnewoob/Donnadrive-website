@@ -135,6 +135,8 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
   const [setup, setSetup] = useState<SetupStatus | null>(null);
   const [donnaEnabled, setDonnaEnabled] = useState(true);
   const [offBySchool, setOffBySchool] = useState(false);
+  // Switched on, but paused because Google Calendar access expired
+  const [pausedForCalendar, setPausedForCalendar] = useState(false);
   const [savingSwitch, setSavingSwitch] = useState(false);
   const [missingOpen, setMissingOpen] = useState(false);
   // What they were trying to do when we asked them to finish setting up
@@ -209,6 +211,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             setSetup(settingsData.setup ?? null);
             setDonnaEnabled(settingsData.botSettings.donnaEnabled !== false);
             setOffBySchool(!!settingsData.donnaOffBySchool);
+            setPausedForCalendar(!!settingsData.donnaPausedForCalendar);
           }
 
           // Handle OAuth callback result
@@ -271,6 +274,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
     try {
       const result = await requestPhoneNumber(token);
       setSetup((prev) => (prev ? { ...prev, hasNumber: true } : prev));
+      refreshSetup();
       notifySetupChanged();
       toast.success(`Your WhatsApp number is ${result.phoneNumber}. Next, connect Google Calendar.`);
       setProfile((prev) =>
@@ -299,10 +303,27 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
     }
   }
 
+  // What to show in the "finish setting up" dialog
+  const missingItems =
+    missingFor === "donna"
+      ? setup?.blockers ?? []
+      : (setup?.required ?? []).filter((r) => !r.done).map(({ key, label, link }) => ({ key, label, link }));
+
+  // Number and calendar steps live on this page; the rest are on other pages
+  function goToStep(step: { key: string; link: string }) {
+    if (step.key === "calendar" || step.key === "calendarExpired") return void handleConnectCalendar();
+    if (step.key === "number") {
+      document.getElementById("setup-steps")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    navigate(step.link);
+  }
+
   async function handleToggleDonna(next: boolean) {
     if (!token) return;
-    // Donna can't do her job until the basics are filled in
-    if (next && setup && !setup.complete) {
+    // Donna can't do her job until the profile, her WhatsApp number and a
+    // working Google Calendar are all done
+    if (next && setup && !setup.ready) {
       setMissingFor("donna");
       setMissingOpen(true);
       return;
@@ -316,7 +337,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
       setDonnaEnabled(!next);
       // Setup changed elsewhere since this page loaded
       const latest = next ? await refreshSetup() : null;
-      if (latest && !latest.complete) {
+      if (latest && !latest.ready) {
         setMissingFor("donna");
         setMissingOpen(true);
         return;
@@ -478,8 +499,8 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
       <DonnaSwitchCard
         enabled={donnaEnabled}
         saving={savingSwitch}
-        hasPhone={hasPhone}
-        setupDone={!setup || setup.complete}
+        blockers={setup?.blockers ?? []}
+        pausedForCalendar={pausedForCalendar}
         offBySchool={offBySchool}
         onChange={handleToggleDonna}
       />
@@ -520,15 +541,15 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             <DialogTitle>Finish setting up Donna first</DialogTitle>
             <DialogDescription>
               {missingFor === "donna"
-                ? "Donna stays off until these are done, so she never tells learners something she can't back up:"
+                ? "Donna can go on once these are done, so she never tells learners something she can't back up:"
                 : "Donna needs these before she can take bookings on your WhatsApp number:"}
             </DialogDescription>
           </DialogHeader>
           <ul className="space-y-2">
-            {(setup?.required || []).filter((r) => !r.done).map((r) => (
+            {missingItems.map((r) => (
               <li key={r.key}>
                 <button
-                  onClick={() => { setMissingOpen(false); navigate(r.link); }}
+                  onClick={() => { setMissingOpen(false); goToStep(r); }}
                   className="flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm hover:bg-slate-50"
                 >
                   <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
@@ -540,8 +561,8 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
           </ul>
           <DialogFooter>
             <Button variant="outline" onClick={() => setMissingOpen(false)}>Later</Button>
-            <Button onClick={() => { setMissingOpen(false); navigate((setup?.required.find((r) => !r.done)?.link) || "/settings"); }}>
-              Fill them in
+            <Button onClick={() => { setMissingOpen(false); if (missingItems[0]) goToStep(missingItems[0]); }}>
+              {missingFor === "donna" ? "Do the first one" : "Fill them in"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -566,44 +587,6 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
               >
                 <XCircle className="h-4 w-4" />
               </button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Google Calendar banner */}
-      {calendarConnected && calendarTokenExpired && (
-        <Card className="mb-4 border-amber-300 bg-amber-50/50">
-          <CardContent className="py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="flex items-center gap-3 flex-1">
-                <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                  <AlertCircle className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="font-semibold text-amber-800">Google Calendar connection expired</p>
-                  <p className="text-sm text-amber-700">
-                    Donna AI can't create calendar events until you reconnect.
-                  </p>
-                </div>
-              </div>
-              <Button
-                onClick={handleConnectCalendar}
-                disabled={calendarConnecting}
-                className="rounded-xl shrink-0 bg-amber-600 hover:bg-amber-700"
-              >
-                {calendarConnecting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Redirecting...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Reconnect Calendar
-                  </>
-                )}
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -976,44 +959,47 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
 function DonnaSwitchCard({
   enabled,
   saving,
-  hasPhone,
-  setupDone,
+  blockers,
+  pausedForCalendar,
   offBySchool,
   onChange,
 }: {
   enabled: boolean;
   saving: boolean;
-  hasPhone: boolean;
-  setupDone: boolean;
+  /** What's still needed before she can go on (profile, number, calendar) */
+  blockers: Array<{ key: string; label: string }>;
+  pausedForCalendar: boolean;
   offBySchool: boolean;
   onChange: (next: boolean) => void;
 }) {
-  // Not set up yet isn't an emergency switch-off, so it isn't shown in red
-  const tone = enabled ? "green" : setupDone ? "red" : "slate";
+  const ready = blockers.length === 0;
+  // Paused for the calendar is urgent; not set up yet isn't an emergency switch-off
+  const tone = pausedForCalendar ? "amber" : enabled ? "green" : ready ? "red" : "slate";
+  const toDo = blockers.map((b) => b.label.charAt(0).toLowerCase() + b.label.slice(1)).join(", ");
   return (
-    <Card className={`mb-4 ${{ green: "border-green-200 bg-green-50/40", red: "border-red-300 bg-red-50/60", slate: "border-slate-200 bg-white" }[tone]}`}>
+    <Card className={`mb-4 ${{ green: "border-green-200 bg-green-50/40", red: "border-red-300 bg-red-50/60", amber: "border-amber-300 bg-amber-50/60", slate: "border-slate-200 bg-white" }[tone]}`}>
       <CardContent className="py-4">
         <div className="flex items-center gap-3">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${{ green: "bg-green-100", red: "bg-red-100", slate: "bg-slate-100" }[tone]}`}>
-            <Power className={`h-5 w-5 ${{ green: "text-green-600", red: "text-red-600", slate: "text-slate-500" }[tone]}`} />
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${{ green: "bg-green-100", red: "bg-red-100", amber: "bg-amber-100", slate: "bg-slate-100" }[tone]}`}>
+            <Power className={`h-5 w-5 ${{ green: "text-green-600", red: "text-red-600", amber: "text-amber-600", slate: "text-slate-500" }[tone]}`} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold">{enabled ? "Donna is on" : "Donna is off"}</p>
+            <p className="font-semibold">{pausedForCalendar ? "Donna is paused" : enabled ? "Donna is on" : "Donna is off"}</p>
             <p className="text-sm text-muted-foreground">
-              {enabled
-                ? hasPhone
+              {pausedForCalendar
+                ? "Your Google Calendar connection expired, so she can't see your diary. Reconnect it and she starts again by herself."
+                : enabled
                   ? "She's replying to learners and booking lessons."
-                  : "She'll start replying once your WhatsApp number is set up."
-                : offBySchool
-                  ? "Your driving school has switched Donna off for everyone. Ask them to turn her back on."
-                  : setupDone
-                  ? "Learners are told to contact you directly, and their messages come to you."
-                  : "Finish setting up and you can turn her on."}
+                  : offBySchool
+                    ? "Your driving school has switched Donna off for everyone. Ask them to turn her back on."
+                    : ready
+                      ? "Learners are told to contact you directly, and their messages come to you."
+                      : `She can go on once you've done these: ${toDo}.`}
             </p>
           </div>
           <Switch
             checked={enabled}
-            disabled={saving || offBySchool}
+            disabled={saving || offBySchool || pausedForCalendar}
             onCheckedChange={onChange}
             aria-label={enabled ? "Turn Donna off" : "Turn Donna on"}
           />
@@ -1056,7 +1042,7 @@ function SetupCard({
   const settingsDone = hasPhone || !!setup?.complete;
 
   return (
-    <Card className="mb-6 border-sky-200">
+    <Card id="setup-steps" className="mb-6 border-sky-200">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Get Donna ready</CardTitle>
         <p className="text-sm text-muted-foreground">Three quick steps before learners can book with you on WhatsApp.</p>

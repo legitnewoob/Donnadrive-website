@@ -265,6 +265,7 @@ function Step({
 
 function MemberStatus({ member, schoolOn }: { member: SchoolMember; schoolOn: boolean }) {
   if (!isReady(member)) return <Badge variant="secondary">Setting up</Badge>;
+  if (member.calendarExpired) return <Badge variant="outline" className="border-amber-300 text-amber-700">Paused · calendar expired</Badge>;
   if (!schoolOn || !member.donnaEnabled) {
     return <Badge variant="outline" className="border-red-300 text-red-700">Donna off</Badge>;
   }

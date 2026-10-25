@@ -358,11 +358,18 @@ export interface BotSettings {
 }
 
 export interface SetupStatus {
+  /** The profile is filled in (enough to request a WhatsApp number) */
   complete: boolean;
   required: Array<{ key: string; label: string; done: boolean; link: string }>;
   missing: string[];
   hasNumber: boolean;
   calendarConnected: boolean;
+  /** Google access expired: Donna is paused until it's reconnected */
+  calendarExpired: boolean;
+  /** Donna can be switched on: profile, number and a working calendar */
+  ready: boolean;
+  /** What's still in the way of turning Donna on, in the order to do it */
+  blockers: Array<{ key: string; label: string; link: string }>;
 }
 
 // Pages fire this after saving anything that can change the setup checklist
@@ -380,6 +387,8 @@ export interface DonnaSettings {
   setup?: SetupStatus;
   /** Their driving school has switched Donna off for everyone */
   donnaOffBySchool?: boolean;
+  /** Switched on, but paused because Google Calendar access expired */
+  donnaPausedForCalendar?: boolean;
   baseAddress: string;
   hasBaseLocation: boolean;
   routeSettings: RouteSettings;
@@ -579,6 +588,8 @@ export interface SchoolMember {
   roleLabel: string | null;
   phoneNumber: string | null;
   calendarConnected: boolean;
+  /** Google access expired: Donna is paused for them until they reconnect */
+  calendarExpired?: boolean;
   donnaEnabled: boolean;
   setup: SetupStatus;
   learners: number;

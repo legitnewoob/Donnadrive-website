@@ -518,6 +518,9 @@ function InstructorTable({
 export function MemberStatus({ member: m }: { member: SchoolMember }) {
   const steps = [m.setup?.complete, !!m.phoneNumber, m.calendarConnected].filter(Boolean).length;
   if (steps < 3) return <Badge variant="secondary" className="whitespace-nowrap">Setting up · {steps}/3</Badge>;
+  if (m.calendarExpired) {
+    return <Badge variant="outline" className="whitespace-nowrap border-amber-300 text-amber-700"><Power className="mr-1 h-3 w-3" /> Paused · calendar expired</Badge>;
+  }
   return m.donnaEnabled ? (
     <Badge variant="outline" className="whitespace-nowrap border-green-300 text-green-700"><Power className="mr-1 h-3 w-3" /> Donna on</Badge>
   ) : (

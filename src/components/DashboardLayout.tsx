@@ -13,12 +13,13 @@ import {
   ArrowUpRight,
   Building2,
   ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
 import { START_TOUR_EVENT } from "@/components/DashboardTour";
-import { getSetupStatus, getProfile, SETUP_CHANGED_EVENT, openPortal } from "@/lib/api";
+import { getSetupStatus, getProfile, SETUP_CHANGED_EVENT, openPortal, getCalendarConnectUrl } from "@/lib/api";
 import { isSchoolOwner, getSchoolInfo, type SchoolInfo } from "@/lib/access";
 
 const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "https://portal.donnadrive.co.uk";
@@ -59,6 +60,22 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
   const [mobileOpen, setMobileOpen] = useState(false);
   // Red dot on Donna Settings until the required setup is done
   const [setupIncomplete, setSetupIncomplete] = useState(false);
+  // Google access expired: Donna is paused, shown on every page until it's fixed
+  const [calendarExpired, setCalendarExpired] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
+
+  async function reconnectCalendar() {
+    const token = localStorage.getItem("dd_token");
+    if (!token) return;
+    setReconnecting(true);
+    try {
+      const { url } = await getCalendarConnectUrl(token);
+      window.location.href = url;
+    } catch {
+      setReconnecting(false);
+      navigate(home);
+    }
+  }
   // Driving school owners and managers get a Team page; Donna Drive staff get Admin
   const [seesTeam, setSeesTeam] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
@@ -86,7 +103,10 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
     if (!token || owner) return;
     const refresh = () =>
       getSetupStatus(token)
-        .then((s) => setSetupIncomplete(!s.complete && !s.hasNumber))
+        .then((s) => {
+          setSetupIncomplete(!s.complete && !s.hasNumber);
+          setCalendarExpired(!!s.calendarExpired);
+        })
         .catch(() => {});
     refresh();
     window.addEventListener(SETUP_CHANGED_EVENT, refresh);
@@ -315,6 +335,21 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
 
         {/* overflow-x-clip (not hidden) so sticky elements inside still stick to the window */}
         <main className={`flex-1 p-4 sm:p-6 lg:pb-6 overflow-x-clip ${mobileFooter ? "pb-44 sm:pb-44" : "pb-28 sm:pb-28"}`}>
+          {calendarExpired && (
+            <div role="alert" className="mb-4 flex flex-col gap-3 rounded-xl border border-red-300 bg-red-50 p-4 sm:flex-row sm:items-center">
+              <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-red-800">Donna is paused: reconnect your Google Calendar</p>
+                <p className="text-sm text-red-700">
+                  Google access has expired, so she can't see your diary or book lessons. Learners are being asked to contact you
+                  directly. She starts again as soon as you reconnect.
+                </p>
+              </div>
+              <Button onClick={reconnectCalendar} disabled={reconnecting} className="shrink-0 bg-red-600 hover:bg-red-700">
+                {reconnecting ? "Opening Google…" : "Reconnect now"}
+              </Button>
+            </div>
+          )}
           {children}
         </main>
 

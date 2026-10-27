@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
+import donnaDriveLogo from "@/assets/donna-drive-logo.svg";
 import { START_TOUR_EVENT } from "@/components/DashboardTour";
 import { getSetupStatus, getProfile, SETUP_CHANGED_EVENT, openPortal, getCalendarConnectUrl } from "@/lib/api";
 import { isSchoolOwner, getSchoolInfo, type SchoolInfo } from "@/lib/access";
@@ -191,7 +191,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
     return (
       <>
         <div className={`${mobile ? "px-6 pb-4" : "p-6"}`}>
-          <img src={donnaDriveLogo} alt="Donna Drive" className="h-10 w-auto rounded-lg" />
+          <img src={donnaDriveLogo} alt="Donna Drive" className="h-9 w-auto" />
           {school && !owner && school.name && (
             <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5 text-xs font-medium text-sky-800">
               <Building2 className="h-3.5 w-3.5 shrink-0" />
@@ -275,7 +275,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
         <header className="lg:hidden bg-white/95 backdrop-blur border-b sticky top-0 z-20 pt-[env(safe-area-inset-top)]">
           <div className="flex items-center justify-between gap-3 px-4 h-14">
             <div className="flex min-w-0 items-center gap-2.5">
-              <img src={donnaDriveLogo} alt="Donna Drive" className="h-8 w-auto shrink-0 rounded-lg" />
+              <img src={donnaDriveLogo} alt="Donna Drive" className="h-7 w-auto shrink-0" />
               <div className="min-w-0">
                 <h2 className="truncate text-[15px] font-bold leading-tight text-slate-900">{title}</h2>
                 {subtitle && <p className="truncate text-[11px] leading-tight text-muted-foreground">{subtitle}</p>}

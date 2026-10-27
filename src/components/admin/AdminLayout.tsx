@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
+import donnaDriveLogo from "@/assets/donna-drive-logo.svg";
 import { adminApi, type StaffMe } from "@/lib/adminApi";
 import { isSuperAdmin, setAccess, signOut } from "@/lib/access";
 
@@ -107,7 +107,7 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 px-5 py-5">
         <span className="rounded-lg bg-white p-1">
-          <img src={donnaDriveLogo} alt="" className="h-7 w-auto" />
+          <img src={donnaDriveLogo} alt="" className="h-6 w-auto" />
         </span>
         <div>
           <p className="font-bold leading-tight text-white">Donna Drive</p>

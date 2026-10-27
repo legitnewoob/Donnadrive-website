@@ -4,7 +4,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { Building2, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
+import donnaDriveLogo from "@/assets/donna-drive-logo.svg";
 import { googleSignup, getSchoolInvite, acceptSchoolInvite } from "@/lib/api";
 
 type Invite = { schoolName: string; ownerName: string | null; email: string };
@@ -65,7 +65,7 @@ export default function JoinSchool() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <Card className="w-full max-w-md">
         <CardContent className="space-y-6 py-8 text-center">
-          <img src={donnaDriveLogo} alt="Donna Drive" className="mx-auto h-10 w-auto" />
+          <img src={donnaDriveLogo} alt="Donna Drive" className="mx-auto h-9 w-auto" />
 
           {loading ? (
             <Loader2 className="mx-auto h-6 w-6 animate-spin text-slate-400" />

@@ -7,7 +7,7 @@ import {
   Twitter,
 } from "lucide-react";
 
-import donnaLogo from "@/assets/donna-drive-logo-v2.png";
+import donnaLogo from "@/assets/donna-drive-logo.svg";
 
 const Footer = () => {
   return (
@@ -25,7 +25,7 @@ const Footer = () => {
             <img
               src={donnaLogo}
               alt="Donna Drive"
-              className="h-11 w-auto"
+              className="h-10 w-auto"
             />
 
             <p className="mt-6 max-w-sm leading-8 text-muted-foreground">

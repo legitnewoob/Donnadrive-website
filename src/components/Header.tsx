@@ -8,7 +8,7 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, LayoutDashboard, Smartphone, ShieldCheck, LogOut, Sparkles, LogIn } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-import donnaDriveLogo from "@/assets/donna-drive-logo-v2.png";
+import donnaDriveLogo from "@/assets/donna-drive-logo.svg";
 import PrimaryCTA from "@/components/launch/PrimaryCTA";
 import LaunchBanner from "@/components/launch/LaunchBanner";
 import { useLaunchActions } from "@/components/launch/LaunchProvider";
@@ -78,7 +78,7 @@ const Header = () => {
               <img
                 src={donnaDriveLogo}
                 alt="Donna Drive"
-                className="h-11 w-auto rounded-xl"
+                className="h-11 w-auto rounded-xl bg-white px-2.5 py-1.5"
               />
             </Link>
 

@@ -16,7 +16,7 @@ const BeautyOfDonnaDrive = () => {
     },
     {
       icon: LayoutDashboard,
-      title: "Student Portal",
+      title: "Instructor Portal",
       description: "All your learners — progress, test dates, payments — in one place, not a spreadsheet."
     },
     {

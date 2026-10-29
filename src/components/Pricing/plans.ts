@@ -41,7 +41,7 @@ export const plans = [
 
     features: [
       "Everything in PDI",
-      "Student Portal",
+      "Instructor Portal",
       "Smart Routes",
       "Automatic reminders",
       "Priority support",

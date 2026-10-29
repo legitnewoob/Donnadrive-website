@@ -4,7 +4,6 @@ import {
   Calendar,
   Route,
   LayoutDashboard,
-  GraduationCap,
   Building2,
   ArrowRight,
 } from "lucide-react";
@@ -54,23 +53,12 @@ const cards: FeatureCard[] = [
   {
     slug: "portal",
     icon: LayoutDashboard,
-    title: "Student Portal",
-    teaser: "Learners see everything, ask nothing.",
+    title: "Instructor Portal",
+    teaser: "Your learners, lessons and payments in one app.",
     detail:
-      "Bookings, payments and lesson progress live in one place your learners can check themselves — fewer \"when's my next lesson?\" texts.",
-    ctaLabel: "See more",
+      "See today's lessons, track every learner's progress to test standard and log who's paid, all from your phone. No spreadsheets.",
+    ctaLabel: "See the Portal",
     href: "/portal",
-  },
-  {
-    slug: "pdi",
-    icon: GraduationCap,
-    title: "Free for PDIs",
-    teaser: "Training? Donna's free until you qualify.",
-    detail:
-      "Unlimited WhatsApp conversations, Google Calendar sync and lesson booking — free for every Potential Driving Instructor, no card required.",
-    ctaLabel: "See pricing",
-    href: "/#pricing",
-    external: true,
   },
   {
     slug: "schools",

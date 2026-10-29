@@ -28,7 +28,7 @@ const PortalPreview = () => {
 
           <h3 className="font-bold text-lg">
 
-            Student Portal
+            Instructor Portal
 
           </h3>
 

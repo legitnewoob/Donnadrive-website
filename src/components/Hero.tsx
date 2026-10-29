@@ -36,7 +36,7 @@ const Hero = () => {
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
 
               <span className="text-sm font-medium">
-                AI Assistant for Driving Schools
+                AI Assistant for ADIs, PDIs &amp; Driving Schools
               </span>
 
             </div>

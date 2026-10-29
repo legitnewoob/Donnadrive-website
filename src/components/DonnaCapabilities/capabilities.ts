@@ -38,7 +38,7 @@ export const capabilities = [
   },
   {
     icon: LayoutDashboard,
-    title: "Student Portal",
+    title: "Instructor Portal",
     description:
       "Track payments, lesson history, progress and upcoming bookings in one place.",
     size: "wide",

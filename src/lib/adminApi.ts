@@ -295,6 +295,8 @@ export const adminApi = {
   launch: () => get<LaunchSettings>("/launch").then((r) => r.data),
   updateLaunch: (body: Partial<Omit<LaunchSettings, "promoCodes">>) => send<LaunchSettings>("PUT", "/launch", body),
   announceLaunch: () => send<{ sent: number; of: number }>("POST", "/launch/announce"),
+  createFoundingInvite: (name: string, email: string) =>
+    send<{ url: string; email: string; name: string; expiresAt: string }>("POST", "/founding-invite", { name, email }),
 
   numbers: (status?: string) => get<PoolNumber[]>(`/phone-numbers${qs({ status, limit: 200 })}`),
   addNumber: (body: { phoneNumber: string; phoneNumberId: string; region?: string; label?: string; whatsappToken?: string }) =>

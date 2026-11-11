@@ -323,7 +323,7 @@ function FoundingInviteCard() {
       </h2>
       <div className="space-y-4 p-4">
         <p className="text-sm text-muted-foreground">
-          Generates a one-time invite link giving the recipient 6 months free — no card required.
+          Generates a one-time invite link giving the recipient 3 months free — no card required.
         </p>
         {result ? (
           <div className="space-y-3">

@@ -56,14 +56,14 @@ export default function InviteLanding() {
               <h1 className="text-3xl font-black tracking-tight text-slate-900">You're in{first ? `, ${first}` : ""} 🎉</h1>
               <p className="mx-auto mt-2 max-w-sm text-muted-foreground">
                 {info.founding
-                  ? "Sign in with Google, pick your plan, and get 6 months completely free — no card needed."
+                  ? "Sign in with Google, pick your plan, and get 3 months completely free — no card needed."
                   : "Your spot on Donna Drive is ready. Sign in with Google, pick your plan and Donna will be answering your learners on WhatsApp in minutes."}
               </p>
               {info.founding ? (
                 <div className="mx-auto mt-5 flex max-w-sm items-center gap-3 rounded-2xl border border-purple-200 bg-purple-50 p-3 text-left">
                   <Sparkles className="h-6 w-6 shrink-0 text-purple-700" />
                   <p className="text-sm text-purple-900">
-                    <strong>6 months free</strong> — no card required. After your free period, you'll be invited to subscribe to continue.
+                    <strong>3 months free</strong> — no card required. After your free period, you'll be invited to subscribe to continue.
                   </p>
                 </div>
               ) : info.promo ? (

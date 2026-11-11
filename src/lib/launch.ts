@@ -207,6 +207,7 @@ export interface InviteInfo {
   name?: string;
   email?: string;
   expiresAt?: string;
+  founding?: boolean;
   promo?: { code: string; label: string } | null;
 }
 

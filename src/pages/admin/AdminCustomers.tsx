@@ -148,7 +148,7 @@ export default function AdminCustomers() {
                     <td className="px-4 py-2.5">
                       <p className="flex items-center gap-1.5 font-medium">
                         {r.name}
-                        {r.staffRole && <ShieldCheck className="h-3.5 w-3.5 text-violet-600" aria-label={`Staff: ${r.staffRole}`} />}
+                        {r.staffRole && <ShieldCheck className="h-3.5 w-3.5 text-primary" aria-label={`Staff: ${r.staffRole}`} />}
                         <ReturningBadge row={r} />
                       </p>
                       <p className="text-xs text-muted-foreground">{r.email}</p>
@@ -289,7 +289,7 @@ function CustomerSheet({
                 {c.name}
                 <StatusBadge status={c.status} />
                 {c.staffRole && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold capitalize text-violet-700">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold capitalize text-coral-deep">
                     <ShieldCheck className="h-3 w-3" /> {c.superAdmin ? "Super admin" : c.staffRole}
                   </span>
                 )}
@@ -313,7 +313,7 @@ function CustomerSheet({
                 <p className="font-medium">Deleted on {date(c.deletedAt)}</p>
                 <p className="text-xs text-muted-foreground">They can't sign in to this account. It's kept here for your records only.</p>
                 {c.rejoinedAs && (
-                  <button onClick={() => onOpen(c.rejoinedAs!.id)} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-violet-700 hover:underline">
+                  <button onClick={() => onOpen(c.rejoinedAs!.id)} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-coral-deep hover:underline">
                     <Undo2 className="h-3.5 w-3.5" /> Came back {date(c.rejoinedAs.createdAt)} with a new account →
                   </button>
                 )}
@@ -561,7 +561,7 @@ function Mini({ value, label }: { value: number; label: string }) {
 function Action({ title, hint, icon: Icon, children }: { title: string; hint?: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
     <section className="rounded-xl border p-3">
-      <h3 className="flex items-center gap-2 text-sm font-semibold"><Icon className="h-4 w-4 text-violet-600" /> {title}</h3>
+      <h3 className="flex items-center gap-2 text-sm font-semibold"><Icon className="h-4 w-4 text-primary" /> {title}</h3>
       {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
       <div className="mt-2">{children}</div>
     </section>

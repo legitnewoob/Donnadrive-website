@@ -43,7 +43,7 @@ function PerDay({ days }: { days: WaitlistStats["perDay"] }) {
   return (
     <div className="flex h-16 items-end gap-[3px]" aria-label="Sign-ups per day">
       {days.map((d) => (
-        <div key={d.date} title={`${shortDate(d.date)}: ${d.count}`} className="flex-1 rounded-t bg-violet-400/80" style={{ height: `${Math.max(6, (d.count / max) * 100)}%` }} />
+        <div key={d.date} title={`${shortDate(d.date)}: ${d.count}`} className="flex-1 rounded-t bg-primary/70" style={{ height: `${Math.max(6, (d.count / max) * 100)}%` }} />
       ))}
     </div>
   );
@@ -106,7 +106,7 @@ function LaunchCard({ settings, onSaved, canEdit }: { settings: LaunchSettings; 
   return (
     <section className="rounded-xl border bg-white">
       <h2 className="flex items-center gap-2 border-b px-4 py-3 font-semibold">
-        <Rocket className="h-4 w-4 text-violet-600" /> Launch settings
+        <Rocket className="h-4 w-4 text-primary" /> Launch settings
         {!canEdit && <span className="ml-auto text-xs font-normal text-muted-foreground">Only admins can change these</span>}
       </h2>
 
@@ -202,7 +202,7 @@ function LaunchCard({ settings, onSaved, canEdit }: { settings: LaunchSettings; 
               ))}
             </select>
             <p className="mt-1 text-xs text-muted-foreground">
-              Applied automatically at checkout for people you invite. <Link to="/admin/sales" className="text-violet-600 hover:underline">Create a code</Link>
+              Applied automatically at checkout for people you invite. <Link to="/admin/sales" className="text-coral-deep hover:underline">Create a code</Link>
             </p>
           </div>
           <div>
@@ -240,7 +240,7 @@ function LaunchCard({ settings, onSaved, canEdit }: { settings: LaunchSettings; 
         {settings.mode === "open" && canEdit && (
           <div className="flex flex-col gap-2 rounded-lg border border-dashed p-3 sm:flex-row sm:items-center">
             <p className="flex-1 text-sm text-slate-700">
-              <Megaphone className="mr-1.5 inline h-4 w-4 text-violet-600" />
+              <Megaphone className="mr-1.5 inline h-4 w-4 text-primary" />
               Tell everyone still waiting (who said yes to product news) that sign-up is open. Each person gets it once.
             </p>
             <Button size="sm" variant="outline" onClick={() => setAnnounce(true)}>Send launch email</Button>
@@ -319,7 +319,7 @@ function FoundingInviteCard() {
   return (
     <section className="rounded-xl border bg-white">
       <h2 className="flex items-center gap-2 border-b px-4 py-3 font-semibold">
-        <Sparkles className="h-4 w-4 text-purple-600" /> Founding customer invite
+        <Sparkles className="h-4 w-4 text-primary" /> Founding customer invite
       </h2>
       <div className="space-y-4 p-4">
         <p className="text-sm text-muted-foreground">
@@ -486,7 +486,7 @@ function WaitlistBody() {
               <button
                 key={s}
                 onClick={() => setFilters((f) => ({ ...f, status: s, page: 1 }))}
-                className={`rounded-full px-3 py-1 text-sm capitalize ${filters.status === s ? "bg-violet-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                className={`rounded-full px-3 py-1 text-sm capitalize ${filters.status === s ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-100"}`}
               >
                 {s}
               </button>

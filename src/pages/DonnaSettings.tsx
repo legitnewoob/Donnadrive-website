@@ -131,7 +131,7 @@ function Section({
     <Card id={id} data-tour={tour} className="scroll-mt-32 lg:scroll-mt-20">
       <CardHeader className="pb-4">
         <CardTitle className="text-base flex items-center gap-2">
-          <Icon className="h-4 w-4 text-sky-600" />
+          <Icon className="h-4 w-4 text-primary" />
           {title}
         </CardTitle>
         <CardDescription>{description}</CardDescription>
@@ -650,7 +650,7 @@ export default function DonnaSettings() {
                   onChange={(h) => setDayHours(key, h)}
                 />
               ))}
-              <Button variant="ghost" size="sm" onClick={copyMondayHours} className="text-sky-700 px-0">
+              <Button variant="ghost" size="sm" onClick={copyMondayHours} className="text-coral-deep px-0">
                 Copy Monday's hours to Tue–Fri
               </Button>
             </div>
@@ -723,7 +723,7 @@ export default function DonnaSettings() {
             </div>
           </Field>
 
-          <div className="rounded-xl border border-sky-100 bg-sky-50/50 p-4 space-y-3">
+          <div className="rounded-xl border bg-slate-50 p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="text-sm font-semibold text-slate-800">Your day, packed</p>
@@ -796,7 +796,7 @@ export default function DonnaSettings() {
           {packed ? (
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
               Donna is packing your day, so how much driving she allows is set by the slider under{" "}
-              <button type="button" className="font-medium text-sky-700 hover:underline" onClick={() => scrollToSection("schedule")}>
+              <button type="button" className="font-medium text-coral-deep hover:underline" onClick={() => scrollToSection("schedule")}>
                 Your schedule
               </button>
               .
@@ -819,7 +819,7 @@ export default function DonnaSettings() {
           <button
             type="button"
             onClick={() => setShowAdvanced((v) => !v)}
-            className="text-sm font-medium text-sky-700 hover:underline"
+            className="text-sm font-medium text-coral-deep hover:underline"
           >
             {showAdvanced ? "Hide advanced settings" : "Show advanced settings"}
           </button>
@@ -945,7 +945,7 @@ export default function DonnaSettings() {
           )}
 
           {/* Try it */}
-          <div className="rounded-xl border border-sky-100 bg-sky-50/50 p-4 space-y-3" data-tour="settings-preview">
+          <div className="rounded-xl border bg-slate-50 p-4 space-y-3" data-tour="settings-preview">
             <div>
               <p className="text-sm font-semibold text-slate-800">Try it</p>
               <p className="text-xs text-slate-500">
@@ -1157,7 +1157,7 @@ export default function DonnaSettings() {
                   type="button"
                   onClick={() => setBotField("notifications", { ...bot.notifications, [key]: !bot.notifications[key] })}
                   className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
-                    bot.notifications[key] ? "bg-sky-600 border-sky-600 text-white" : "bg-white text-slate-600 hover:border-slate-400"
+                    bot.notifications[key] ? "bg-primary border-primary text-white" : "bg-white text-slate-600 hover:border-slate-400"
                   }`}
                 >
                   {label}
@@ -1241,7 +1241,7 @@ function SetupBanner({ setup, onGo }: { setup: SetupStatus; onGo: (link: string)
             )}
             <span className={`flex-1 ${r.done ? "text-slate-500 line-through" : "text-slate-800"}`}>{r.label}</span>
             {!r.done && (
-              <button onClick={() => onGo(r.link)} className="shrink-0 font-medium text-sky-700 hover:underline">
+              <button onClick={() => onGo(r.link)} className="shrink-0 font-medium text-coral-deep hover:underline">
                 {r.link.startsWith("/settings#") ? "Show me" : "Add"}
               </button>
             )}
@@ -1371,7 +1371,7 @@ function SettingsNav({ sections, children }: { sections: { id: string; label: st
                   onClick={() => go(id)}
                   aria-current={active === id ? "true" : undefined}
                   className={`-ml-px flex w-full items-center gap-2 border-l-2 px-3 py-1.5 text-left text-sm transition-colors ${
-                    active === id ? "border-sky-600 font-medium text-slate-900" : "border-transparent text-slate-500 hover:text-slate-800"
+                    active === id ? "border-primary font-medium text-slate-900" : "border-transparent text-slate-500 hover:text-slate-800"
                   }`}
                 >
                   {label}
@@ -1412,17 +1412,17 @@ function ModeCard({
       aria-checked={selected}
       onClick={onSelect}
       className={`flex flex-col rounded-xl border-2 p-4 text-left transition-colors ${
-        selected ? "border-sky-600 bg-sky-50/60" : "border-slate-200 bg-white hover:border-slate-300"
+        selected ? "border-primary bg-primary/5" : "border-slate-200 bg-white hover:border-slate-300"
       }`}
     >
       <span className="flex items-center gap-2">
         <span
           aria-hidden
           className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-            selected ? "border-sky-600" : "border-slate-300"
+            selected ? "border-primary" : "border-slate-300"
           }`}
         >
-          {selected && <span className="h-2 w-2 rounded-full bg-sky-600" />}
+          {selected && <span className="h-2 w-2 rounded-full bg-primary" />}
         </span>
         <span className="text-sm font-semibold text-slate-900">{title}</span>
       </span>
@@ -1432,7 +1432,7 @@ function ModeCard({
           <span
             key={i}
             style={{ flexGrow: b || 0.5 }}
-            className={`rounded-sm ${b ? (selected ? "bg-sky-500" : "bg-slate-300") : "bg-transparent"}`}
+            className={`rounded-sm ${b ? (selected ? "bg-primary" : "bg-slate-300") : "bg-transparent"}`}
           />
         ))}
       </span>

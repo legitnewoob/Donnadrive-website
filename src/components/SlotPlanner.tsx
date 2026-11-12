@@ -26,8 +26,16 @@ const DAYS: { key: DayKey; label: string; long: string }[] = [
   { key: "sun", label: "Sun", long: "Sunday" },
 ];
 
-// One colour per lesson length, shortest first. The length is always written on the slot too.
-const COLORS = ["bg-sky-600", "bg-violet-600", "bg-emerald-600", "bg-orange-600", "bg-rose-600", "bg-slate-600"];
+// Lesson lengths share one coral ramp: the longer the lesson, the deeper the shade.
+// The length is always written on the slot too.
+const RAMP = [
+  "bg-[#FBC9B8] text-[#5F1D14]",
+  "bg-coral-peach text-[#5F1D14]",
+  "bg-primary text-white",
+  "bg-[#C63D2B] text-white",
+  "bg-[#8F2D1F] text-white",
+  "bg-[#5F1D14] text-white",
+];
 const HATCH = "bg-[repeating-linear-gradient(135deg,#cbd5e1_0_4px,transparent_4px_8px)]";
 
 const toMinutes = (t: string) => {
@@ -104,7 +112,12 @@ export default function SlotPlanner({
     () => [...new Set([...lengths.map((l) => l.durationMin), ...Object.values(slots).flatMap((d) => d.map((s) => s.durationMin))])].sort((a, b) => a - b),
     [lengths, slots]
   );
-  const colorOf = (durationMin: number) => COLORS[Math.min(allLengths.indexOf(durationMin), COLORS.length - 1)] ?? COLORS[0];
+  // Spread the lengths in use across the ramp so neighbours are easy to tell apart
+  const colorOf = (durationMin: number) => {
+    const i = Math.max(0, allLengths.indexOf(durationMin));
+    const step = allLengths.length <= 3 ? 2 : 1;
+    return RAMP[Math.min(i * step, RAMP.length - 1)];
+  };
   const nameOf = (durationMin: number) => lengths.find((l) => l.durationMin === durationMin)?.name ?? null;
   // A slot nobody can book: no lesson type fits it
   const unbookable = (s: DaySlot) =>
@@ -249,7 +262,7 @@ export default function SlotPlanner({
                         onClick={(e) => setPanel({ kind: "slot", day: key, index: i, draft: { ...s }, rect: e.currentTarget.getBoundingClientRect() })}
                         aria-label={`${long} ${s.start} to ${toTime(endOf(s))}, ${formatDuration(s.durationMin)}${s.exact ? ", this length only" : ""}${warn ? `, ${warn}` : ""}. Edit`}
                         title={`${s.start}–${toTime(endOf(s))} · ${formatDuration(s.durationMin)}${nameOf(s.durationMin) ? ` · ${nameOf(s.durationMin)}` : ""}${warn ? ` · ${warn}` : ""}`}
-                        className={`absolute inset-y-1 flex items-center justify-center gap-0.5 overflow-hidden rounded px-0.5 text-[11px] font-semibold leading-none text-white outline-offset-1 transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-900 ${colorOf(s.durationMin)} ${warn ? "ring-2 ring-inset ring-amber-300" : ""}`}
+                        className={`absolute inset-y-1 flex items-center justify-center gap-0.5 overflow-hidden rounded px-0.5 text-[11px] font-semibold leading-none outline-offset-1 transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-900 ${colorOf(s.durationMin)} ${warn ? "ring-2 ring-inset ring-amber-300" : ""}`}
                         style={{ left: pct(toMinutes(s.start)), width: `calc(${(s.durationMin / span) * 100}% - 2px)` }}
                       >
                         {warn ? <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden /> : s.exact && <Lock className="h-3 w-3 shrink-0" aria-hidden />}
@@ -435,7 +448,7 @@ export default function SlotPlanner({
                     type="button"
                     aria-pressed={on}
                     onClick={() => setPanel({ ...panel, to: on ? panel.to.filter((k) => k !== d.key) : [...panel.to, d.key] })}
-                    className={`rounded-md border px-3 py-2 text-sm transition-colors ${on ? "border-sky-600 bg-sky-600 text-white" : "bg-white text-slate-600 hover:border-slate-400"}`}
+                    className={`rounded-md border px-3 py-2 text-sm transition-colors ${on ? "border-primary bg-primary text-white" : "bg-white text-slate-600 hover:border-slate-400"}`}
                   >
                     {d.label}
                   </button>
@@ -444,7 +457,7 @@ export default function SlotPlanner({
             </div>
             <button
               type="button"
-              className="text-sm font-medium text-sky-700 hover:underline"
+              className="text-sm font-medium text-coral-deep hover:underline"
               onClick={() => setPanel({ ...panel, to: (["mon", "tue", "wed", "thu", "fri"] as DayKey[]).filter((k) => k !== panel.day) })}
             >
               Choose all weekdays

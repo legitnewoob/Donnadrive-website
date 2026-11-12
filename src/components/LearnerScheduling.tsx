@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, X, MapPin, CheckCircle2 } from "lucide-react";
+import { Loader2, Plus, X, MapPin, CheckCircle2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -16,27 +16,47 @@ const DAYS = [
   { n: 0, label: "Sun" },
 ];
 const HOURLY = Array.from({ length: 14 }, (_, i) => `${String(i + 7).padStart(2, "0")}:00`);
+// The hours grouped for a quick pick; "exact hours" opens the full list
+const PARTS = [
+  { label: "Morning", hint: "7am–12pm", times: HOURLY.filter((t) => t < "12:00") },
+  { label: "Afternoon", hint: "12–5pm", times: HOURLY.filter((t) => t >= "12:00" && t < "17:00") },
+  { label: "Evening", hint: "5–9pm", times: HOURLY.filter((t) => t >= "17:00") },
+];
 
 const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v));
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const toggle = <T,>(list: T[], item: T) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
 
+const chip = (on: boolean) =>
+  `rounded-md border px-2.5 py-1.5 text-xs transition-colors ${
+    on ? "border-primary bg-primary text-white" : "bg-white text-slate-600 hover:border-slate-400"
+  }`;
+
 function DayChips({ value, onChange }: { value: number[]; onChange: (v: number[]) => void }) {
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-1.5">
       {DAYS.map((d) => (
-        <button
-          key={d.n}
-          type="button"
-          onClick={() => onChange(toggle(value, d.n).sort())}
-          className={`px-2 py-1 text-xs rounded-md border ${
-            value.includes(d.n) ? "bg-sky-600 border-sky-600 text-white" : "bg-white text-slate-500 hover:border-slate-400"
-          }`}
-        >
+        <button key={d.n} type="button" aria-pressed={value.includes(d.n)} onClick={() => onChange(toggle(value, d.n).sort())} className={chip(value.includes(d.n))}>
           {d.label}
         </button>
       ))}
     </div>
+  );
+}
+
+// A titled block of the form, with an optional action beside the title
+function Group({ title, help, action, children }: { title: string; help?: string; action?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <section className="space-y-3 py-4 first:pt-0 last:pb-0">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h5 className="text-sm font-semibold text-slate-800">{title}</h5>
+          {help && <p className="text-xs text-slate-500">{help}</p>}
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -56,6 +76,7 @@ export default function LearnerScheduling({
   const [saved, setSaved] = useState(initial);
   const [prefs, setPrefs] = useState(initial);
   const [saving, setSaving] = useState(false);
+  const [showHours, setShowHours] = useState(false);
 
   const set = <K extends keyof SchedulingPrefs>(key: K, value: SchedulingPrefs[K]) =>
     setPrefs((p) => ({ ...p, [key]: value }));
@@ -85,185 +106,225 @@ export default function LearnerScheduling({
     }
   }
 
+  // Whole parts of the day cover most learners; anything else needs the exact hours
+  const inParts = PARTS.every((p) => { const n = p.times.filter((t) => prefs.preferredTimes.includes(t)).length; return n === 0 || n === p.times.length; });
+  const exactOpen = showHours || !inParts;
+  const togglePart = (times: string[]) => {
+    const all = times.every((t) => prefs.preferredTimes.includes(t));
+    set("preferredTimes", all ? prefs.preferredTimes.filter((t) => !times.includes(t)) : [...new Set([...prefs.preferredTimes, ...times])].sort());
+  };
+  const addButton = (label: string, onClick: () => void) => (
+    <Button variant="ghost" size="sm" className="-my-1 h-8 shrink-0 px-2 text-coral-deep hover:text-coral-deep" onClick={onClick}>
+      <Plus className="mr-1 h-4 w-4" /> {label}
+    </Button>
+  );
+
   return (
-    <div className="space-y-4 rounded-lg bg-white p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-slate-800">Priority learner</p>
-          <p className="text-xs text-slate-500">Offer every slot you can reach, however far. Useful before a test.</p>
-        </div>
-        <Switch checked={prefs.priority} onCheckedChange={(v) => set("priority", v)} />
-      </div>
-
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-slate-800">Pause Donna for this learner</p>
-          <p className="text-xs text-slate-500">Donna won't reply to them; you'll get an email when they message.</p>
-        </div>
-        <Switch checked={prefs.donnaPaused} onCheckedChange={(v) => set("donnaPaused", v)} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-700">Max extra driving (min)</label>
-          <Input
-            type="number"
-            min={5}
-            max={120}
-            value={prefs.maxAddedDriveMin ?? ""}
-            onChange={(e) => set("maxAddedDriveMin", numOrNull(e.target.value))}
-            placeholder="Your setting"
-            disabled={prefs.priority}
-            className="h-9"
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-700">Max lessons per week</label>
-          <Input
-            type="number"
-            min={1}
-            max={14}
-            value={prefs.maxLessonsPerWeek ?? ""}
-            onChange={(e) => set("maxLessonsPerWeek", numOrNull(e.target.value))}
-            placeholder="No limit"
-            className="h-9"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-slate-700">Default lesson type</label>
-        <select
-          value={prefs.defaultLessonTypeId ?? ""}
-          onChange={(e) => set("defaultLessonTypeId", e.target.value || null)}
-          className="h-9 w-full rounded-md border bg-white px-2 text-sm"
-        >
-          <option value="">None</option>
-          {lessonTypes
-            .filter((t) => t.active || t._id === prefs.defaultLessonTypeId)
-            .map((t) => (
-              <option key={t._id} value={t._id}>
-                {t.name} (£{t.price})
-              </option>
-            ))}
-        </select>
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-slate-700">Saved pickup places</label>
-        <p className="text-xs text-slate-500">Donna offers these by name and uses them to plan your route.</p>
-        {prefs.savedPlaces.map((p, i) => (
-          <div key={i} className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-md border p-2 sm:flex sm:border-0 sm:p-0">
-            <Input
-              value={p.label}
-              maxLength={30}
-              onChange={(e) =>
-                set("savedPlaces", prefs.savedPlaces.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))
-              }
-              placeholder="Name, e.g. College"
-              className="h-9 sm:w-32"
-            />
-            <Button variant="ghost" size="icon" className="h-8 w-8 sm:order-last" aria-label="Remove place" onClick={() => set("savedPlaces", prefs.savedPlaces.filter((_, j) => j !== i))}>
-              <X className="h-4 w-4" />
-            </Button>
-            <Input
-              value={p.address}
-              maxLength={200}
-              onChange={(e) =>
-                set("savedPlaces", prefs.savedPlaces.map((x, j) => (j === i ? { ...x, address: e.target.value, located: false } : x)))
-              }
-              placeholder="Address or postcode"
-              className="h-9 sm:flex-1"
-            />
-            <span className="flex h-8 w-8 items-center justify-center sm:w-auto">
-              {p.located ? (
-                <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" aria-label="Found on the map" />
-              ) : (
-                <MapPin className="h-4 w-4 text-slate-300 shrink-0" aria-label="Will be looked up when saved" />
-              )}
-            </span>
-          </div>
-        ))}
-        {prefs.savedPlaces.length < 5 && (
-          <Button variant="outline" size="sm" onClick={() => set("savedPlaces", [...prefs.savedPlaces, { label: "", address: "" }])}>
-            <Plus className="h-4 w-4 mr-1" /> Add place
-          </Button>
-        )}
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-slate-700">Usual days and times</label>
-        <p className="text-xs text-slate-500">Donna mentions these first when they're free.</p>
-        <DayChips value={prefs.preferredDays} onChange={(v) => set("preferredDays", v)} />
-        <div className="flex flex-wrap gap-1">
-          {HOURLY.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => set("preferredTimes", toggle(prefs.preferredTimes, t).sort())}
-              className={`px-2 py-1 text-xs rounded-md border ${
-                prefs.preferredTimes.includes(t) ? "bg-sky-600 border-sky-600 text-white" : "bg-white text-slate-500 hover:border-slate-400"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-slate-700">Times they can't do</label>
-        <p className="text-xs text-slate-500">Donna never offers these, e.g. school hours.</p>
-        {prefs.unavailable.map((u, i) => (
-          <div key={i} className="space-y-1.5 rounded-md border p-2">
-            <div className="flex items-start justify-between gap-2">
-              <DayChips
-                value={u.days}
-                onChange={(days) => set("unavailable", prefs.unavailable.map((x, j) => (j === i ? { ...x, days } : x)))}
-              />
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Remove rule" onClick={() => set("unavailable", prefs.unavailable.filter((_, j) => j !== i))}>
-                <X className="h-4 w-4" />
-              </Button>
+    <div className="rounded-lg bg-white p-4">
+      <div className="grid gap-x-10 lg:grid-cols-2">
+        <div className="divide-y">
+          <Group title="Donna and this learner">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-slate-800">Priority learner</p>
+                <p className="text-xs text-slate-500">Offer every slot you can reach, however far. Useful before a test.</p>
+              </div>
+              <Switch checked={prefs.priority} onCheckedChange={(v) => set("priority", v)} aria-label="Priority learner" />
             </div>
-            <div className="flex items-center gap-2">
-              <Input
-                type="time"
-                value={u.from}
-                onChange={(e) => set("unavailable", prefs.unavailable.map((x, j) => (j === i ? { ...x, from: e.target.value } : x)))}
-                className="h-9 min-w-0 flex-1 sm:w-28 sm:flex-none"
-              />
-              <span className="text-xs text-slate-400">to</span>
-              <Input
-                type="time"
-                value={u.to}
-                onChange={(e) => set("unavailable", prefs.unavailable.map((x, j) => (j === i ? { ...x, to: e.target.value } : x)))}
-                className="h-9 min-w-0 flex-1 sm:w-28 sm:flex-none"
-              />
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-slate-800">Pause Donna</p>
+                <p className="text-xs text-slate-500">Donna won't reply to them; you'll get an email when they message.</p>
+              </div>
+              <Switch checked={prefs.donnaPaused} onCheckedChange={(v) => set("donnaPaused", v)} aria-label="Pause Donna for this learner" />
             </div>
-          </div>
-        ))}
-        {prefs.unavailable.length < 10 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => set("unavailable", [...prefs.unavailable, { days: [1, 2, 3, 4, 5], from: "09:00", to: "15:00" }])}
+          </Group>
+
+          <Group title="Limits and defaults">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label htmlFor="ls-drive" className="text-xs font-medium text-slate-700">Max extra driving (min)</label>
+                <Input
+                  id="ls-drive"
+                  type="number"
+                  min={5}
+                  max={120}
+                  value={prefs.maxAddedDriveMin ?? ""}
+                  onChange={(e) => set("maxAddedDriveMin", numOrNull(e.target.value))}
+                  placeholder="Your setting"
+                  disabled={prefs.priority}
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="ls-week" className="text-xs font-medium text-slate-700">Max lessons per week</label>
+                <Input
+                  id="ls-week"
+                  type="number"
+                  min={1}
+                  max={14}
+                  value={prefs.maxLessonsPerWeek ?? ""}
+                  onChange={(e) => set("maxLessonsPerWeek", numOrNull(e.target.value))}
+                  placeholder="No limit"
+                  className="h-9"
+                />
+              </div>
+              <div className="col-span-2 space-y-1">
+                <label htmlFor="ls-type" className="text-xs font-medium text-slate-700">Default lesson type</label>
+                <select
+                  id="ls-type"
+                  value={prefs.defaultLessonTypeId ?? ""}
+                  onChange={(e) => set("defaultLessonTypeId", e.target.value || null)}
+                  className="h-9 w-full rounded-md border bg-white px-2 text-sm"
+                >
+                  <option value="">None</option>
+                  {lessonTypes
+                    .filter((t) => t.active || t._id === prefs.defaultLessonTypeId)
+                    .map((t) => (
+                      <option key={t._id} value={t._id}>
+                        {t.name} (£{t.price})
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+          </Group>
+
+          <Group
+            title="Saved pickup places"
+            help="Donna offers these by name and uses them to plan your route."
+            action={prefs.savedPlaces.length < 5 && addButton("Add place", () => set("savedPlaces", [...prefs.savedPlaces, { label: "", address: "" }]))}
           >
-            <Plus className="h-4 w-4 mr-1" /> Add rule
-          </Button>
-        )}
+            {prefs.savedPlaces.map((p, i) => (
+              <div key={i} className="grid grid-cols-[1fr_auto] items-center gap-2 rounded-md border p-2 sm:flex sm:border-0 sm:p-0">
+                <Input
+                  value={p.label}
+                  maxLength={30}
+                  onChange={(e) =>
+                    set("savedPlaces", prefs.savedPlaces.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))
+                  }
+                  placeholder="Name, e.g. College"
+                  aria-label="Place name"
+                  className="h-9 sm:w-32"
+                />
+                <Button variant="ghost" size="icon" className="h-8 w-8 sm:order-last" aria-label="Remove place" onClick={() => set("savedPlaces", prefs.savedPlaces.filter((_, j) => j !== i))}>
+                  <X className="h-4 w-4" />
+                </Button>
+                <Input
+                  value={p.address}
+                  maxLength={200}
+                  onChange={(e) =>
+                    set("savedPlaces", prefs.savedPlaces.map((x, j) => (j === i ? { ...x, address: e.target.value, located: false } : x)))
+                  }
+                  placeholder="Address or postcode"
+                  aria-label="Address or postcode"
+                  className="h-9 sm:flex-1"
+                />
+                <span className="flex h-8 w-8 items-center justify-center sm:w-auto">
+                  {p.located ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" aria-label="Found on the map" />
+                  ) : (
+                    <MapPin className="h-4 w-4 text-slate-300 shrink-0" aria-label="Will be looked up when saved" />
+                  )}
+                </span>
+              </div>
+            ))}
+          </Group>
+        </div>
+
+        <div className="mt-4 divide-y border-t pt-4 lg:mt-0 lg:border-t-0 lg:pt-0">
+          <Group title="Usual days and times" help="Donna mentions these first when they're free.">
+            <DayChips value={prefs.preferredDays} onChange={(v) => set("preferredDays", v)} />
+            <div className="flex flex-wrap gap-1.5">
+              {PARTS.map((p) => {
+                const on = p.times.every((t) => prefs.preferredTimes.includes(t));
+                return (
+                  <button key={p.label} type="button" aria-pressed={on} onClick={() => togglePart(p.times)} className={chip(on)}>
+                    {p.label} <span className={on ? "text-white/80" : "text-slate-400"}>{p.hint}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              aria-expanded={exactOpen}
+              onClick={() => setShowHours(!exactOpen)}
+              className="flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-slate-900"
+            >
+              Exact hours
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${exactOpen ? "rotate-180" : ""}`} />
+            </button>
+            {exactOpen && (
+              <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-7">
+                {HOURLY.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    aria-pressed={prefs.preferredTimes.includes(t)}
+                    onClick={() => set("preferredTimes", toggle(prefs.preferredTimes, t).sort())}
+                    className={`${chip(prefs.preferredTimes.includes(t))} px-0`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
+          </Group>
+
+          <Group
+            title="Times they can't do"
+            help="Donna never offers these, e.g. school hours."
+            action={
+              prefs.unavailable.length < 10 &&
+              addButton("Add rule", () => set("unavailable", [...prefs.unavailable, { days: [1, 2, 3, 4, 5], from: "09:00", to: "15:00" }]))
+            }
+          >
+            {prefs.unavailable.map((u, i) => (
+              <div key={i} className="space-y-2 rounded-md border p-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <DayChips
+                    value={u.days}
+                    onChange={(days) => set("unavailable", prefs.unavailable.map((x, j) => (j === i ? { ...x, days } : x)))}
+                  />
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Remove rule" onClick={() => set("unavailable", prefs.unavailable.filter((_, j) => j !== i))}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="time"
+                    value={u.from}
+                    aria-label="From"
+                    onChange={(e) => set("unavailable", prefs.unavailable.map((x, j) => (j === i ? { ...x, from: e.target.value } : x)))}
+                    className="h-9 min-w-0 flex-1 sm:w-28 sm:flex-none"
+                  />
+                  <span className="text-xs text-slate-400">to</span>
+                  <Input
+                    type="time"
+                    value={u.to}
+                    aria-label="To"
+                    onChange={(e) => set("unavailable", prefs.unavailable.map((x, j) => (j === i ? { ...x, to: e.target.value } : x)))}
+                    className="h-9 min-w-0 flex-1 sm:w-28 sm:flex-none"
+                  />
+                </div>
+              </div>
+            ))}
+          </Group>
+        </div>
       </div>
 
-      <div className="flex justify-end gap-2 border-t pt-3">
-        {dirty && (
+      {dirty && (
+        <div className="mt-4 flex items-center justify-end gap-2 border-t pt-3">
+          <span className="mr-auto text-xs text-slate-500">Unsaved changes</span>
           <Button variant="ghost" size="sm" onClick={() => setPrefs(saved)} disabled={saving}>
             Discard
           </Button>
-        )}
-        <Button size="sm" onClick={save} disabled={!dirty || saving}>
-          {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          Save
-        </Button>
-      </div>
+          <Button size="sm" onClick={save} disabled={saving}>
+            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Save
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

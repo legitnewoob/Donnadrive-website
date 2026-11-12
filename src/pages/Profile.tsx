@@ -48,7 +48,7 @@ const PLAN_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-100 text-green-700",
-  trialing: "bg-blue-100 text-blue-700",
+  trialing: "bg-sky-100 text-sky-700",
   past_due: "bg-amber-100 text-amber-700",
   canceled: "bg-red-100 text-red-700",
   incomplete: "bg-slate-100 text-slate-500",
@@ -197,7 +197,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -230,7 +230,7 @@ export default function ProfilePage() {
     <DashboardLayout title="Account" subtitle="Manage your profile and subscription" initials={initials}>
       {/* Profile Header */}
       <div className="flex items-center gap-4 mb-8">
-        <div className="h-16 w-16 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white text-xl font-bold shrink-0">
+        <div className="h-16 w-16 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xl font-bold shrink-0">
           {initials}
         </div>
         <div>
@@ -245,7 +245,7 @@ export default function ProfilePage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <User className="h-4 w-4 text-sky-600" />
+                <User className="h-4 w-4 text-primary" />
                 Profile
               </CardTitle>
               {!editing && (
@@ -316,7 +316,7 @@ export default function ProfilePage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Phone className="h-4 w-4 text-sky-600" />
+              <Phone className="h-4 w-4 text-primary" />
               WhatsApp Number
             </CardTitle>
           </CardHeader>
@@ -351,7 +351,7 @@ export default function ProfilePage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-sky-600" />
+              <CreditCard className="h-4 w-4 text-primary" />
               Subscription
             </CardTitle>
           </CardHeader>
@@ -408,7 +408,7 @@ export default function ProfilePage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4 text-sky-600" />
+                <FileText className="h-4 w-4 text-primary" />
                 Billing
               </CardTitle>
               {profile.subscriptionStatus && !["member", "manager"].includes(profile.school?.role ?? "") && (
@@ -442,7 +442,7 @@ export default function ProfilePage() {
                         {inv.status}
                       </Badge>
                       {inv.pdfUrl && (
-                        <a href={inv.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-sky-600 hover:underline">
+                        <a href={inv.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-coral-deep hover:underline">
                           PDF
                         </a>
                       )}

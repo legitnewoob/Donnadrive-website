@@ -42,12 +42,13 @@ export function driveLabel(minutes: number) {
   return (DRIVE_BANDS.find((b) => minutes <= b.upTo) ?? DRIVE_BANDS[DRIVE_BANDS.length - 1]).label;
 }
 
-/** Teal for a small local area, through sky blue, to violet for a wide one. */
-export function driveColor(minutes: number, lightness = 46) {
+/** Peach for a small local area, deepening to coral red for a wide one. */
+export function driveColor(minutes: number, lightness = 56) {
   const t = Math.min(1, Math.max(0, (minutes - DRIVE_MIN) / (DRIVE_MAX - DRIVE_MIN)));
-  const hue = lerp(170, 265, t);
-  const sat = lerp(70, 62, t);
-  return `hsl(${hue.toFixed(1)} ${sat.toFixed(0)}% ${lightness}%)`;
+  const hue = lerp(18, 4, t);
+  // Light versions (the track) keep their lightness; solid ones deepen as the area widens
+  const light = lightness > 70 ? lightness : lerp(lightness + 6, lightness - 12, t);
+  return `hsl(${hue.toFixed(1)} 84% ${light.toFixed(0)}%)`;
 }
 
 /** "What's the longest you'll drive between lessons?" */

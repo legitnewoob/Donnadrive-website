@@ -230,7 +230,7 @@ export default function Team() {
               </div>
               <div className="mt-1 flex gap-1">
                 {Array.from({ length: seats.limit }).map((_, i) => (
-                  <span key={i} className={`h-2 w-8 rounded-full ${i < seats.members ? "bg-sky-600" : i < seats.used ? "bg-sky-300" : "bg-slate-200"}`} />
+                  <span key={i} className={`h-2 w-8 rounded-full ${i < seats.members ? "bg-primary" : i < seats.used ? "bg-primary/40" : "bg-slate-200"}`} />
                 ))}
               </div>
             </div>
@@ -240,7 +240,7 @@ export default function Team() {
         {/* Invite */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base"><UserPlus className="h-4 w-4 text-sky-600" /> Invite an instructor</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base"><UserPlus className="h-4 w-4 text-primary" /> Invite an instructor</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {seatsFull ? (
@@ -450,13 +450,13 @@ function InstructorTable({
                 <tr key={m.id} onClick={() => onOpen(m)} className="cursor-pointer hover:bg-slate-50">
                   <td className="px-4 py-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-[11px] font-semibold text-white">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-[11px] font-semibold text-white">
                         {m.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase()}
                       </span>
                       <div className="min-w-0">
                         <p className="flex items-center gap-1.5 truncate font-medium">
                           {m.name}
-                          {m.role === "manager" && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-violet-600" aria-label="Manager" />}
+                          {m.role === "manager" && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-label="Manager" />}
                         </p>
                         <p className="truncate text-xs text-muted-foreground">{m.email}</p>
                         {/* Phones: the numbers sit under the name */}

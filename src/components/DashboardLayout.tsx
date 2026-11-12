@@ -221,7 +221,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
         <div className="px-3 pb-3 space-y-1">
           {isStaff && (
             <button onClick={() => go("/admin")} className={itemClass(false)}>
-              <ShieldCheck className="h-5 w-5 shrink-0 text-violet-600" />
+              <ShieldCheck className="h-5 w-5 shrink-0 text-slate-500" />
               <span className="flex-1 text-left">Admin panel</span>
               <ArrowUpRight className="h-4 w-4 text-slate-400" aria-hidden />
             </button>
@@ -244,7 +244,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
               accountActive ? "bg-slate-900 text-white" : "hover:bg-slate-100"
             }`}
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-xs font-semibold text-white">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-xs font-semibold text-white">
               {initials}
             </span>
             <span className="min-w-0">
@@ -330,7 +330,7 @@ const DashboardLayout = ({ children, title, subtitle, initials = "AD", mobileFoo
             >
               <LogOut className="h-5 w-5" />
             </button>
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold ml-1">
+            <div className="h-8 w-8 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xs font-semibold ml-1">
               {initials}
             </div>
           </div>

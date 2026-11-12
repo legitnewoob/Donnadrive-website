@@ -371,8 +371,8 @@ export default function DonnaSettings() {
     setBot((b) => (b ? { ...b, [key]: value } : b));
 
   const routeDirty = !same(routeDraft, saved.routeSettings) || baseAddress.trim() !== saved.baseAddress;
-  const packingKeys = ["scheduleMode", "dayHours", "lunch"] as const;
-  const availabilityKeys = ["workingHours", "breaks", "maxLessonsPerDay", "minNoticeHours", "bookingWindowDays", "holiday"] as const;
+  const packingKeys = ["dayHours", "lunch"] as const;
+  const availabilityKeys = ["scheduleMode", "workingHours", "breaks", "maxLessonsPerDay", "minNoticeHours", "bookingWindowDays", "holiday"] as const;
   const rulesKeys = ["acceptingNewLearners", "allowCancel", "allowReschedule", "cancellationNoticeHours", "lateCancellationFee"] as const;
   const alertKeys = ["reminders", "notifications", "handover"] as const;
   const personalityKeys = ["tone", "emojis", "customGreeting", "aboutLessons"] as const;
@@ -472,7 +472,7 @@ export default function DonnaSettings() {
 
   const sections = [
     { id: "route", label: "Route", dirty: routeDirty },
-    { id: "packing", label: "Your day", dirty: packingDirty, keys: packingKeys },
+    ...(packed ? [{ id: "packing", label: "Your day", dirty: packingDirty, keys: packingKeys }] : []),
     { id: "availability", label: "Availability", dirty: availabilityDirty, keys: availabilityKeys },
     { id: "rules", label: "Rules", dirty: dirtyFor(rulesKeys), keys: rulesKeys },
     { id: "alerts", label: "Reminders", dirty: dirtyFor(alertKeys), keys: alertKeys },
@@ -780,7 +780,8 @@ export default function DonnaSettings() {
           </div>
         </Section>
 
-        {/* ── Your day: how tightly Donna packs it ─────────────────────────── */}
+        {/* ── Your day: packing config (only in packed mode) ─────────────── */}
+        {packed && (
         <Section
           id="packing"
           icon={Gauge}
@@ -794,128 +795,109 @@ export default function DonnaSettings() {
             setMaxDrive(savedMaxDrive(saved));
           }}
         >
-          <Field label="How should Donna plan your day?">
-            <Segmented
-              value={bot.scheduleMode}
-              options={[
-                { key: "packed", label: "Donna packs my day" },
-                { key: "fixed", label: "I'll pick start times" },
-              ]}
-              onChange={(v) => setBotField("scheduleMode", v)}
-            />
-            <p className="text-xs text-slate-500">
-              {packed
-                ? "You set your hours; Donna works out the start times for each lesson length."
-                : "You choose the exact start times under Availability. Donna only offers those."}
-            </p>
+          <Field
+            label="What's the longest you'll drive between lessons?"
+            help={`Donna never plans a drive longer than ${maxDrive} minutes between two lessons.`}
+          >
+            <PackingSlider value={maxDrive} onChange={setMaxDrive} />
+            <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
+              <p>
+                <span className="font-semibold text-slate-800">Donna packs with about {usualGap} min between lessons</span>{" "}
+                {gapSource === "learned"
+                  ? `(learned from your last ${saved.packing?.bufferSamples ?? ""} drives between lessons).`
+                  : gapSource === "previous"
+                    ? `(your previous setting, until she's seen ${saved.packing?.learnAfter ?? 10} drives between your lessons).`
+                    : `(half your longest drive, until she's seen ${saved.packing?.learnAfter ?? 10} drives between your lessons).`}
+              </p>
+              <p>Close learners start sooner, with up to 5 minutes spare for traffic. Learners further out are fitted in when the drive doesn't cost you a lesson (or one, on a quiet day).</p>
+            </div>
           </Field>
 
-          {packed && (
-            <>
-              <Field
-                label="What's the longest you'll drive between lessons?"
-                help={`Donna never plans a drive longer than ${maxDrive} minutes between two lessons.`}
-              >
-                <PackingSlider value={maxDrive} onChange={setMaxDrive} />
-                <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
-                  <p>
-                    <span className="font-semibold text-slate-800">Donna packs with about {usualGap} min between lessons</span>{" "}
-                    {gapSource === "learned"
-                      ? `(learned from your last ${saved.packing?.bufferSamples ?? ""} drives between lessons).`
-                      : gapSource === "previous"
-                        ? `(your previous setting, until she's seen ${saved.packing?.learnAfter ?? 10} drives between your lessons).`
-                        : `(half your longest drive, until she's seen ${saved.packing?.learnAfter ?? 10} drives between your lessons).`}
-                  </p>
-                  <p>Close learners start sooner, with up to 5 minutes spare for traffic. Learners further out are fitted in when the drive doesn't cost you a lesson (or one, on a quiet day).</p>
-                </div>
-              </Field>
-
-              <Field label="Working hours">
-                <div className="space-y-2">
-                  {DAYS.map(({ key, label }) => (
-                    <DayHoursRow
-                      key={key}
-                      label={label}
-                      hours={bot.dayHours[key]}
-                      onToggle={(on) => toggleWorkDay(key, on)}
-                      onChange={(h) => setDayHours(key, h)}
-                    />
-                  ))}
-                  <Button variant="ghost" size="sm" onClick={copyMondayHours} className="text-sky-700 px-0">
-                    Copy Monday's hours to Tue–Fri
-                  </Button>
-                </div>
-              </Field>
-
-              <div className="rounded-xl border p-4 space-y-4">
-                <SwitchRow
-                  label="Lunch break"
-                  help="Donna places it wherever it fits the most lessons, inside your lunch window."
-                  checked={bot.lunch.enabled}
-                  onChange={(v) => setBotField("lunch", { ...bot.lunch, enabled: v })}
+          <Field label="Working hours">
+            <div className="space-y-2">
+              {DAYS.map(({ key, label }) => (
+                <DayHoursRow
+                  key={key}
+                  label={label}
+                  hours={bot.dayHours[key]}
+                  onToggle={(on) => toggleWorkDay(key, on)}
+                  onChange={(h) => setDayHours(key, h)}
                 />
-                {bot.lunch.enabled && (
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <Field label="Lunch length">
-                      <select
-                        value={bot.lunch.durationMin}
-                        onChange={(e) => setBotField("lunch", { ...bot.lunch, durationMin: Number(e.target.value) })}
-                        className="h-10 w-full rounded-md border bg-white px-3 text-base sm:text-sm"
-                      >
-                        {[15, 20, 30, 45, 60, 75, 90].map((m) => (
-                          <option key={m} value={m}>{m} minutes</option>
-                        ))}
-                      </select>
-                    </Field>
-                    <Field label="Not before">
-                      <Input
-                        type="time"
-                        step={300}
-                        value={bot.lunch.windowFrom}
-                        onChange={(e) => setBotField("lunch", { ...bot.lunch, windowFrom: e.target.value })}
-                      />
-                    </Field>
-                    <Field label="Finished by">
-                      <Input
-                        type="time"
-                        step={300}
-                        value={bot.lunch.windowTo}
-                        aria-invalid={lunchTooShort}
-                        onChange={(e) => setBotField("lunch", { ...bot.lunch, windowTo: e.target.value })}
-                      />
-                    </Field>
-                    {lunchTooShort && (
-                      <p role="alert" className="text-xs text-red-600 sm:col-span-3">
-                        The window is shorter than a {bot.lunch.durationMin}-minute lunch.
-                      </p>
-                    )}
-                  </div>
+              ))}
+              <Button variant="ghost" size="sm" onClick={copyMondayHours} className="text-sky-700 px-0">
+                Copy Monday's hours to Tue–Fri
+              </Button>
+            </div>
+          </Field>
+
+          <div className="rounded-xl border p-4 space-y-4">
+            <SwitchRow
+              label="Lunch break"
+              help="Donna places it wherever it fits the most lessons, inside your lunch window."
+              checked={bot.lunch.enabled}
+              onChange={(v) => setBotField("lunch", { ...bot.lunch, enabled: v })}
+            />
+            {bot.lunch.enabled && (
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field label="Lunch length">
+                  <select
+                    value={bot.lunch.durationMin}
+                    onChange={(e) => setBotField("lunch", { ...bot.lunch, durationMin: Number(e.target.value) })}
+                    className="h-10 w-full rounded-md border bg-white px-3 text-base sm:text-sm"
+                  >
+                    {[15, 20, 30, 45, 60, 75, 90].map((m) => (
+                      <option key={m} value={m}>{m} minutes</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Not before">
+                  <Input
+                    type="time"
+                    step={300}
+                    value={bot.lunch.windowFrom}
+                    onChange={(e) => setBotField("lunch", { ...bot.lunch, windowFrom: e.target.value })}
+                  />
+                </Field>
+                <Field label="Finished by">
+                  <Input
+                    type="time"
+                    step={300}
+                    value={bot.lunch.windowTo}
+                    aria-invalid={lunchTooShort}
+                    onChange={(e) => setBotField("lunch", { ...bot.lunch, windowTo: e.target.value })}
+                  />
+                </Field>
+                {lunchTooShort && (
+                  <p role="alert" className="text-xs text-red-600 sm:col-span-3">
+                    The window is shorter than a {bot.lunch.durationMin}-minute lunch.
+                  </p>
                 )}
               </div>
+            )}
+          </div>
 
-              <div className="rounded-xl border border-sky-100 bg-sky-50/50 p-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">Your day, packed</p>
-                    <p className="text-xs text-slate-500">Updates as you move the slider, before you save.</p>
-                  </div>
-                  <select
-                    value={packDay}
-                    onChange={(e) => setPackDay(e.target.value as DayKey)}
-                    aria-label="Day to preview"
-                    className="h-9 rounded-md border bg-white px-2 text-sm"
-                  >
-                    {DAYS.filter((d) => bot.dayHours[d.key]).map((d) => (
-                      <option key={d.key} value={d.key}>{d.label}</option>
-                    ))}
-                    {!bot.dayHours[packDay] && <option value={packDay}>{DAYS.find((d) => d.key === packDay)?.label} (off)</option>}
-                  </select>
-                </div>
-                <DayPackPreview preview={bot.dayHours[packDay] ? dayPreview : null} loading={dayPreviewLoading} bufferMin={usualGap} />
+          <div className="rounded-xl border border-sky-100 bg-sky-50/50 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Your day, packed</p>
+                <p className="text-xs text-slate-500">Updates as you move the slider, before you save. Shows each lesson length from your lesson types.</p>
               </div>
-            </>
-          )}
+              <select
+                value={packDay}
+                onChange={(e) => setPackDay(e.target.value as DayKey)}
+                aria-label="Day to preview"
+                className="h-9 rounded-md border bg-white px-2 text-sm"
+              >
+                {DAYS.filter((d) => bot.dayHours[d.key]).map((d) => (
+                  <option key={d.key} value={d.key}>{d.label}</option>
+                ))}
+                {!bot.dayHours[packDay] && <option value={packDay}>{DAYS.find((d) => d.key === packDay)?.label} (off)</option>}
+              </select>
+            </div>
+            <DayPackPreview preview={bot.dayHours[packDay] ? dayPreview : null} loading={dayPreviewLoading} bufferMin={usualGap} />
+          </div>
         </Section>
+        )}
 
         {/* ── Availability ─────────────────────────────────────────────── */}
         <Section
@@ -929,14 +911,22 @@ export default function DonnaSettings() {
           onSave={() => save("availability", { botSettings: pick(bot, availabilityKeys) })}
           onReset={() => setBot((b) => (b ? { ...b, ...pick(saved.botSettings, availabilityKeys) } : b))}
         >
-          {packed ? (
-            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
-              Your working hours are set under{" "}
-              <button type="button" className="font-medium text-sky-700 hover:underline" onClick={() => scrollToSection("packing")}>
-                How tightly should Donna pack your day?
-              </button>
+          <Field label="How should Donna plan your day?">
+            <Segmented
+              value={bot.scheduleMode}
+              options={[
+                { key: "packed", label: "Donna packs my day" },
+                { key: "fixed", label: "I'll pick start times" },
+              ]}
+              onChange={(v) => setBotField("scheduleMode", v)}
+            />
+            <p className="text-xs text-slate-500">
+              {packed
+                ? "You set your hours above; Donna works out the start times for each lesson length."
+                : "You choose the exact start times below. Donna only offers those."}
             </p>
-          ) : (
+          </Field>
+          {!packed && (
           <Field label="Working days and lesson start times" help="Tap a time to turn it on or off." required={!!setup && !setup.hasNumber}>
             <div className="space-y-2">
               {DAYS.map(({ key, label }) => (
@@ -1168,8 +1158,8 @@ export default function DonnaSettings() {
               value={bot.reminders}
               options={[
                 { key: "off", label: "Off" },
-                { key: "48h", label: "2 days before" },
-                { key: "48h+2h", label: "2 days before + 2h before" },
+                { key: "24h", label: "24h before" },
+                { key: "48h", label: "48h before" },
               ]}
               onChange={(v) => setBotField("reminders", v)}
             />

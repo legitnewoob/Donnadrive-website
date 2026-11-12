@@ -330,6 +330,13 @@ export interface Lunch {
   windowTo: string;
 }
 
+/** A fixed-mode lesson slot. It takes lessons of its length or shorter, or only its own length when exact */
+export interface DaySlot {
+  start: string;
+  durationMin: number;
+  exact: boolean;
+}
+
 export interface BotSettings {
   /** Master switch: off = Donna stops replying and booking */
   donnaEnabled: boolean;
@@ -338,6 +345,8 @@ export interface BotSettings {
   dayHours: Record<DayKey, DayHours>;
   lunch: Lunch;
   workingHours: Record<DayKey, string[]>;
+  /** Fixed mode: each day's lesson slots. Before any are saved, the older start times at the default length */
+  daySlots: Record<DayKey, DaySlot[]>;
   breaks: Array<{ from: string; to: string }>;
   maxLessonsPerDay: number | null;
   minNoticeHours: number;
@@ -352,7 +361,7 @@ export interface BotSettings {
   aboutLessons: string;
   cancellationNoticeHours: number;
   lateCancellationFee: number | null;
-  reminders: "off" | "24h" | "24h+2h";
+  reminders: "off" | "24h" | "24h+2h" | "48h";
   notifications: { booked: boolean; cancelled: boolean; rescheduled: boolean; email: boolean };
   handover: boolean;
 }

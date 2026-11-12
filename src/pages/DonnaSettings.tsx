@@ -1168,8 +1168,8 @@ export default function DonnaSettings() {
               value={bot.reminders}
               options={[
                 { key: "off", label: "Off" },
-                { key: "24h", label: "Day before" },
-                { key: "24h+2h", label: "Day before + 2h before" },
+                { key: "48h", label: "2 days before" },
+                { key: "48h+2h", label: "2 days before + 2h before" },
               ]}
               onChange={(v) => setBotField("reminders", v)}
             />

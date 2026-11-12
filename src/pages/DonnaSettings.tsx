@@ -17,7 +17,8 @@ import {
   XCircle,
   ChevronDown,
   AlertTriangle,
-  Gauge,
+  SlidersHorizontal,
+  Umbrella,
 } from "lucide-react";
 import PackingSlider from "@/components/PackingSlider";
 import DayPackPreview from "@/components/DayPackPreview";
@@ -54,6 +55,13 @@ const DAYS: { key: DayKey; label: string }[] = [
   { key: "sat", label: "Sat" },
   { key: "sun", label: "Sun" },
 ];
+
+// Setup links and old bookmarks still point at sections that have since merged
+const SECTION_ALIASES: Record<string, string> = { availability: "schedule", packing: "schedule" };
+
+// Tiny pictures of a day for the two schedule modes: lesson lengths in half hours, 0 = a gap
+const PACKED_STRIP = [2, 0, 2, 0, 3, 0, 2, 0, 4];
+const MANUAL_STRIP = [4, 0, 3, 0, 0, 2, 0, 2];
 
 const HOURLY = Array.from({ length: 14 }, (_, i) => `${String(i + 7).padStart(2, "0")}:00`);
 
@@ -275,7 +283,8 @@ export default function DonnaSettings() {
   // Arriving from a setup link like /settings#route: jump there once the page has loaded
   useEffect(() => {
     if (loading || !location.hash) return;
-    const id = location.hash.slice(1);
+    const hash = location.hash.slice(1);
+    const id = SECTION_ALIASES[hash] ?? hash;
     const t = setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
     return () => clearTimeout(t);
   }, [loading, location.hash]);
@@ -318,7 +327,7 @@ export default function DonnaSettings() {
   }, [previewKey, token]);
 
   function scrollToSection(id: string) {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById(SECTION_ALIASES[id] ?? id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   if (loading) {
@@ -371,9 +380,10 @@ export default function DonnaSettings() {
     setBot((b) => (b ? { ...b, [key]: value } : b));
 
   const routeDirty = !same(routeDraft, saved.routeSettings) || baseAddress.trim() !== saved.baseAddress;
-  const packingKeys = ["dayHours", "lunch"] as const;
-  const availabilityKeys = ["scheduleMode", "workingHours", "breaks", "maxLessonsPerDay", "minNoticeHours", "bookingWindowDays", "holiday"] as const;
-  const rulesKeys = ["acceptingNewLearners", "allowCancel", "allowReschedule", "cancellationNoticeHours", "lateCancellationFee"] as const;
+  const scheduleKeys = ["scheduleMode", "dayHours", "lunch", "workingHours", "breaks"] as const;
+  const limitsKeys = ["acceptingNewLearners", "maxLessonsPerDay", "minNoticeHours", "bookingWindowDays"] as const;
+  const rulesKeys = ["allowCancel", "allowReschedule", "cancellationNoticeHours", "lateCancellationFee"] as const;
+  const timeOffKeys = ["holiday"] as const;
   const alertKeys = ["reminders", "notifications", "handover"] as const;
   const personalityKeys = ["tone", "emojis", "customGreeting", "aboutLessons"] as const;
   const pick = (src: BotSettings, keys: readonly (keyof BotSettings)[]) =>
@@ -427,7 +437,6 @@ export default function DonnaSettings() {
 
   // Until working hours have been saved once, the defaults shown still need confirming
   const hoursUnconfirmed = !!setup && !setup.hasNumber && setup.required.some((r) => r.key === "workingHours" && !r.done);
-  const availabilityDirty = dirtyFor(availabilityKeys) || hoursUnconfirmed;
 
   const packed = bot.scheduleMode === "packed";
   const lunchTooShort =
@@ -436,19 +445,32 @@ export default function DonnaSettings() {
     const h = bot.dayHours[key];
     return h && (!h.start || !h.end || toMinutes(h.end) - toMinutes(h.start) < 30);
   });
-  const packingDirty = dirtyFor(packingKeys) || maxDrive !== savedMaxDrive(saved);
+  const maxDriveDirty = maxDrive !== savedMaxDrive(saved);
+  const scheduleDirty = dirtyFor(scheduleKeys) || maxDriveDirty || hoursUnconfirmed;
   // The usual gap Donna packs with: from the live preview while the slider moves
   const usualGap = dayPreview?.bufferMin ?? saved.packing?.bufferMin ?? Math.ceil(maxDrive / 2 / 5) * 5;
   const gapSource = dayPreview?.bufferSource ?? saved.packing?.bufferSource ?? "default";
 
-  function packingBody(): Parameters<typeof updateSettings>[1] {
-    return { routeSettings: { maxDriveMin: maxDrive }, botSettings: pick(bot!, packingKeys) };
+  // What stops the schedule being saved, if anything
+  function scheduleProblem() {
+    if (!packed) return null;
+    if (lunchTooShort) return "Make the lunch window at least as long as lunch.";
+    if (badDays.length) return `${badDays[0].label}: the day must end at least 30 minutes after it starts.`;
+    return null;
   }
 
-  function savePacking() {
-    if (lunchTooShort) return toast.error("Make the lunch window at least as long as lunch.");
-    if (badDays.length) return toast.error(`${badDays[0].label}: the day must end at least 30 minutes after it starts.`);
-    return save("packing", packingBody());
+  // The slider only matters in packed mode, but a change to it is never left unsaved
+  const maxDriveBody = packed || maxDriveDirty ? { maxDriveMin: maxDrive } : null;
+
+  function saveSchedule() {
+    const problem = scheduleProblem();
+    if (problem) return toast.error(problem);
+    return save("schedule", { botSettings: pick(bot!, scheduleKeys), ...(maxDriveBody && { routeSettings: maxDriveBody }) });
+  }
+
+  function resetSchedule() {
+    setBot((b) => (b ? { ...b, ...pick(saved!.botSettings, scheduleKeys) } : b));
+    setMaxDrive(savedMaxDrive(saved!));
   }
 
   const setDayHours = (day: DayKey, hours: DayHours) => setBotField("dayHours", { ...bot.dayHours, [day]: hours });
@@ -471,10 +493,11 @@ export default function DonnaSettings() {
   }
 
   const sections = [
-    { id: "route", label: "Route", dirty: routeDirty },
-    ...(packed ? [{ id: "packing", label: "Your day", dirty: packingDirty, keys: packingKeys }] : []),
-    { id: "availability", label: "Availability", dirty: availabilityDirty, keys: availabilityKeys },
-    { id: "rules", label: "Rules", dirty: dirtyFor(rulesKeys), keys: rulesKeys },
+    { id: "schedule", label: "Schedule", dirty: scheduleDirty, keys: scheduleKeys },
+    { id: "route", label: "Travel & area", dirty: routeDirty },
+    { id: "limits", label: "Limits", dirty: dirtyFor(limitsKeys), keys: limitsKeys },
+    { id: "rules", label: "Cancellations", dirty: dirtyFor(rulesKeys), keys: rulesKeys },
+    { id: "timeoff", label: "Time off", dirty: dirtyFor(timeOffKeys), keys: timeOffKeys },
     { id: "alerts", label: "Reminders", dirty: dirtyFor(alertKeys), keys: alertKeys },
     { id: "personality", label: "Personality", dirty: dirtyFor(personalityKeys), keys: personalityKeys },
   ];
@@ -482,10 +505,12 @@ export default function DonnaSettings() {
 
   // Phones: one save for everything changed, so edits aren't lost between cards.
   function saveAll() {
+    const problem = scheduleDirty ? scheduleProblem() : null;
+    if (problem) return toast.error(problem);
     const body = routeDirty ? routeBody() : {};
     const botKeys = dirtySections.flatMap((x) => x.keys ?? []);
     if (botKeys.length) body.botSettings = pick(bot!, botKeys);
-    if (maxDrive !== savedMaxDrive(saved!)) body.routeSettings = { ...(body.routeSettings || {}), maxDriveMin: maxDrive };
+    if (maxDriveDirty) body.routeSettings = { ...(body.routeSettings || {}), maxDriveMin: maxDrive };
     return save(routeDirty ? "all" : "bot", body);
   }
 
@@ -545,6 +570,46 @@ export default function DonnaSettings() {
     setBotField("workingHours", { ...bot!.workingHours, tue: [...mon], wed: [...mon], thu: [...mon], fri: [...mon] });
   }
 
+  const breaksEditor = (
+            <div className="space-y-2">
+              {bot.breaks.map((b, i) => (
+                <div key={i} className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="time"
+                    value={b.from}
+                    aria-invalid={!validBreak(b)}
+                    onChange={(e) => setBotField("breaks", bot.breaks.map((x, j) => (j === i ? { ...x, from: e.target.value } : x)))}
+                    className="min-w-0 flex-1 sm:w-32 sm:flex-none"
+                  />
+                  <span className="text-sm text-slate-400">to</span>
+                  <Input
+                    type="time"
+                    value={b.to}
+                    onChange={(e) => setBotField("breaks", bot.breaks.map((x, j) => (j === i ? { ...x, to: e.target.value } : x)))}
+                    className="min-w-0 flex-1 sm:w-32 sm:flex-none"
+                  />
+                  <Button variant="ghost" size="icon" className="shrink-0" aria-label="Remove break" onClick={() => setBotField("breaks", bot.breaks.filter((_, j) => j !== i))}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                {!validBreak(b) && (
+                  <p className="text-xs text-red-600">This break must end after it starts.</p>
+                )}
+                </div>
+              ))}
+              {bot.breaks.length < 5 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBotField("breaks", [...bot.breaks, { from: "12:00", to: "13:00" }])}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add break
+                </Button>
+              )}
+            </div>
+  );
+
   return (
     <DashboardLayout
       title="Donna Settings"
@@ -566,18 +631,205 @@ export default function DonnaSettings() {
         )
       }
     >
-      <SectionNav sections={sections} />
-      <div className="space-y-6 max-w-4xl">
+      <SettingsNav sections={sections}>
         {setup && !setup.complete && !setup.hasNumber && (
           <SetupBanner setup={setup} onGo={(link) => (link.startsWith("/settings#") ? scrollToSection(link.split("#")[1]) : navigate(link))} />
         )}
+        {/* ── Your schedule: who plans the day, and that mode's settings ── */}
+        <Section
+          id="schedule"
+          tour="settings-availability"
+          icon={CalendarClock}
+          title="Your schedule"
+          description="When you teach, and who works out the lesson start times."
+          dirty={scheduleDirty}
+          saving={saving === "schedule" || saving === "all" || saving === "bot"}
+          onSave={saveSchedule}
+          onReset={resetSchedule}
+        >
+          <div role="radiogroup" aria-label="How should Donna plan your day?" className="grid gap-3 sm:grid-cols-2">
+            <ModeCard
+              selected={packed}
+              title="Donna packs my day"
+              text="Set your hours. Donna works out the start times for every lesson length."
+              blocks={PACKED_STRIP}
+              onSelect={() => setBotField("scheduleMode", "packed")}
+            />
+            <ModeCard
+              selected={!packed}
+              title="I'll plan my day myself"
+              text="Choose your own lesson start times. Donna only offers those."
+              blocks={MANUAL_STRIP}
+              onSelect={() => setBotField("scheduleMode", "fixed")}
+            />
+          </div>
+
+          {packed ? (
+            <>
+          <Field label="Working hours" required={!!setup && !setup.hasNumber}>
+            <div className="space-y-2">
+              {DAYS.map(({ key, label }) => (
+                <DayHoursRow
+                  key={key}
+                  label={label}
+                  hours={bot.dayHours[key]}
+                  onToggle={(on) => toggleWorkDay(key, on)}
+                  onChange={(h) => setDayHours(key, h)}
+                />
+              ))}
+              <Button variant="ghost" size="sm" onClick={copyMondayHours} className="text-sky-700 px-0">
+                Copy Monday's hours to Tue–Fri
+              </Button>
+            </div>
+          </Field>
+
+          <div className="rounded-xl border p-4 space-y-4">
+            <SwitchRow
+              label="Lunch break"
+              help="Donna places it wherever it fits the most lessons, inside the window you set."
+              checked={bot.lunch.enabled}
+              onChange={(v) => setBotField("lunch", { ...bot.lunch, enabled: v })}
+            />
+            {bot.lunch.enabled && (
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field label="Lunch length">
+                  <select
+                    value={bot.lunch.durationMin}
+                    onChange={(e) => setBotField("lunch", { ...bot.lunch, durationMin: Number(e.target.value) })}
+                    className="h-10 w-full rounded-md border bg-white px-3 text-base sm:text-sm"
+                  >
+                    {[15, 20, 30, 45, 60, 75, 90].map((m) => (
+                      <option key={m} value={m}>{m} minutes</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Not before">
+                  <Input
+                    type="time"
+                    step={300}
+                    value={bot.lunch.windowFrom}
+                    onChange={(e) => setBotField("lunch", { ...bot.lunch, windowFrom: e.target.value })}
+                  />
+                </Field>
+                <Field label="Finished by">
+                  <Input
+                    type="time"
+                    step={300}
+                    value={bot.lunch.windowTo}
+                    aria-invalid={lunchTooShort}
+                    onChange={(e) => setBotField("lunch", { ...bot.lunch, windowTo: e.target.value })}
+                  />
+                </Field>
+                {lunchTooShort && (
+                  <p role="alert" className="text-xs text-red-600 sm:col-span-3">
+                    The window is shorter than a {bot.lunch.durationMin}-minute lunch.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          <Field label="Other breaks" help="Fixed times Donna keeps free, every working day.">
+            {breaksEditor}
+          </Field>
+
+          <Field
+            label="What's the longest you'll drive between lessons?"
+            help={`Donna never plans a drive longer than ${maxDrive} minutes between two lessons.`}
+          >
+            <PackingSlider value={maxDrive} onChange={setMaxDrive} />
+            <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
+              <p>
+                <span className="font-semibold text-slate-800">Donna packs with about {usualGap} min between lessons</span>{" "}
+                {gapSource === "learned"
+                  ? `(learned from your last ${saved.packing?.bufferSamples ?? ""} drives between lessons).`
+                  : gapSource === "previous"
+                    ? `(your previous setting, until she's seen ${saved.packing?.learnAfter ?? 10} drives between your lessons).`
+                    : `(half your longest drive, until she's seen ${saved.packing?.learnAfter ?? 10} drives between your lessons).`}
+              </p>
+              <p>Close learners start sooner, with up to 5 minutes spare for traffic. Learners further out are fitted in when the drive doesn't cost you a lesson (or one, on a quiet day).</p>
+            </div>
+          </Field>
+
+          <div className="rounded-xl border border-sky-100 bg-sky-50/50 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Your day, packed</p>
+                <p className="text-xs text-slate-500">Updates as you move the slider, before you save. Shows each lesson length from your lesson types.</p>
+              </div>
+              <select
+                value={packDay}
+                onChange={(e) => setPackDay(e.target.value as DayKey)}
+                aria-label="Day to preview"
+                className="h-9 rounded-md border bg-white px-2 text-sm"
+              >
+                {DAYS.filter((d) => bot.dayHours[d.key]).map((d) => (
+                  <option key={d.key} value={d.key}>{d.label}</option>
+                ))}
+                {!bot.dayHours[packDay] && <option value={packDay}>{DAYS.find((d) => d.key === packDay)?.label} (off)</option>}
+              </select>
+            </div>
+            <DayPackPreview preview={bot.dayHours[packDay] ? dayPreview : null} loading={dayPreviewLoading} bufferMin={usualGap} />
+          </div>
+            </>
+          ) : (
+            <>
+          <Field label="Working days and lesson start times" help="Tap a time to turn it on or off." required={!!setup && !setup.hasNumber}>
+            <div className="space-y-2">
+              {DAYS.map(({ key, label }) => (
+                <WorkingDayRow
+                  key={key}
+                  label={label}
+                  times={allTimes(key)}
+                  selected={bot.workingHours[key]}
+                  clashing={breakClashes.filter((c) => c.day === key).map((c) => c.time)}
+                  onToggleTime={(t) => toggleTime(key, t)}
+                  onToggleDay={(on) => toggleDay(key, on)}
+                />
+              ))}
+              <Button variant="ghost" size="sm" onClick={copyMondayToWeekdays} className="text-sky-700 px-0">
+                Copy Monday's times to Tue–Fri
+              </Button>
+            </div>
+          </Field>
+          <Field label="Breaks" help="Donna won't book lessons that overlap these, every working day.">
+            {breaksEditor}
+          </Field>
+
+          {!packed && clashesByTime.length > 0 && (
+            <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                <div className="min-w-0 space-y-2">
+                  <p className="font-medium text-amber-900">
+                    {breakClashes.length} lesson start time{breakClashes.length === 1 ? "" : "s"} clash with your breaks
+                  </p>
+                  <ul className="space-y-1 text-amber-800">
+                    {clashesByTime.map((c) => (
+                      <li key={`${c.time}|${c.brk.from}`}>
+                        <span className="font-medium">{c.time}</span> on {c.days.join(", ")} — a {route.lessonDurationMin}-minute lesson
+                        runs into your {c.brk.from}–{c.brk.to} break
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-amber-800">Donna won't offer these times. Remove them, move the break, or shorten the lesson length.</p>
+                  <Button variant="outline" size="sm" onClick={removeClashingTimes} className="border-amber-300 bg-white">
+                    Remove clashing times
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+            </>
+          )}
+        </Section>
+
         {/* ── Route & travel ───────────────────────────────────────────── */}
         <Section
           id="route"
           tour="settings-route"
           icon={RouteIcon}
-          title="Route & travel"
-          description="How Donna fits new lessons around the ones you already have, to keep your driving down."
+          title="Travel & area"
+          description="Where you start from, the area you cover, and how Donna keeps your driving down."
           dirty={routeDirty}
           saving={saving === "route" || saving === "all"}
           onSave={saveRoute}
@@ -606,13 +858,13 @@ export default function DonnaSettings() {
           {packed ? (
             <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
               Donna is packing your day, so how much driving she allows is set by the slider under{" "}
-              <button type="button" className="font-medium text-sky-700 hover:underline" onClick={() => scrollToSection("packing")}>
-                Your day
+              <button type="button" className="font-medium text-sky-700 hover:underline" onClick={() => scrollToSection("schedule")}>
+                Your schedule
               </button>
               .
             </p>
           ) : (
-          <Field label="How tightly should Donna pack your day?">
+          <Field label="How much extra driving should Donna allow?">
             <Segmented
               value={route.preset === "custom" ? ("custom" as RoutePreset) : route.preset}
               options={[...PRESETS, ...(route.preset === "custom" ? [{ key: "custom" as const, label: "Custom" }] : [])]}
@@ -780,238 +1032,23 @@ export default function DonnaSettings() {
           </div>
         </Section>
 
-        {/* ── Your day: packing config (only in packed mode) ─────────────── */}
-        {packed && (
+        {/* ── Booking limits ───────────────────────────────────────────── */}
         <Section
-          id="packing"
-          icon={Gauge}
-          title="How tightly should Donna pack your day?"
-          description="Donna fits as many lessons as she can between your start and finish, leaves time to drive between them, and keeps your lunch."
-          dirty={packingDirty}
-          saving={saving === "packing" || saving === "all" || saving === "bot"}
-          onSave={savePacking}
-          onReset={() => {
-            setBot((b) => (b ? { ...b, ...pick(saved.botSettings, packingKeys) } : b));
-            setMaxDrive(savedMaxDrive(saved));
-          }}
+          id="limits"
+          icon={SlidersHorizontal}
+          title="Booking limits"
+          description="How many lessons Donna takes, and how far ahead."
+          dirty={dirtyFor(limitsKeys)}
+          saving={saving === "limits" || saving === "all" || saving === "bot"}
+          onSave={() => save("limits", { botSettings: pick(bot, limitsKeys) })}
+          onReset={() => setBot((b) => (b ? { ...b, ...pick(saved.botSettings, limitsKeys) } : b))}
         >
-          <Field
-            label="What's the longest you'll drive between lessons?"
-            help={`Donna never plans a drive longer than ${maxDrive} minutes between two lessons.`}
-          >
-            <PackingSlider value={maxDrive} onChange={setMaxDrive} />
-            <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
-              <p>
-                <span className="font-semibold text-slate-800">Donna packs with about {usualGap} min between lessons</span>{" "}
-                {gapSource === "learned"
-                  ? `(learned from your last ${saved.packing?.bufferSamples ?? ""} drives between lessons).`
-                  : gapSource === "previous"
-                    ? `(your previous setting, until she's seen ${saved.packing?.learnAfter ?? 10} drives between your lessons).`
-                    : `(half your longest drive, until she's seen ${saved.packing?.learnAfter ?? 10} drives between your lessons).`}
-              </p>
-              <p>Close learners start sooner, with up to 5 minutes spare for traffic. Learners further out are fitted in when the drive doesn't cost you a lesson (or one, on a quiet day).</p>
-            </div>
-          </Field>
-
-          <Field label="Working hours">
-            <div className="space-y-2">
-              {DAYS.map(({ key, label }) => (
-                <DayHoursRow
-                  key={key}
-                  label={label}
-                  hours={bot.dayHours[key]}
-                  onToggle={(on) => toggleWorkDay(key, on)}
-                  onChange={(h) => setDayHours(key, h)}
-                />
-              ))}
-              <Button variant="ghost" size="sm" onClick={copyMondayHours} className="text-sky-700 px-0">
-                Copy Monday's hours to Tue–Fri
-              </Button>
-            </div>
-          </Field>
-
-          <div className="rounded-xl border p-4 space-y-4">
-            <SwitchRow
-              label="Lunch break"
-              help="Donna places it wherever it fits the most lessons, inside your lunch window."
-              checked={bot.lunch.enabled}
-              onChange={(v) => setBotField("lunch", { ...bot.lunch, enabled: v })}
-            />
-            {bot.lunch.enabled && (
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="Lunch length">
-                  <select
-                    value={bot.lunch.durationMin}
-                    onChange={(e) => setBotField("lunch", { ...bot.lunch, durationMin: Number(e.target.value) })}
-                    className="h-10 w-full rounded-md border bg-white px-3 text-base sm:text-sm"
-                  >
-                    {[15, 20, 30, 45, 60, 75, 90].map((m) => (
-                      <option key={m} value={m}>{m} minutes</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Not before">
-                  <Input
-                    type="time"
-                    step={300}
-                    value={bot.lunch.windowFrom}
-                    onChange={(e) => setBotField("lunch", { ...bot.lunch, windowFrom: e.target.value })}
-                  />
-                </Field>
-                <Field label="Finished by">
-                  <Input
-                    type="time"
-                    step={300}
-                    value={bot.lunch.windowTo}
-                    aria-invalid={lunchTooShort}
-                    onChange={(e) => setBotField("lunch", { ...bot.lunch, windowTo: e.target.value })}
-                  />
-                </Field>
-                {lunchTooShort && (
-                  <p role="alert" className="text-xs text-red-600 sm:col-span-3">
-                    The window is shorter than a {bot.lunch.durationMin}-minute lunch.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-xl border border-sky-100 bg-sky-50/50 p-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-semibold text-slate-800">Your day, packed</p>
-                <p className="text-xs text-slate-500">Updates as you move the slider, before you save. Shows each lesson length from your lesson types.</p>
-              </div>
-              <select
-                value={packDay}
-                onChange={(e) => setPackDay(e.target.value as DayKey)}
-                aria-label="Day to preview"
-                className="h-9 rounded-md border bg-white px-2 text-sm"
-              >
-                {DAYS.filter((d) => bot.dayHours[d.key]).map((d) => (
-                  <option key={d.key} value={d.key}>{d.label}</option>
-                ))}
-                {!bot.dayHours[packDay] && <option value={packDay}>{DAYS.find((d) => d.key === packDay)?.label} (off)</option>}
-              </select>
-            </div>
-            <DayPackPreview preview={bot.dayHours[packDay] ? dayPreview : null} loading={dayPreviewLoading} bufferMin={usualGap} />
-          </div>
-        </Section>
-        )}
-
-        {/* ── Availability ─────────────────────────────────────────────── */}
-        <Section
-          id="availability"
-          tour="settings-availability"
-          icon={CalendarClock}
-          title="Availability"
-          description="When learners can book with you."
-          dirty={availabilityDirty}
-          saving={saving === "availability" || saving === "all" || saving === "bot"}
-          onSave={() => save("availability", { botSettings: pick(bot, availabilityKeys) })}
-          onReset={() => setBot((b) => (b ? { ...b, ...pick(saved.botSettings, availabilityKeys) } : b))}
-        >
-          <Field label="How should Donna plan your day?">
-            <Segmented
-              value={bot.scheduleMode}
-              options={[
-                { key: "packed", label: "Donna packs my day" },
-                { key: "fixed", label: "I'll pick start times" },
-              ]}
-              onChange={(v) => setBotField("scheduleMode", v)}
-            />
-            <p className="text-xs text-slate-500">
-              {packed
-                ? "You set your hours above; Donna works out the start times for each lesson length."
-                : "You choose the exact start times below. Donna only offers those."}
-            </p>
-          </Field>
-          {!packed && (
-          <Field label="Working days and lesson start times" help="Tap a time to turn it on or off." required={!!setup && !setup.hasNumber}>
-            <div className="space-y-2">
-              {DAYS.map(({ key, label }) => (
-                <WorkingDayRow
-                  key={key}
-                  label={label}
-                  times={allTimes(key)}
-                  selected={bot.workingHours[key]}
-                  clashing={breakClashes.filter((c) => c.day === key).map((c) => c.time)}
-                  onToggleTime={(t) => toggleTime(key, t)}
-                  onToggleDay={(on) => toggleDay(key, on)}
-                />
-              ))}
-              <Button variant="ghost" size="sm" onClick={copyMondayToWeekdays} className="text-sky-700 px-0">
-                Copy Monday's times to Tue–Fri
-              </Button>
-            </div>
-          </Field>
-          )}
-
-          <Field label="Breaks" help="Donna won't book lessons that overlap these, every working day.">
-            <div className="space-y-2">
-              {bot.breaks.map((b, i) => (
-                <div key={i} className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="time"
-                    value={b.from}
-                    aria-invalid={!validBreak(b)}
-                    onChange={(e) => setBotField("breaks", bot.breaks.map((x, j) => (j === i ? { ...x, from: e.target.value } : x)))}
-                    className="min-w-0 flex-1 sm:w-32 sm:flex-none"
-                  />
-                  <span className="text-sm text-slate-400">to</span>
-                  <Input
-                    type="time"
-                    value={b.to}
-                    onChange={(e) => setBotField("breaks", bot.breaks.map((x, j) => (j === i ? { ...x, to: e.target.value } : x)))}
-                    className="min-w-0 flex-1 sm:w-32 sm:flex-none"
-                  />
-                  <Button variant="ghost" size="icon" className="shrink-0" aria-label="Remove break" onClick={() => setBotField("breaks", bot.breaks.filter((_, j) => j !== i))}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                {!validBreak(b) && (
-                  <p className="text-xs text-red-600">This break must end after it starts.</p>
-                )}
-                </div>
-              ))}
-              {bot.breaks.length < 5 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setBotField("breaks", [...bot.breaks, { from: "12:00", to: "13:00" }])}
-                >
-                  <Plus className="h-4 w-4 mr-1" /> Add break
-                </Button>
-              )}
-            </div>
-          </Field>
-
-          {!packed && clashesByTime.length > 0 && (
-            <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                <div className="min-w-0 space-y-2">
-                  <p className="font-medium text-amber-900">
-                    {breakClashes.length} lesson start time{breakClashes.length === 1 ? "" : "s"} clash with your breaks
-                  </p>
-                  <ul className="space-y-1 text-amber-800">
-                    {clashesByTime.map((c) => (
-                      <li key={`${c.time}|${c.brk.from}`}>
-                        <span className="font-medium">{c.time}</span> on {c.days.join(", ")} — a {route.lessonDurationMin}-minute lesson
-                        runs into your {c.brk.from}–{c.brk.to} break
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-amber-800">Donna won't offer these times. Remove them, move the break, or shorten the lesson length.</p>
-                  <Button variant="outline" size="sm" onClick={removeClashingTimes} className="border-amber-300 bg-white">
-                    Remove clashing times
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
+          <SwitchRow
+            label="Accepting new learners"
+            help="When off, Donna tells new numbers you're full. Existing learners can still book."
+            checked={bot.acceptingNewLearners}
+            onChange={(v) => setBotField("acceptingNewLearners", v)}
+          />
           <div className="grid gap-5 sm:grid-cols-3">
             <Field label="Max lessons per day" help="Leave empty for no limit.">
               <Input
@@ -1042,63 +1079,20 @@ export default function DonnaSettings() {
               />
             </Field>
           </div>
-
-          <div className="rounded-xl border p-4 space-y-4">
-            <SwitchRow
-              label="Holiday mode"
-              help="Donna tells learners you're away and offers dates after you're back."
-              checked={bot.holiday.enabled}
-              onChange={(v) => setBotField("holiday", { ...bot.holiday, enabled: v })}
-            />
-            {bot.holiday.enabled && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Away from">
-                  <Input
-                    type="date"
-                    value={bot.holiday.from ?? ""}
-                    onChange={(e) => setBotField("holiday", { ...bot.holiday, from: e.target.value || null })}
-                  />
-                </Field>
-                <Field label="Back after">
-                  <Input
-                    type="date"
-                    value={bot.holiday.to ?? ""}
-                    onChange={(e) => setBotField("holiday", { ...bot.holiday, to: e.target.value || null })}
-                  />
-                </Field>
-                <div className="sm:col-span-2">
-                  <Field label="Message for learners (optional)">
-                    <Input
-                      value={bot.holiday.message}
-                      maxLength={300}
-                      onChange={(e) => setBotField("holiday", { ...bot.holiday, message: e.target.value })}
-                      placeholder="e.g. I'm on holiday — back on the 21st!"
-                    />
-                  </Field>
-                </div>
-              </div>
-            )}
-          </div>
         </Section>
 
-        {/* ── Booking rules ────────────────────────────────────────────── */}
+        {/* ── Cancellations & changes ──────────────────────────────────── */}
         <Section
           id="rules"
           tour="settings-rules"
           icon={ShieldCheck}
-          title="Booking rules"
-          description="What Donna is allowed to do for learners."
+          title="Cancellations & changes"
+          description="What learners can change through Donna, and how much notice you need."
           dirty={dirtyFor(rulesKeys)}
           saving={saving === "rules" || saving === "all" || saving === "bot"}
           onSave={() => save("rules", { botSettings: pick(bot, rulesKeys) })}
           onReset={() => setBot((b) => (b ? { ...b, ...pick(saved.botSettings, rulesKeys) } : b))}
         >
-          <SwitchRow
-            label="Accepting new learners"
-            help="When off, Donna tells new numbers you're full. Existing learners can still book."
-            checked={bot.acceptingNewLearners}
-            onChange={(v) => setBotField("acceptingNewLearners", v)}
-          />
           <SwitchRow
             label="Learners can cancel through Donna"
             help="When off, Donna asks them to contact you directly."
@@ -1135,6 +1129,55 @@ export default function DonnaSettings() {
                 placeholder="No fee shown"
               />
             </Field>
+          </div>
+        </Section>
+
+        {/* ── Time off ─────────────────────────────────────────────────── */}
+        <Section
+          id="timeoff"
+          icon={Umbrella}
+          title="Time off"
+          description="Pause bookings while you're away."
+          dirty={dirtyFor(timeOffKeys)}
+          saving={saving === "timeoff" || saving === "all" || saving === "bot"}
+          onSave={() => save("timeoff", { botSettings: pick(bot, timeOffKeys) })}
+          onReset={() => setBot((b) => (b ? { ...b, ...pick(saved.botSettings, timeOffKeys) } : b))}
+        >
+          <div className="rounded-xl border p-4 space-y-4">
+            <SwitchRow
+              label="Holiday mode"
+              help="Donna tells learners you're away and offers dates after you're back."
+              checked={bot.holiday.enabled}
+              onChange={(v) => setBotField("holiday", { ...bot.holiday, enabled: v })}
+            />
+            {bot.holiday.enabled && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Away from">
+                  <Input
+                    type="date"
+                    value={bot.holiday.from ?? ""}
+                    onChange={(e) => setBotField("holiday", { ...bot.holiday, from: e.target.value || null })}
+                  />
+                </Field>
+                <Field label="Back after">
+                  <Input
+                    type="date"
+                    value={bot.holiday.to ?? ""}
+                    onChange={(e) => setBotField("holiday", { ...bot.holiday, to: e.target.value || null })}
+                  />
+                </Field>
+                <div className="sm:col-span-2">
+                  <Field label="Message for learners (optional)">
+                    <Input
+                      value={bot.holiday.message}
+                      maxLength={300}
+                      onChange={(e) => setBotField("holiday", { ...bot.holiday, message: e.target.value })}
+                      placeholder="e.g. I'm on holiday — back on the 21st!"
+                    />
+                  </Field>
+                </div>
+              </div>
+            )}
           </div>
         </Section>
 
@@ -1240,7 +1283,7 @@ export default function DonnaSettings() {
             />
           </Field>
         </Section>
-      </div>
+      </SettingsNav>
     </DashboardLayout>
   );
 }
@@ -1407,7 +1450,8 @@ function WorkingDayRow({
   );
 }
 
-function SectionNav({ sections }: { sections: { id: string; label: string; dirty: boolean }[] }) {
+// Section links around the page: a pill row on smaller screens, a side rail on wide ones
+function SettingsNav({ sections, children }: { sections: { id: string; label: string; dirty: boolean }[]; children: React.ReactNode }) {
   const [active, setActive] = useState(sections[0]?.id);
 
   useEffect(() => {
@@ -1429,33 +1473,116 @@ function SectionNav({ sections }: { sections: { id: string; label: string; dirty
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sections.map((x) => x.id).join()]);
 
+  function go(id: string) {
+    setActive(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const unsavedDot = (
+    <>
+      <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500" />
+      <span className="sr-only">, unsaved changes</span>
+    </>
+  );
+
   return (
-    <nav
-      aria-label="Settings sections"
-      className="lg:hidden sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-10 -mx-4 -mt-4 mb-4 flex gap-2 overflow-x-auto border-b bg-slate-50/95 px-4 py-2.5 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6 [scrollbar-width:none]"
+    <>
+      <nav
+        aria-label="Settings sections"
+        className="xl:hidden sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-10 -mx-4 -mt-4 mb-4 flex gap-2 overflow-x-auto border-b bg-slate-50/95 px-4 py-2.5 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6 [scrollbar-width:none]"
+      >
+        {sections.map(({ id, label, dirty }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => go(id)}
+            className={`relative shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+              active === id ? "border-slate-900 bg-slate-900 text-white" : "bg-white text-slate-600"
+            }`}
+          >
+            {label}
+            {dirty && unsavedDot}
+          </button>
+        ))}
+      </nav>
+      <div className="xl:flex xl:items-start xl:gap-8">
+        <div className="min-w-0 max-w-4xl flex-1 space-y-6">{children}</div>
+        <nav aria-label="Settings sections" className="sticky top-20 hidden w-44 shrink-0 xl:block">
+          <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">On this page</p>
+          <ul className="space-y-0.5 border-l">
+            {sections.map(({ id, label, dirty }) => (
+              <li key={id}>
+                <button
+                  type="button"
+                  onClick={() => go(id)}
+                  aria-current={active === id ? "true" : undefined}
+                  className={`-ml-px flex w-full items-center gap-2 border-l-2 px-3 py-1.5 text-left text-sm transition-colors ${
+                    active === id ? "border-sky-600 font-medium text-slate-900" : "border-transparent text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  {label}
+                  {dirty && (
+                    <>
+                      <span className="h-2 w-2 rounded-full bg-amber-500" />
+                      <span className="sr-only">, unsaved changes</span>
+                    </>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </>
+  );
+}
+
+// One of the two ways to plan a day, as a large radio card
+function ModeCard({
+  selected,
+  title,
+  text,
+  blocks,
+  onSelect,
+}: {
+  selected: boolean;
+  title: string;
+  text: string;
+  blocks: number[];
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className={`flex flex-col rounded-xl border-2 p-4 text-left transition-colors ${
+        selected ? "border-sky-600 bg-sky-50/60" : "border-slate-200 bg-white hover:border-slate-300"
+      }`}
     >
-      {sections.map(({ id, label, dirty }) => (
-        <button
-          key={id}
-          type="button"
-          onClick={() => {
-            setActive(id);
-            document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }}
-          className={`relative shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-            active === id ? "border-slate-900 bg-slate-900 text-white" : "bg-white text-slate-600"
+      <span className="flex items-center gap-2">
+        <span
+          aria-hidden
+          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+            selected ? "border-sky-600" : "border-slate-300"
           }`}
         >
-          {label}
-          {dirty && (
-            <>
-              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-amber-500" />
-              <span className="sr-only">, unsaved changes</span>
-            </>
-          )}
-        </button>
-      ))}
-    </nav>
+          {selected && <span className="h-2 w-2 rounded-full bg-sky-600" />}
+        </span>
+        <span className="text-sm font-semibold text-slate-900">{title}</span>
+      </span>
+      <span className="mt-1.5 block text-xs text-slate-600">{text}</span>
+      <span aria-hidden className="mt-auto flex h-2 w-full gap-0.5 pt-3 box-content">
+        {blocks.map((b, i) => (
+          <span
+            key={i}
+            style={{ flexGrow: b || 0.5 }}
+            className={`rounded-sm ${b ? (selected ? "bg-sky-500" : "bg-slate-300") : "bg-transparent"}`}
+          />
+        ))}
+      </span>
+    </button>
   );
 }
 

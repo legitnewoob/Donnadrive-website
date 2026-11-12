@@ -110,7 +110,7 @@ export default function AdminNumbers() {
         </section>
 
         <section className="h-fit rounded-xl border bg-white p-4">
-          <h2 className="mb-3 flex items-center gap-2 font-semibold"><Plus className="h-4 w-4 text-violet-600" /> Add a number</h2>
+          <h2 className="mb-3 flex items-center gap-2 font-semibold"><Plus className="h-4 w-4 text-primary" /> Add a number</h2>
           <form onSubmit={add} className="space-y-3">
             <div>
               <Label className="text-xs">Phone number</Label>

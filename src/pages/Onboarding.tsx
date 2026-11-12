@@ -85,6 +85,10 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Activity,
 };
 
+// Chart colours from the brand palette (Brand-Identity-Guide/palette.js)
+const CHART_CORAL = "#F05442";
+const LESSON_STATUS_COLORS: Record<string, string> = { Booked: CHART_CORAL, Completed: "#15803D", Cancelled: "#94A3B8" };
+
 const PLAN_LABELS: Record<string, string> = {
   pdi: "PDI (Free)",
   adi: "ADI Pro",
@@ -503,6 +507,10 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
         pausedForCalendar={pausedForCalendar}
         offBySchool={offBySchool}
         onChange={handleToggleDonna}
+        phoneNumber={hasPhone && calendarConnected ? profile.phoneNumber : null}
+        calendarConnected={calendarConnected && !calendarTokenExpired}
+        calendarDisconnecting={calendarDisconnecting}
+        onDisconnectCalendar={handleDisconnectCalendar}
       />
 
       {/* Getting started: settings → number → calendar */}
@@ -519,20 +527,6 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
           onConnectCalendar={handleConnectCalendar}
           onGo={(link) => navigate(link)}
         />
-      )}
-
-      {hasPhone && calendarConnected && (
-        <Card data-tour="phone-setup" className="mb-4 border-green-200 bg-green-50/50">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-              <p className="text-sm">
-                <span className="font-semibold">WhatsApp number active:</span>{" "}
-                {profile.phoneNumber}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       )}
 
       <Dialog open={missingOpen} onOpenChange={setMissingOpen}>
@@ -592,37 +586,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
         </Card>
       )}
 
-      {calendarConnected && !calendarTokenExpired && (
-        <Card className="mb-4 border-green-200 bg-green-50/50">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-                <p className="text-sm">
-                  <span className="font-semibold">Google Calendar connected</span>
-                  <span className="hidden sm:inline"> — lessons are synced automatically.</span>
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDisconnectCalendar}
-                disabled={calendarDisconnecting}
-                className="text-muted-foreground hover:text-red-600 shrink-0"
-              >
-                {calendarDisconnecting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Disconnect"
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {dashboard && (
-        // On phones, today's schedule and activity come before the charts.
         <div className="flex flex-col">
           {/* Date range selector */}
           <div className="flex items-center justify-between mb-4">
@@ -634,7 +598,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
                   onClick={() => setRange(r)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                     range === r
-                      ? "bg-primary text-white"
+                      ? "bg-slate-900 text-white"
                       : "bg-white text-muted-foreground hover:bg-slate-100 border"
                   }`}
                 >
@@ -645,18 +609,18 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
           </div>
 
           {/* Stats row */}
-          <div data-tour="stats" className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+          <div data-tour="stats" className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-6">
             {dashboard.stats.map((stat) => {
               const Icon = ICON_MAP[stat.icon] || Activity;
               const isPositive = stat.change.startsWith("+");
               return (
                 <Card key={stat.title}>
-                  <CardContent className="pt-5 pb-4 px-5">
+                  <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div
-                        className={`h-9 w-9 rounded-xl flex items-center justify-center ${stat.bgColor}`}
+                        className="h-9 w-9 rounded-xl flex items-center justify-center bg-primary/10"
                       >
-                        <Icon className={`h-4 w-4 ${stat.color}`} />
+                        <Icon className="h-4 w-4 text-coral-deep" />
                       </div>
                       <span
                         className={`text-xs font-medium ${
@@ -676,143 +640,10 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             })}
           </div>
 
-          {/* Charts row */}
-          <div data-tour="charts" className="order-last lg:order-none grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-            {/* Revenue Bar Chart */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  Revenue
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={dashboard.revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} width={40} />
-                    <Tooltip
-                      formatter={(value: number) => [`£${value}`, "Revenue"]}
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "1px solid #e2e8f0",
-                      }}
-                    />
-                    <Bar
-                      dataKey="revenue"
-                      fill="#0ea5e9"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Lesson Status Pie Chart */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  Lesson Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={dashboard.lessonData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {dashboard.lessonData.map((entry, index) => (
-                        <Cell key={index} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "1px solid #e2e8f0",
-                      }}
-                    />
-                    <Legend
-                      iconType="circle"
-                      iconSize={8}
-                      wrapperStyle={{ fontSize: "12px" }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Student Growth Line Chart */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  Student Growth
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={220}>
-                  <LineChart data={dashboard.studentGrowth}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} width={30} />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "1px solid #e2e8f0",
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="students"
-                      stroke="#0ea5e9"
-                      strokeWidth={2}
-                      dot={{ r: 4, fill: "#0ea5e9" }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Revenue Goal + Schedule row */}
+          {/* Today and what's next */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-            {/* Revenue Goal */}
-            <Card data-tour="revenue-goal">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Target className="h-4 w-4 text-primary" />
-                  Monthly Revenue Goal
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-end justify-between">
-                    <p className="text-3xl font-bold">
-                      £{dashboard.revenueGoal.current.toLocaleString()}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      / £{dashboard.revenueGoal.target.toLocaleString()}
-                    </p>
-                  </div>
-                  <Progress value={Math.min(revenuePercent, 100)} className="h-3" />
-                  <p className="text-xs text-muted-foreground">
-                    {revenuePercent}% of monthly target
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Today's Schedule */}
-            <Card data-tour="schedule" className="order-first lg:order-none">
+            <Card data-tour="schedule">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
@@ -864,45 +695,6 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
                 )}
               </CardContent>
             </Card>
-          </div>
-
-          {/* Activity + Upcoming row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-primary" />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {dashboard.activity.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">
-                    No recent activity
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {dashboard.activity.map((item, i) => {
-                      const Icon = ICON_MAP[item.icon] || Activity;
-                      return (
-                        <div key={i} className="flex items-start gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                            <Icon className="h-4 w-4 text-slate-600" />
-                          </div>
-                          <div>
-                            <p className="text-sm">{item.text}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {item.time}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
             {/* Upcoming Lessons */}
             <Card>
@@ -948,6 +740,180 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
               </CardContent>
             </Card>
           </div>
+
+          {/* Charts row */}
+          <div data-tour="charts" className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+            {/* Revenue Bar Chart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  Revenue
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={dashboard.revenueData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} width={40} />
+                    <Tooltip
+                      formatter={(value: number) => [`£${value}`, "Revenue"]}
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "1px solid #e2e8f0",
+                      }}
+                    />
+                    <Bar
+                      dataKey="revenue"
+                      fill={CHART_CORAL}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Lesson Status Pie Chart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  Lesson Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={dashboard.lessonData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {dashboard.lessonData.map((entry, index) => (
+                        <Cell key={index} fill={LESSON_STATUS_COLORS[entry.name] ?? entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "1px solid #e2e8f0",
+                      }}
+                    />
+                    <Legend
+                      iconType="circle"
+                      iconSize={8}
+                      wrapperStyle={{ fontSize: "12px" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Student Growth Line Chart */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  Student Growth
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={dashboard.studentGrowth}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} width={30} />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "1px solid #e2e8f0",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="students"
+                      stroke={CHART_CORAL}
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: CHART_CORAL }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Goal and activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+            {/* Revenue Goal */}
+            <Card data-tour="revenue-goal">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Target className="h-4 w-4 text-primary" />
+                  Monthly Revenue Goal
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-end justify-between">
+                    <p className="text-3xl font-bold">
+                      £{dashboard.revenueGoal.current.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      / £{dashboard.revenueGoal.target.toLocaleString()}
+                    </p>
+                  </div>
+                  <Progress value={Math.min(revenuePercent, 100)} className="h-3" />
+                  <p className="text-xs text-muted-foreground">
+                    {revenuePercent}% of monthly target
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+
+            {/* Recent Activity */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {dashboard.activity.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    No recent activity
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {dashboard.activity.map((item, i) => {
+                      const Icon = ICON_MAP[item.icon] || Activity;
+                      return (
+                        <div key={i} className="flex items-start gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
+                            <Icon className="h-4 w-4 text-slate-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm">{item.text}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.time}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+          </div>
         </div>
       )}
     </DashboardLayout>
@@ -963,6 +929,10 @@ function DonnaSwitchCard({
   pausedForCalendar,
   offBySchool,
   onChange,
+  phoneNumber,
+  calendarConnected,
+  calendarDisconnecting,
+  onDisconnectCalendar,
 }: {
   enabled: boolean;
   saving: boolean;
@@ -971,6 +941,11 @@ function DonnaSwitchCard({
   pausedForCalendar: boolean;
   offBySchool: boolean;
   onChange: (next: boolean) => void;
+  /** Shown once setup is finished: what Donna is connected to */
+  phoneNumber: string | null;
+  calendarConnected: boolean;
+  calendarDisconnecting: boolean;
+  onDisconnectCalendar: () => void;
 }) {
   const ready = blockers.length === 0;
   // Paused for the calendar is urgent; not set up yet isn't an emergency switch-off
@@ -1004,6 +979,29 @@ function DonnaSwitchCard({
             aria-label={enabled ? "Turn Donna off" : "Turn Donna on"}
           />
         </div>
+        {(phoneNumber || calendarConnected) && (
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-black/5 pt-3 text-sm text-slate-600">
+            {phoneNumber && (
+              <span data-tour="phone-setup" className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+                WhatsApp <span className="font-medium text-slate-900">{phoneNumber}</span>
+              </span>
+            )}
+            {calendarConnected && (
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+                Google Calendar connected
+                <button
+                  onClick={onDisconnectCalendar}
+                  disabled={calendarDisconnecting}
+                  className="ml-1 text-xs text-slate-500 underline-offset-2 hover:text-red-600 hover:underline disabled:opacity-50"
+                >
+                  {calendarDisconnecting ? "Disconnecting…" : "Disconnect"}
+                </button>
+              </span>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

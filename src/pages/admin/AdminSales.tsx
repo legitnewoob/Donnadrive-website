@@ -103,11 +103,11 @@ export default function AdminSales() {
       ) : (
         <div className="space-y-6">
           <section className="rounded-xl border bg-white">
-            <h2 className="flex items-center gap-2 border-b px-4 py-3 font-semibold"><PartyPopper className="h-4 w-4 text-violet-600" /> Sales</h2>
+            <h2 className="flex items-center gap-2 border-b px-4 py-3 font-semibold"><PartyPopper className="h-4 w-4 text-primary" /> Sales</h2>
             {sales.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                 No sales yet.{" "}
-                <button className="font-medium text-violet-600 hover:underline" onClick={() => setSaleOpen(true)}>Start one</button>
+                <button className="font-medium text-coral-deep hover:underline" onClick={() => setSaleOpen(true)}>Start one</button>
               </div>
             ) : (
               <ul className="divide-y">
@@ -138,7 +138,7 @@ export default function AdminSales() {
           </section>
 
           <section className="rounded-xl border bg-white">
-            <h2 className="flex items-center gap-2 border-b px-4 py-3 font-semibold"><Ticket className="h-4 w-4 text-violet-600" /> Promo codes</h2>
+            <h2 className="flex items-center gap-2 border-b px-4 py-3 font-semibold"><Ticket className="h-4 w-4 text-primary" /> Promo codes</h2>
             <p className="border-b bg-slate-50 px-4 py-2 text-xs text-muted-foreground">
               Stripe allows one discount per checkout, so codes can't be used on a plan while a sale is running for it.
             </p>
@@ -194,7 +194,7 @@ function PlanPicker({ value, onChange }: { value: string[]; onChange: (v: string
             type="button"
             key={slug}
             onClick={() => toggle(slug)}
-            className={`rounded-full border px-3 py-1 text-sm ${value.includes(slug) ? "border-violet-500 bg-violet-50 text-violet-700" : "text-slate-600"}`}
+            className={`rounded-full border px-3 py-1 text-sm ${value.includes(slug) ? "border-primary bg-primary/5 text-coral-deep" : "text-slate-600"}`}
           >
             {label}
           </button>
@@ -302,7 +302,7 @@ function SaleDialog({ open, onOpenChange, onCreated }: { open: boolean; onOpenCh
         </DialogHeader>
         <div className="flex flex-wrap gap-1.5">
           {PRESETS.map((p) => (
-            <button key={p.name} type="button" onClick={() => preset(p)} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium hover:bg-violet-100 hover:text-violet-700">
+            <button key={p.name} type="button" onClick={() => preset(p)} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium hover:bg-primary/10 hover:text-coral-deep">
               {p.banner.split(" ")[0]} {p.name}
             </button>
           ))}

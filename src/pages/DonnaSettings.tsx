@@ -70,6 +70,11 @@ const PRESETS: { key: Exclude<RoutePreset, "custom">; label: string; blurb: stri
   { key: "tight", label: "Tight", blurb: "Fewest miles. Up to 12 min extra driving; fewer slots offered." },
 ];
 
+// How much extra driving Donna allows. Set under "Your schedule" and saved with it;
+// everything else in routeSettings belongs to "Travel & area"
+const DRIVE_KEYS = ["preset", "maxAddedDriveMin", "travelGraceMin", "fragmentationPenalty"] as const;
+const pickDrive = (r: RouteSettings) => Object.fromEntries(DRIVE_KEYS.map((k) => [k, r[k]])) as Partial<RouteSettings>;
+
 const TONES: { key: BotSettings["tone"]; label: string; blurb: string }[] = [
   { key: "friendly", label: "Friendly", blurb: "Warm and chatty" },
   { key: "professional", label: "Professional", blurb: "Polite, no slang" },
@@ -239,10 +244,13 @@ export default function DonnaSettings() {
   const [route, setRoute] = useState<RouteSettings | null>(null);
   const [districtsText, setDistrictsText] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showTravelAdvanced, setShowTravelAdvanced] = useState(false);
   const [bot, setBot] = useState<BotSettings | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
   // Lengths of the active lesson types: what a fixed-mode slot can be
   const [lessonLengths, setLessonLengths] = useState<SlotLength[]>([]);
+  // Some active lesson type has no length yet, so it uses the default
+  const [untypedLessons, setUntypedLessons] = useState(false);
 
   // "How tightly should Donna pack your day?": the most driving between lessons
   // Packed mode: the longest drive between lessons (the slider)
@@ -283,14 +291,15 @@ export default function DonnaSettings() {
       .catch((e) => setLoadError(e instanceof Error ? e.message : "Failed to load settings"))
       .finally(() => setLoading(false));
     getLessonTypes(token)
-      .then((types) =>
+      .then((types) => {
         setLessonLengths(
           types
             .filter((t) => t.active && t.durationMin)
             .map((t) => ({ durationMin: t.durationMin!, name: t.name }))
             .sort((a, b) => a.durationMin - b.durationMin)
-        )
-      )
+        );
+        setUntypedLessons(types.some((t) => t.active && !t.durationMin));
+      })
       .catch(() => setLessonLengths([]));
   }, [token, navigate]);
 
@@ -393,7 +402,10 @@ export default function DonnaSettings() {
   const setBotField = <K extends keyof BotSettings>(key: K, value: BotSettings[K]) =>
     setBot((b) => (b ? { ...b, [key]: value } : b));
 
-  const routeDirty = !same(routeDraft, saved.routeSettings) || baseAddress.trim() !== saved.baseAddress;
+  const driveDirty = !same(pickDrive(route), pickDrive(saved.routeSettings));
+  // Travel & area saves the rest of routeSettings, leaving the driving choice as saved
+  const travelDraft = { ...routeDraft, ...pickDrive(saved.routeSettings) };
+  const routeDirty = !same(travelDraft, saved.routeSettings) || baseAddress.trim() !== saved.baseAddress;
   const scheduleKeys = ["scheduleMode", "dayHours", "lunch", "daySlots", "breaks"] as const;
   const limitsKeys = ["acceptingNewLearners", "maxLessonsPerDay", "minNoticeHours", "bookingWindowDays"] as const;
   const rulesKeys = ["allowCancel", "allowReschedule", "cancellationNoticeHours", "lateCancellationFee"] as const;
@@ -414,8 +426,12 @@ export default function DonnaSettings() {
       // Only reset the fields that were saved; keep unsaved edits elsewhere.
       if (section === "route" || section === "all") {
         setBaseAddress(next.baseAddress);
-        setRoute(next.routeSettings);
+        // Saving Travel & area keeps an unsaved driving choice under Your schedule
+        setRoute((r) => ({ ...next.routeSettings, ...(section === "route" && r ? pickDrive(r) : {}) }));
         setDistrictsText(next.routeSettings.serviceArea.postcodeDistricts.join(", "));
+      }
+      if (body.routeSettings?.preset !== undefined && section !== "route") {
+        setRoute((r) => (r ? { ...r, ...pickDrive(next.routeSettings) } : r));
       }
       if (body.routeSettings?.maxDriveMin !== undefined) {
         setMaxDrive(savedMaxDrive(next));
@@ -435,7 +451,7 @@ export default function DonnaSettings() {
   function routeBody() {
     const body: Parameters<typeof updateSettings>[1] = {};
     if (baseAddress.trim() !== saved!.baseAddress) body.baseAddress = baseAddress.trim();
-    if (!same(routeDraft, saved!.routeSettings)) body.routeSettings = routeDraft!;
+    if (!same(travelDraft, saved!.routeSettings)) body.routeSettings = travelDraft;
     return body;
   }
 
@@ -454,10 +470,12 @@ export default function DonnaSettings() {
     return h && (!h.start || !h.end || toMinutes(h.end) - toMinutes(h.start) < 30);
   });
   const maxDriveDirty = maxDrive !== savedMaxDrive(saved);
-  const scheduleDirty = dirtyFor(scheduleKeys) || maxDriveDirty || hoursUnconfirmed;
+  const scheduleDirty = dirtyFor(scheduleKeys) || maxDriveDirty || driveDirty || hoursUnconfirmed;
   // Slots are only sent once they've been changed (or need confirming at setup):
   // until then Donna keeps offering the older start times for every lesson length
   const scheduleSaveKeys = scheduleKeys.filter((k) => k !== "daySlots" || dirtyFor(["daySlots"]) || (hoursUnconfirmed && !packed));
+  // The default length only matters while some lessons have no length of their own
+  const showDefaultLength = !lessonLengths.length || untypedLessons;
   // Without lesson types yet, slots use the default lesson length
   const slotLengths = lessonLengths.length ? lessonLengths : [{ durationMin: route.lessonDurationMin, name: null }];
   // The usual gap Donna packs with: from the live preview while the slider moves
@@ -478,12 +496,17 @@ export default function DonnaSettings() {
   function saveSchedule() {
     const problem = scheduleProblem();
     if (problem) return toast.error(problem);
-    return save("schedule", { botSettings: pick(bot!, scheduleSaveKeys), ...(maxDriveBody && { routeSettings: maxDriveBody }) });
+    const routeSettings = { ...maxDriveBody, ...(driveDirty && pickDrive(route!)) };
+    return save("schedule", {
+      botSettings: pick(bot!, scheduleSaveKeys),
+      ...(Object.keys(routeSettings).length && { routeSettings }),
+    });
   }
 
   function resetSchedule() {
     setBot((b) => (b ? { ...b, ...pick(saved!.botSettings, scheduleKeys) } : b));
     setMaxDrive(savedMaxDrive(saved!));
+    setRoute((r) => (r ? { ...r, ...pickDrive(saved!.routeSettings) } : r));
   }
 
   const setDayHours = (day: DayKey, hours: DayHours) => setBotField("dayHours", { ...bot.dayHours, [day]: hours });
@@ -524,6 +547,7 @@ export default function DonnaSettings() {
     const botKeys = dirtySections.flatMap((x) => x.keys ?? []);
     if (botKeys.length) body.botSettings = pick(bot!, botKeys);
     if (maxDriveDirty) body.routeSettings = { ...(body.routeSettings || {}), maxDriveMin: maxDrive };
+    if (driveDirty) body.routeSettings = { ...(body.routeSettings || {}), ...pickDrive(route!) };
     return save(routeDirty ? "all" : "bot", body);
   }
 
@@ -581,6 +605,73 @@ export default function DonnaSettings() {
                 </Button>
               )}
             </div>
+  );
+
+  // Fixed mode: slots are the instructor's, so these say "slot"; a packed day has free time instead
+  const gapsField = (
+    <Field
+      label={packed ? "Avoid leaving gaps you can't fill" : "Avoid leaving slots you can't fill"}
+      help={
+        packed
+          ? "How strongly Donna avoids lessons that leave free time too far from anything to sell."
+          : "How strongly Donna avoids lessons that leave one of your free slots too far from anything to sell."
+      }
+    >
+      <Segmented
+        value={effectivePenalty}
+        options={[
+          { key: "off", label: "Off" },
+          { key: "low", label: "Low" },
+          { key: "medium", label: "Medium" },
+          { key: "high", label: "High" },
+        ]}
+        onChange={(v) => setRouteField("fragmentationPenalty", v, true)}
+      />
+    </Field>
+  );
+
+  const drivingAdvanced = (
+    <>
+      <button
+        type="button"
+        onClick={() => setShowAdvanced((v) => !v)}
+        className="text-sm font-medium text-coral-deep hover:underline"
+      >
+        {showAdvanced ? "Hide advanced driving settings" : "Show advanced driving settings"}
+      </button>
+      {showAdvanced && (
+        <div className="grid gap-5 sm:grid-cols-2 rounded-xl border bg-slate-50 p-4">
+          {!packed && (
+            <>
+              <Field
+                label="How late you'll accept arriving at a slot (min)"
+                help="If the drive from your last lesson runs over, Donna still offers the slot when you'd be at most this late."
+              >
+                <Input
+                  type="number"
+                  min={0}
+                  max={30}
+                  value={effective("travelGraceMin")}
+                  onChange={(e) => setRouteField("travelGraceMin", Number(e.target.value), true)}
+                  disabled={route.preset === "off"}
+                />
+              </Field>
+              <Field label="Max extra driving per lesson (min)" help="Slots that add more than this aren't offered.">
+                <Input
+                  type="number"
+                  min={5}
+                  max={60}
+                  value={effective("maxAddedDriveMin")}
+                  onChange={(e) => setRouteField("maxAddedDriveMin", Number(e.target.value), true)}
+                  disabled={route.preset === "off"}
+                />
+              </Field>
+            </>
+          )}
+          {gapsField}
+        </div>
+      )}
+    </>
   );
 
   return (
@@ -722,6 +813,7 @@ export default function DonnaSettings() {
               <p>Close learners start sooner, with up to 5 minutes spare for traffic. Learners further out are fitted in when the drive doesn't cost you a lesson (or one, on a quiet day).</p>
             </div>
           </Field>
+          {drivingAdvanced}
 
           <div className="rounded-xl border bg-slate-50 p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -756,7 +848,19 @@ export default function DonnaSettings() {
           <Field label="Breaks" help="Donna won't book lessons that overlap these, every working day.">
             {breaksEditor}
           </Field>
-
+          <Field label="How much extra driving should Donna allow?">
+            <Segmented
+              value={route.preset === "custom" ? ("custom" as RoutePreset) : route.preset}
+              options={[...PRESETS, ...(route.preset === "custom" ? [{ key: "custom" as const, label: "Custom" }] : [])]}
+              onChange={(v) => setRouteField("preset", v)}
+            />
+            <p className="text-xs text-slate-500">
+              {route.preset === "custom"
+                ? "Using your own values below."
+                : PRESETS.find((p) => p.key === route.preset)?.blurb}
+            </p>
+          </Field>
+          {drivingAdvanced}
             </>
           )}
         </Section>
@@ -767,7 +871,7 @@ export default function DonnaSettings() {
           tour="settings-route"
           icon={RouteIcon}
           title="Travel & area"
-          description="Where you start from, the area you cover, and how Donna keeps your driving down."
+          description="Where you start from and the area you cover."
           dirty={routeDirty}
           saving={saving === "route" || saving === "all"}
           onSave={saveRoute}
@@ -793,77 +897,34 @@ export default function DonnaSettings() {
             </div>
           </Field>
 
-          {packed ? (
-            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
-              Donna is packing your day, so how much driving she allows is set by the slider under{" "}
-              <button type="button" className="font-medium text-coral-deep hover:underline" onClick={() => scrollToSection("schedule")}>
-                Your schedule
-              </button>
-              .
-            </p>
-          ) : (
-          <Field label="How much extra driving should Donna allow?">
-            <Segmented
-              value={route.preset === "custom" ? ("custom" as RoutePreset) : route.preset}
-              options={[...PRESETS, ...(route.preset === "custom" ? [{ key: "custom" as const, label: "Custom" }] : [])]}
-              onChange={(v) => setRouteField("preset", v)}
-            />
-            <p className="text-xs text-slate-500">
-              {route.preset === "custom"
-                ? "Using your own values below."
-                : PRESETS.find((p) => p.key === route.preset)?.blurb}
-            </p>
-          </Field>
-          )}
-
           <button
             type="button"
-            onClick={() => setShowAdvanced((v) => !v)}
+            onClick={() => setShowTravelAdvanced((v) => !v)}
             className="text-sm font-medium text-coral-deep hover:underline"
           >
-            {showAdvanced ? "Hide advanced settings" : "Show advanced settings"}
+            {showTravelAdvanced ? "Hide advanced settings" : "Show advanced settings"}
           </button>
 
-          {showAdvanced && (
+          {showTravelAdvanced && (
             <div className="grid gap-5 sm:grid-cols-2 rounded-xl border bg-slate-50 p-4">
-              <Field label="Default lesson length" help="For lessons without a lesson type, and lessons booked before lesson types had lengths.">
-                <select
-                  value={route.lessonDurationMin}
-                  onChange={(e) => setRouteField("lessonDurationMin", Number(e.target.value))}
-                  className="h-10 w-full rounded-md border bg-white px-3 text-base sm:text-sm"
+              {showDefaultLength && (
+                <Field
+                  label="Length for lessons without a lesson type"
+                  help="Also used for lessons booked before lesson types had lengths."
                 >
-                  {Array.from({ length: 11 }, (_, i) => 30 + i * 15).map((m) => (
-                    <option key={m} value={m}>
-                      {m % 60 === 0 ? `${m / 60} hour${m > 60 ? "s" : ""}` : `${m} minutes`}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              {!packed && (<>
-              <Field
-                label="Allowed lateness between lessons (min)"
-                help="With back-to-back lessons there's no gap to travel; this is how many minutes over you'll accept."
-              >
-                <Input
-                  type="number"
-                  min={0}
-                  max={30}
-                  value={effective("travelGraceMin")}
-                  onChange={(e) => setRouteField("travelGraceMin", Number(e.target.value), true)}
-                  disabled={route.preset === "off"}
-                />
-              </Field>
-              <Field label="Max extra driving per lesson (min)" help="Slots that add more than this aren't offered.">
-                <Input
-                  type="number"
-                  min={5}
-                  max={60}
-                  value={effective("maxAddedDriveMin")}
-                  onChange={(e) => setRouteField("maxAddedDriveMin", Number(e.target.value), true)}
-                  disabled={route.preset === "off"}
-                />
-              </Field>
-              </>)}
+                  <select
+                    value={route.lessonDurationMin}
+                    onChange={(e) => setRouteField("lessonDurationMin", Number(e.target.value))}
+                    className="h-10 w-full rounded-md border bg-white px-3 text-base sm:text-sm"
+                  >
+                    {Array.from({ length: 11 }, (_, i) => 30 + i * 15).map((m) => (
+                      <option key={m} value={m}>
+                        {m % 60 === 0 ? `${m / 60} hour${m > 60 ? "s" : ""}` : `${m} minutes`}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
               <Field label="Count the drive from and to home" help="For your first and last lesson of the day.">
                 <Segmented
                   value={route.homeLegWeight}
@@ -873,21 +934,6 @@ export default function DonnaSettings() {
                     { key: "full", label: "Fully" },
                   ]}
                   onChange={(v) => setRouteField("homeLegWeight", v)}
-                />
-              </Field>
-              <Field
-                label="Avoid leaving gaps you can't fill"
-                help="How strongly Donna avoids slots that leave a free hour too far from anything to sell."
-              >
-                <Segmented
-                  value={effectivePenalty}
-                  options={[
-                    { key: "off", label: "Off" },
-                    { key: "low", label: "Low" },
-                    { key: "medium", label: "Medium" },
-                    { key: "high", label: "High" },
-                  ]}
-                  onChange={(v) => setRouteField("fragmentationPenalty", v, true)}
                 />
               </Field>
             </div>
@@ -949,7 +995,7 @@ export default function DonnaSettings() {
             <div>
               <p className="text-sm font-semibold text-slate-800">Try it</p>
               <p className="text-xs text-slate-500">
-                See which times Donna would offer a learner, using the settings above (even before you save).
+                See which times Donna would offer a learner, using your settings on this page (even before you save).
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">

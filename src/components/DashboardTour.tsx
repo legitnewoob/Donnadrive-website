@@ -238,7 +238,7 @@ export default function DashboardTour() {
       {/* Spotlight ring */}
       {rect && (
         <div
-          className="absolute rounded-xl border-2 border-sky-400 transition-all duration-300 ease-out"
+          className="absolute rounded-xl border-2 border-primary transition-all duration-300 ease-out"
           style={{ ...spotStyle, pointerEvents: "none" }}
         />
       )}
@@ -280,7 +280,7 @@ export default function DashboardTour() {
               <div
                 key={i}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === step ? "w-4 bg-sky-600" : "w-1.5 bg-slate-200"
+                  i === step ? "w-4 bg-primary" : "w-1.5 bg-slate-200"
                 }`}
               />
             ))}

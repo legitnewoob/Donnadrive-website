@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search,
   ChevronDown,
@@ -25,7 +26,7 @@ type Learner = Awaited<ReturnType<typeof getLearners>>[number];
 type LearnerDetail = Awaited<ReturnType<typeof getLearnerDetail>>;
 
 const progressColors: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
+  new: "bg-sky-100 text-sky-700",
   active: "bg-amber-100 text-amber-700",
   "test-ready": "bg-green-100 text-green-700",
 };
@@ -73,6 +74,13 @@ function CopyPhoneButton({ phone }: { phone: string }) {
   );
 }
 
+// Dates of birth arrive as typed, often "18072002": show those as 18/07/2002
+function formatDob(dob?: string | null) {
+  if (!dob) return "—";
+  const m = dob.match(/^(\d{2})(\d{2})(\d{4})$/);
+  return m ? `${m[1]}/${m[2]}/${m[3]}` : dob;
+}
+
 function money(n: number) {
   return `£${Number.isInteger(n) ? n : n.toFixed(2)}`;
 }
@@ -91,7 +99,7 @@ function LearnerBadges({ learner: l }: { learner: Learner }) {
         <Badge variant="outline" className="border-amber-300 text-amber-700 whitespace-nowrap">Donna paused</Badge>
       )}
       {l.priority && (
-        <Badge variant="outline" className="border-sky-300 text-sky-700">Priority</Badge>
+        <Badge variant="outline" className="border-primary/40 text-coral-deep">Priority</Badge>
       )}
       <Badge className={`${progressColors[l.progressLevel]} whitespace-nowrap`} variant="secondary">
         {progressLabels[l.progressLevel]}
@@ -277,7 +285,7 @@ export default function Learners() {
                       aria-expanded={isExpanded}
                       className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 transition-colors"
                     >
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xs font-semibold shrink-0">
                         {initials(l.name)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -314,61 +322,48 @@ export default function Learners() {
                             <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
                           </div>
                         ) : detail ? (
-                          <div className="grid gap-6 md:grid-cols-2">
-                            {/* Left column */}
-                            <div className="space-y-4">
+                          <Tabs defaultValue="overview">
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                              <TabsList>
+                                <TabsTrigger value="overview">Overview</TabsTrigger>
+                                {!readOnly && <TabsTrigger value="scheduling">Scheduling</TabsTrigger>}
+                              </TabsList>
+                              <a
+                                href={`https://wa.me/${l.phone}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-fit"
+                              >
+                                <Button variant="outline" size="sm" className="gap-2">
+                                  <MessageCircle className="h-4 w-4" />
+                                  Message on WhatsApp
+                                </Button>
+                              </a>
+                            </div>
+
+                            <TabsContent value="overview" className="mt-0 grid gap-6 md:grid-cols-2">
+                              <div className="space-y-5">
                               {/* Profile */}
-                              <div>
-                                <h4 className="text-sm font-semibold text-slate-700 mb-2">Profile</h4>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                  <div className="col-span-2 flex items-center gap-1.5">
-                                    <span className="text-slate-400">Phone:</span>
-                                    <span>{formatPhone(detail.phone)}</span>
+                              <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
+                                <div className="col-span-2 sm:col-span-1">
+                                  <dt className="text-xs text-slate-500">Phone</dt>
+                                  <dd className="flex items-center gap-1 font-medium text-slate-900">
+                                    {formatPhone(detail.phone)}
                                     <CopyPhoneButton phone={detail.phone} />
+                                  </dd>
+                                </div>
+                                {[
+                                  ["Age", detail.age ?? "—"],
+                                  ["Date of birth", formatDob(detail.dob)],
+                                  ["Postcode", detail.postalCode ?? "—"],
+                                  ["Joined", detail.createdAt ? new Date(detail.createdAt).toLocaleDateString("en-GB") : "—"],
+                                ].map(([label, value]) => (
+                                  <div key={label}>
+                                    <dt className="text-xs text-slate-500">{label}</dt>
+                                    <dd className="font-medium text-slate-900">{value}</dd>
                                   </div>
-                                  <div><span className="text-slate-400">Age:</span> {detail.age ?? "—"}</div>
-                                  <div><span className="text-slate-400">DOB:</span> {detail.dob ?? "—"}</div>
-                                  <div><span className="text-slate-400">Postal:</span> {detail.postalCode ?? "—"}</div>
-                                  <div><span className="text-slate-400">Joined:</span> {detail.createdAt ? new Date(detail.createdAt).toLocaleDateString("en-GB") : "—"}</div>
-                                </div>
-                              </div>
-
-                              {/* Notes */}
-                              <div>
-                                <div className="flex items-center gap-2 mb-2">
-                                  <h4 className="text-sm font-semibold text-slate-700">Notes</h4>
-                                  {savingNotes && <span className="text-xs text-slate-400">Saving...</span>}
-                                </div>
-                                <Textarea
-                                  placeholder="Add notes about this learner..."
-                                  value={notes}
-                                  onChange={(e) => handleNotesChange(e.target.value)}
-                                  rows={3}
-                                  className="bg-white"
-                                  readOnly={readOnly}
-                                />
-                              </div>
-
-                              {/* Scheduling (the instructor's own controls) */}
-                              {!readOnly && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-slate-700 mb-2">Scheduling</h4>
-                                <LearnerScheduling
-                                  key={detail.phone}
-                                  token={token!}
-                                  phone={detail.phone}
-                                  initial={detail.schedulingPrefs}
-                                  lessonTypes={lessonTypes}
-                                  onSaved={(prefs) =>
-                                    setLearners((prev) =>
-                                      prev.map((x) =>
-                                        x.phone === detail.phone ? { ...x, priority: prefs.priority, donnaPaused: prefs.donnaPaused } : x
-                                      )
-                                    )
-                                  }
-                                />
-                              </div>
-                              )}
+                                ))}
+                              </dl>
 
                               {/* Financial summary */}
                               <div>
@@ -398,28 +393,31 @@ export default function Learners() {
                                 </div>
                               </div>
 
-                              {/* WhatsApp link */}
-                              <a
-                                href={`https://wa.me/${l.phone}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block w-fit"
-                              >
-                                <Button variant="outline" size="sm" className="gap-2">
-                                  <MessageCircle className="h-4 w-4" />
-                                  Message on WhatsApp
-                                </Button>
-                              </a>
-                            </div>
 
-                            {/* Right column — history */}
-                            <div className="space-y-4">
+                              {/* Notes */}
+                              <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h4 className="text-sm font-semibold text-slate-700">Notes</h4>
+                                  {savingNotes && <span className="text-xs text-slate-400">Saving...</span>}
+                                </div>
+                                <Textarea
+                                  placeholder="Add notes about this learner..."
+                                  value={notes}
+                                  onChange={(e) => handleNotesChange(e.target.value)}
+                                  rows={3}
+                                  className="bg-white"
+                                  readOnly={readOnly}
+                                />
+                              </div>
+
+                              </div>
+                              <div className="space-y-5">
                               {/* Lesson history */}
                               <div>
                                 <h4 className="text-sm font-semibold text-slate-700 mb-2">
-                                  Lesson History ({detail.lessons.length})
+                                  Lessons ({detail.lessons.length})
                                 </h4>
-                                <div className="space-y-2 sm:max-h-64 sm:overflow-y-auto sm:pr-1">
+                                <div className="space-y-2 sm:max-h-80 sm:overflow-y-auto sm:pr-1">
                                   {detail.lessons.length === 0 ? (
                                     <p className="text-sm text-slate-400">No lessons yet</p>
                                   ) : (
@@ -465,10 +463,10 @@ export default function Learners() {
                                 </div>
                               </div>
 
-                              {/* Payment history */}
+                                {detail.payments.length > 0 && (
                               <div>
                                 <h4 className="text-sm font-semibold text-slate-700 mb-2">
-                                  Payment History ({detail.payments.length})
+                                  Payments received ({detail.payments.length})
                                 </h4>
                                 <div className="space-y-2 sm:max-h-48 sm:overflow-y-auto sm:pr-1">
                                   {detail.payments.length === 0 ? (
@@ -487,8 +485,30 @@ export default function Learners() {
                                   )}
                                 </div>
                               </div>
-                            </div>
-                          </div>
+                                )}
+                              </div>
+                            </TabsContent>
+
+                            {/* Kept mounted so unsaved scheduling edits survive a look at the overview */}
+                            {!readOnly && (
+                              <TabsContent value="scheduling" forceMount className="mt-0 data-[state=inactive]:hidden">
+                                <LearnerScheduling
+                                  key={detail.phone}
+                                  token={token!}
+                                  phone={detail.phone}
+                                  initial={detail.schedulingPrefs}
+                                  lessonTypes={lessonTypes}
+                                  onSaved={(prefs) =>
+                                    setLearners((prev) =>
+                                      prev.map((x) =>
+                                        x.phone === detail.phone ? { ...x, priority: prefs.priority, donnaPaused: prefs.donnaPaused } : x
+                                      )
+                                    )
+                                  }
+                                />
+                              </TabsContent>
+                            )}
+                          </Tabs>
                         ) : null}
                       </div>
                     )}

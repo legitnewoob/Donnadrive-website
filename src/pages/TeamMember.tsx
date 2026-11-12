@@ -149,7 +149,7 @@ export default function TeamMember() {
         {/* Their learners */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-2">
-            <CardTitle className="flex items-center gap-2 text-base"><Users className="h-4 w-4 text-sky-600" /> Learners</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-base"><Users className="h-4 w-4 text-primary" /> Learners</CardTitle>
             <Button size="sm" variant="outline" onClick={() => navigate(`/school/learners?instructor=${member.id}`)}>Open all</Button>
           </CardHeader>
           <CardContent>

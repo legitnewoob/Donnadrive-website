@@ -250,7 +250,7 @@ function Step({
       {done ? (
         <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
       ) : (
-        <Circle className={`mt-0.5 h-5 w-5 shrink-0 ${active ? "text-sky-600" : "text-slate-300"}`} />
+        <Circle className={`mt-0.5 h-5 w-5 shrink-0 ${active ? "text-primary" : "text-slate-300"}`} />
       )}
       <div className="min-w-0 flex-1">
         <p className={`font-medium ${done ? "text-muted-foreground line-through" : ""}`}>

@@ -396,7 +396,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -634,7 +634,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
                   onClick={() => setRange(r)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                     range === r
-                      ? "bg-sky-600 text-white"
+                      ? "bg-primary text-white"
                       : "bg-white text-muted-foreground hover:bg-slate-100 border"
                   }`}
                 >
@@ -682,7 +682,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-sky-600" />
+                  <BarChart3 className="h-4 w-4 text-primary" />
                   Revenue
                 </CardTitle>
               </CardHeader>
@@ -713,7 +713,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-sky-600" />
+                  <Calendar className="h-4 w-4 text-primary" />
                   Lesson Status
                 </CardTitle>
               </CardHeader>
@@ -753,7 +753,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-4 w-4 text-sky-600" />
+                  <Users className="h-4 w-4 text-primary" />
                   Student Growth
                 </CardTitle>
               </CardHeader>
@@ -789,7 +789,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             <Card data-tour="revenue-goal">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Target className="h-4 w-4 text-sky-600" />
+                  <Target className="h-4 w-4 text-primary" />
                   Monthly Revenue Goal
                 </CardTitle>
               </CardHeader>
@@ -815,7 +815,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             <Card data-tour="schedule" className="order-first lg:order-none">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-sky-600" />
+                  <Calendar className="h-4 w-4 text-primary" />
                   Today's Schedule
                 </CardTitle>
               </CardHeader>
@@ -832,7 +832,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
                         className="flex items-center justify-between py-2 border-b last:border-0"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-sky-100 flex items-center justify-center text-xs font-bold text-sky-700">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-coral-deep">
                             {lesson.student
                               .split(" ")
                               .map((n) => n[0])
@@ -872,7 +872,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-sky-600" />
+                  <Activity className="h-4 w-4 text-primary" />
                   Recent Activity
                 </CardTitle>
               </CardHeader>
@@ -908,7 +908,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-sky-600" />
+                  <Clock className="h-4 w-4 text-primary" />
                   Upcoming Lessons
                 </CardTitle>
               </CardHeader>
@@ -1013,7 +1013,7 @@ function DonnaSwitchCard({
 
 function StepIcon({ done, active }: { done: boolean; active: boolean }) {
   if (done) return <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />;
-  return <Circle className={`h-5 w-5 shrink-0 ${active ? "text-sky-600" : "text-slate-300"}`} />;
+  return <Circle className={`h-5 w-5 shrink-0 ${active ? "text-primary" : "text-slate-300"}`} />;
 }
 
 function SetupCard({
@@ -1042,7 +1042,7 @@ function SetupCard({
   const settingsDone = hasPhone || !!setup?.complete;
 
   return (
-    <Card id="setup-steps" className="mb-6 border-sky-200">
+    <Card id="setup-steps" className="mb-6 border-primary/30">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Get Donna ready</CardTitle>
         <p className="text-sm text-muted-foreground">Three quick steps before learners can book with you on WhatsApp.</p>
@@ -1064,7 +1064,7 @@ function SetupCard({
                     )}
                     <span className={`flex-1 ${r.done ? "text-muted-foreground" : ""}`}>{r.label}</span>
                     {!r.done && (
-                      <button onClick={() => onGo(r.link)} className="shrink-0 text-sm font-medium text-sky-700 hover:underline">
+                      <button onClick={() => onGo(r.link)} className="shrink-0 text-sm font-medium text-coral-deep hover:underline">
                         Add
                       </button>
                     )}

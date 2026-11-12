@@ -36,7 +36,7 @@ export default function ReferralCard({ token }: { token: string }) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Gift className="h-4 w-4 text-sky-600" />
+          <Gift className="h-4 w-4 text-primary" />
           Give a month, get a month
         </CardTitle>
       </CardHeader>

@@ -24,6 +24,8 @@ export default {
           foreground: "hsl(var(--primary-foreground))",
           glow: "hsl(var(--primary-glow))",
         },
+        // Brand coral beyond the UI primary (Brand-Identity-Guide/palette.js)
+        coral: { DEFAULT: "#F86C4F", deep: "#E8553A", peach: "#F59678", blush: "#FFD1D0" },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",

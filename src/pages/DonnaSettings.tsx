@@ -15,13 +15,12 @@ import {
   CheckCircle2,
   MinusCircle,
   XCircle,
-  ChevronDown,
-  AlertTriangle,
   SlidersHorizontal,
   Umbrella,
 } from "lucide-react";
 import PackingSlider from "@/components/PackingSlider";
 import DayPackPreview from "@/components/DayPackPreview";
+import SlotPlanner, { type SlotLength } from "@/components/SlotPlanner";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +33,7 @@ import {
   updateSettings,
   previewRoute,
   previewDay,
+  getLessonTypes,
   notifySetupChanged,
   type DayPreview,
   type DayHours,
@@ -62,8 +62,6 @@ const SECTION_ALIASES: Record<string, string> = { availability: "schedule", pack
 // Tiny pictures of a day for the two schedule modes: lesson lengths in half hours, 0 = a gap
 const PACKED_STRIP = [2, 0, 2, 0, 3, 0, 2, 0, 4];
 const MANUAL_STRIP = [4, 0, 3, 0, 0, 2, 0, 2];
-
-const HOURLY = Array.from({ length: 14 }, (_, i) => `${String(i + 7).padStart(2, "0")}:00`);
 
 const PRESETS: { key: Exclude<RoutePreset, "custom">; label: string; blurb: string }[] = [
   { key: "off", label: "Off", blurb: "Offer every free slot. No route checks." },
@@ -204,13 +202,6 @@ const toMinutes = (t: string) => {
 type Break = BotSettings["breaks"][number];
 const validBreak = (b: Break) => !!b.from && !!b.to && b.from < b.to;
 
-// Same rule Donna uses: a start time is dropped if the lesson would overlap a break.
-function clashingBreak(time: string, lessonMin: number, breaks: Break[]) {
-  const start = toMinutes(time);
-  const end = start + lessonMin;
-  return breaks.find((b) => validBreak(b) && start < toMinutes(b.to) && end > toMinutes(b.from));
-}
-
 const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v));
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -218,6 +209,16 @@ function tomorrowPlus(days: number) {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+// A backend from before lesson slots sends only start times: show those as slots of the default length
+function withSlots(s: Settings): Settings {
+  if (s.botSettings.daySlots) return s;
+  const durationMin = s.routeSettings.lessonDurationMin;
+  const daySlots = Object.fromEntries(
+    DAYS.map(({ key }) => [key, (s.botSettings.workingHours?.[key] ?? []).map((start) => ({ start, durationMin, exact: false }))])
+  ) as BotSettings["daySlots"];
+  return { ...s, botSettings: { ...s.botSettings, daySlots } };
 }
 
 // The saved longest drive: older settings only have the usual gap, so it's twice that
@@ -240,6 +241,8 @@ export default function DonnaSettings() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [bot, setBot] = useState<BotSettings | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  // Lengths of the active lesson types: what a fixed-mode slot can be
+  const [lessonLengths, setLessonLengths] = useState<SlotLength[]>([]);
 
   // "How tightly should Donna pack your day?": the most driving between lessons
   // Packed mode: the longest drive between lessons (the slider)
@@ -254,7 +257,8 @@ export default function DonnaSettings() {
   const [preview, setPreview] = useState<RoutePreview | null>(null);
   const [previewing, setPreviewing] = useState(false);
 
-  function apply(s: Settings) {
+  function apply(loaded: Settings) {
+    const s = withSlots(loaded);
     if (s.setup) setSetup(s.setup);
     setSaved(s);
     setBaseAddress(s.baseAddress);
@@ -278,6 +282,16 @@ export default function DonnaSettings() {
       })
       .catch((e) => setLoadError(e instanceof Error ? e.message : "Failed to load settings"))
       .finally(() => setLoading(false));
+    getLessonTypes(token)
+      .then((types) =>
+        setLessonLengths(
+          types
+            .filter((t) => t.active && t.durationMin)
+            .map((t) => ({ durationMin: t.durationMin!, name: t.name }))
+            .sort((a, b) => a.durationMin - b.durationMin)
+        )
+      )
+      .catch(() => setLessonLengths([]));
   }, [token, navigate]);
 
   // Arriving from a setup link like /settings#route: jump there once the page has loaded
@@ -380,7 +394,7 @@ export default function DonnaSettings() {
     setBot((b) => (b ? { ...b, [key]: value } : b));
 
   const routeDirty = !same(routeDraft, saved.routeSettings) || baseAddress.trim() !== saved.baseAddress;
-  const scheduleKeys = ["scheduleMode", "dayHours", "lunch", "workingHours", "breaks"] as const;
+  const scheduleKeys = ["scheduleMode", "dayHours", "lunch", "daySlots", "breaks"] as const;
   const limitsKeys = ["acceptingNewLearners", "maxLessonsPerDay", "minNoticeHours", "bookingWindowDays"] as const;
   const rulesKeys = ["allowCancel", "allowReschedule", "cancellationNoticeHours", "lateCancellationFee"] as const;
   const timeOffKeys = ["holiday"] as const;
@@ -393,7 +407,7 @@ export default function DonnaSettings() {
   async function save(section: string, body: Parameters<typeof updateSettings>[1]) {
     setSaving(section);
     try {
-      const next = await updateSettings(token!, body);
+      const next = withSlots(await updateSettings(token!, body));
       setSaved(next);
       if (next.setup) setSetup(next.setup);
       notifySetupChanged();
@@ -410,13 +424,7 @@ export default function DonnaSettings() {
       if (body.botSettings) {
         setBot((b) => (b ? { ...b, ...pick(next.botSettings, Object.keys(body.botSettings || {}) as (keyof BotSettings)[]) } : b));
       }
-      if (body.botSettings?.workingHours && breakClashes.length) {
-        toast.warning(
-          `Saved, but ${breakClashes.length} start time${breakClashes.length === 1 ? " clashes" : "s clash"} with your breaks and won't be offered.`
-        );
-      } else {
-        toast.success("Saved. Donna will use this from her next message.");
-      }
+      toast.success("Saved. Donna will use this from her next message.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't save");
     } finally {
@@ -447,6 +455,11 @@ export default function DonnaSettings() {
   });
   const maxDriveDirty = maxDrive !== savedMaxDrive(saved);
   const scheduleDirty = dirtyFor(scheduleKeys) || maxDriveDirty || hoursUnconfirmed;
+  // Slots are only sent once they've been changed (or need confirming at setup):
+  // until then Donna keeps offering the older start times for every lesson length
+  const scheduleSaveKeys = scheduleKeys.filter((k) => k !== "daySlots" || dirtyFor(["daySlots"]) || (hoursUnconfirmed && !packed));
+  // Without lesson types yet, slots use the default lesson length
+  const slotLengths = lessonLengths.length ? lessonLengths : [{ durationMin: route.lessonDurationMin, name: null }];
   // The usual gap Donna packs with: from the live preview while the slider moves
   const usualGap = dayPreview?.bufferMin ?? saved.packing?.bufferMin ?? Math.ceil(maxDrive / 2 / 5) * 5;
   const gapSource = dayPreview?.bufferSource ?? saved.packing?.bufferSource ?? "default";
@@ -465,7 +478,7 @@ export default function DonnaSettings() {
   function saveSchedule() {
     const problem = scheduleProblem();
     if (problem) return toast.error(problem);
-    return save("schedule", { botSettings: pick(bot!, scheduleKeys), ...(maxDriveBody && { routeSettings: maxDriveBody }) });
+    return save("schedule", { botSettings: pick(bot!, scheduleSaveKeys), ...(maxDriveBody && { routeSettings: maxDriveBody }) });
   }
 
   function resetSchedule() {
@@ -493,7 +506,7 @@ export default function DonnaSettings() {
   }
 
   const sections = [
-    { id: "schedule", label: "Schedule", dirty: scheduleDirty, keys: scheduleKeys },
+    { id: "schedule", label: "Schedule", dirty: scheduleDirty, keys: scheduleSaveKeys },
     { id: "route", label: "Travel & area", dirty: routeDirty },
     { id: "limits", label: "Limits", dirty: dirtyFor(limitsKeys), keys: limitsKeys },
     { id: "rules", label: "Cancellations", dirty: dirtyFor(rulesKeys), keys: rulesKeys },
@@ -528,46 +541,6 @@ export default function DonnaSettings() {
     } finally {
       setPreviewing(false);
     }
-  }
-
-  const allTimes = (day: DayKey) =>
-    Array.from(new Set([...HOURLY, ...bot.workingHours[day]])).sort();
-
-  const breakClashes = DAYS.flatMap(({ key, label }) =>
-    bot.workingHours[key].flatMap((time) => {
-      const brk = clashingBreak(time, route.lessonDurationMin, bot.breaks);
-      return brk ? [{ day: key, label, time, brk }] : [];
-    })
-  );
-  const clashesByTime = Object.values(
-    breakClashes.reduce<Record<string, { time: string; brk: Break; days: string[] }>>((acc, c) => {
-      const k = `${c.time}|${c.brk.from}`;
-      (acc[k] ??= { time: c.time, brk: c.brk, days: [] }).days.push(c.label);
-      return acc;
-    }, {})
-  ).sort((a, b) => a.time.localeCompare(b.time));
-
-  function removeClashingTimes() {
-    const next = { ...bot!.workingHours };
-    for (const { day, time } of breakClashes) next[day] = next[day].filter((t) => t !== time);
-    setBotField("workingHours", next);
-  }
-
-  function toggleTime(day: DayKey, time: string) {
-    const current = bot!.workingHours[day];
-    const next = current.includes(time) ? current.filter((t) => t !== time) : [...current, time].sort();
-    setBotField("workingHours", { ...bot!.workingHours, [day]: next });
-  }
-
-  function toggleDay(day: DayKey, on: boolean) {
-    const fallback = ["09:00", "11:00", "13:00", "15:00"];
-    const restore = [saved!.botSettings.workingHours[day], bot!.workingHours.mon, fallback].find((t) => t.length) ?? fallback;
-    setBotField("workingHours", { ...bot!.workingHours, [day]: on ? [...restore] : [] });
-  }
-
-  function copyMondayToWeekdays() {
-    const mon = bot!.workingHours.mon;
-    setBotField("workingHours", { ...bot!.workingHours, tue: [...mon], wed: [...mon], thu: [...mon], fri: [...mon] });
   }
 
   const breaksEditor = (
@@ -658,7 +631,7 @@ export default function DonnaSettings() {
             <ModeCard
               selected={!packed}
               title="I'll plan my day myself"
-              text="Choose your own lesson start times. Donna only offers those."
+              text="Lay out your own lesson slots, each with its own length. Donna only offers those."
               blocks={MANUAL_STRIP}
               onSelect={() => setBotField("scheduleMode", "fixed")}
             />
@@ -773,52 +746,17 @@ export default function DonnaSettings() {
             </>
           ) : (
             <>
-          <Field label="Working days and lesson start times" help="Tap a time to turn it on or off." required={!!setup && !setup.hasNumber}>
-            <div className="space-y-2">
-              {DAYS.map(({ key, label }) => (
-                <WorkingDayRow
-                  key={key}
-                  label={label}
-                  times={allTimes(key)}
-                  selected={bot.workingHours[key]}
-                  clashing={breakClashes.filter((c) => c.day === key).map((c) => c.time)}
-                  onToggleTime={(t) => toggleTime(key, t)}
-                  onToggleDay={(on) => toggleDay(key, on)}
-                />
-              ))}
-              <Button variant="ghost" size="sm" onClick={copyMondayToWeekdays} className="text-sky-700 px-0">
-                Copy Monday's times to Tue–Fri
-              </Button>
-            </div>
+          <Field
+            label="Your lesson slots"
+            help="Each slot has a start and a length. Donna offers a slot for lessons of that length or shorter, unless you keep it for one length."
+            required={!!setup && !setup.hasNumber}
+          >
+            <SlotPlanner slots={bot.daySlots} onChange={(v) => setBotField("daySlots", v)} lengths={slotLengths} breaks={bot.breaks} />
           </Field>
           <Field label="Breaks" help="Donna won't book lessons that overlap these, every working day.">
             {breaksEditor}
           </Field>
 
-          {!packed && clashesByTime.length > 0 && (
-            <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                <div className="min-w-0 space-y-2">
-                  <p className="font-medium text-amber-900">
-                    {breakClashes.length} lesson start time{breakClashes.length === 1 ? "" : "s"} clash with your breaks
-                  </p>
-                  <ul className="space-y-1 text-amber-800">
-                    {clashesByTime.map((c) => (
-                      <li key={`${c.time}|${c.brk.from}`}>
-                        <span className="font-medium">{c.time}</span> on {c.days.join(", ")} — a {route.lessonDurationMin}-minute lesson
-                        runs into your {c.brk.from}–{c.brk.to} break
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="text-amber-800">Donna won't offer these times. Remove them, move the break, or shorten the lesson length.</p>
-                  <Button variant="outline" size="sm" onClick={removeClashingTimes} className="border-amber-300 bg-white">
-                    Remove clashing times
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
             </>
           )}
         </Section>
@@ -1362,90 +1300,6 @@ function DayHoursRow({
       ) : (
         <span className="text-sm text-slate-400">Day off</span>
       )}
-    </div>
-  );
-}
-
-function WorkingDayRow({
-  label,
-  times,
-  selected,
-  clashing,
-  onToggleTime,
-  onToggleDay,
-}: {
-  label: string;
-  times: string[];
-  selected: string[];
-  clashing: string[];
-  onToggleTime: (t: string) => void;
-  onToggleDay: (on: boolean) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const working = selected.length > 0;
-  const summary = working
-    ? `${selected[0]} – ${selected[selected.length - 1]} · ${selected.length} start${selected.length === 1 ? "" : "s"}`
-    : "Day off";
-
-  return (
-    <div className="rounded-lg border bg-white sm:flex sm:items-start sm:gap-3 sm:border-0 sm:bg-transparent">
-      {/* Phones: a compact row that expands; wider screens: just the day name */}
-      <div className="flex items-center gap-3 px-3 py-2 sm:w-10 sm:shrink-0 sm:p-0 sm:pt-1.5">
-        <Switch
-          checked={working}
-          onCheckedChange={onToggleDay}
-          aria-label={`Work on ${label}`}
-          className="sm:hidden"
-        />
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left sm:pointer-events-none"
-        >
-          <span className={`w-9 shrink-0 text-sm font-medium ${working ? "text-slate-800" : "text-slate-400"}`}>{label}</span>
-          <span className={`min-w-0 flex-1 truncate text-sm sm:hidden ${working ? "text-slate-600" : "text-slate-400"}`}>{summary}</span>
-          {clashing.length > 0 && (
-            <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 sm:hidden">
-              ⚠ {clashing.length}
-              <span className="sr-only"> clash{clashing.length === 1 ? "" : "es"} with breaks</span>
-            </span>
-          )}
-          <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform sm:hidden ${open ? "rotate-180" : ""}`} />
-        </button>
-      </div>
-      <div className={`${open ? "grid" : "hidden"} grid-cols-4 gap-1.5 border-t px-3 py-3 sm:flex sm:flex-wrap sm:border-0 sm:p-0`}>
-        {times.map((t) => {
-          const on = selected.includes(t);
-          const clash = on && clashing.includes(t);
-          return (
-            <button
-              key={t}
-              type="button"
-              onClick={() => onToggleTime(t)}
-              aria-pressed={on}
-              title={clash ? `${t} clashes with a break, so Donna won't offer it` : undefined}
-              className={`py-2 text-sm rounded-md border transition-colors sm:w-12 sm:py-1 sm:text-xs ${
-                clash
-                  ? "bg-amber-100 border-amber-400 text-amber-900"
-                  : on
-                    ? "bg-sky-600 border-sky-600 text-white"
-                    : "bg-white text-slate-500 hover:border-slate-400"
-              }`}
-            >
-              {clash ? (
-                <span key="clash" className="inline-flex items-center justify-center gap-0.5 whitespace-nowrap font-medium sm:text-[11px] motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-300">
-                  <AlertTriangle className="h-3.5 w-3.5 sm:h-3 sm:w-3" aria-hidden />
-                  Break
-                  <span className="sr-only"> ({t} clashes with a break)</span>
-                </span>
-              ) : (
-                t
-              )}
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

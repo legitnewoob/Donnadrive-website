@@ -173,14 +173,14 @@ function PlanEditor({ plan, noticeDays, onSaved }: { plan: AdminPlan; noticeDays
   const effective = new Date(Date.now() + noticeDays * 86400000);
 
   return (
-    <section className={`flex flex-col rounded-xl border bg-white ${plan.popular ? "ring-2 ring-violet-500" : ""}`}>
+    <section className={`flex flex-col rounded-xl border bg-white ${plan.popular ? "ring-2 ring-primary" : ""}`}>
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
           <h2 className="font-semibold">{PLAN_LABELS[plan.slug]}</h2>
           <p className="text-xs text-muted-foreground">{plan.amount === 0 ? "Free" : `${gbp(plan.amount)}/${plan.interval}${plan.trialDays > 0 ? ` · ${plan.trialDays}-day trial` : " · no trial"}`}{isSchool ? ` · ${plan.includedSeats} seats + ${gbp(plan.extraSeatAmount)} each` : ""}</p>
         </div>
         <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Star className={`h-3.5 w-3.5 ${f.popular ? "fill-violet-500 text-violet-500" : ""}`} /> Popular
+          <Star className={`h-3.5 w-3.5 ${f.popular ? "fill-primary text-primary" : ""}`} /> Popular
           <Switch checked={f.popular} onCheckedChange={(v) => setF({ ...f, popular: v })} />
         </label>
       </div>

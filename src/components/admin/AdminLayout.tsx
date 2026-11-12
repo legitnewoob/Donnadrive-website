@@ -111,7 +111,7 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
         </span>
         <div>
           <p className="font-bold leading-tight text-white">Donna Drive</p>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-400">Admin</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-coral-peach">Admin</p>
         </div>
       </div>
       <nav aria-label="Admin" className="flex-1 space-y-0.5 overflow-y-auto px-3">
@@ -125,7 +125,7 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
               onClick={onGo}
               aria-current={active ? "page" : undefined}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                active ? "bg-violet-600 text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"
+                active ? "bg-primary text-white" : "text-slate-400 hover:bg-white/5 hover:text-white"
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -146,7 +146,7 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
         <div className="flex items-center gap-1 rounded-lg bg-white/5 py-1.5 pl-3 pr-1">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs text-slate-300">{me.email}</p>
-            <p className="text-[11px] font-semibold text-violet-400">{superAdmin ? "Super admin" : ROLE_LABEL[me.role]}</p>
+            <p className="text-[11px] font-semibold text-coral-peach">{superAdmin ? "Super admin" : ROLE_LABEL[me.role]}</p>
           </div>
           <button
             onClick={handleSignOut}
@@ -182,7 +182,7 @@ export default function AdminLayout({ title, subtitle, actions, permission = "ad
               </SheetContent>
             </Sheet>
             <p className="truncate font-semibold text-white">{title}</p>
-            <span className="ml-auto rounded-full bg-violet-600/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-violet-300">
+            <span className="ml-auto rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-coral-peach">
               Admin
             </span>
             <button onClick={handleSignOut} aria-label="Sign out" title="Sign out" className="rounded-md p-1.5 text-slate-300 hover:bg-white/10">
@@ -229,11 +229,11 @@ export function StatCard({
 }) {
   const tones = {
     slate: "bg-slate-100 text-slate-600",
-    violet: "bg-violet-100 text-violet-600",
+    violet: "bg-primary/10 text-coral-deep",
     green: "bg-green-100 text-green-600",
     amber: "bg-amber-100 text-amber-600",
     red: "bg-red-100 text-red-600",
-    sky: "bg-sky-100 text-sky-600",
+    sky: "bg-slate-100 text-slate-600",
   };
   return (
     <div className="rounded-xl border bg-white p-4">
@@ -258,8 +258,8 @@ const STATUS_STYLES: Record<string, string> = {
   canceled: "bg-slate-200 text-slate-600",
   incomplete: "bg-slate-200 text-slate-600",
   free: "bg-slate-100 text-slate-600",
-  comped: "bg-violet-100 text-violet-700",
-  school: "bg-indigo-100 text-indigo-700",
+  comped: "bg-primary/10 text-coral-deep",
+  school: "bg-sky-100 text-sky-700",
   suspended: "bg-red-100 text-red-700",
   deleted: "bg-slate-200 text-slate-500 line-through",
 };

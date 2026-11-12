@@ -54,7 +54,7 @@ export default function AdminAudit() {
             {rows.map((r) => (
               <li key={r._id} className="px-4 py-3 text-sm">
                 <div className="flex flex-wrap items-baseline gap-x-2">
-                  <code className="rounded bg-violet-50 px-1.5 py-0.5 text-xs font-semibold text-violet-700">{r.action}</code>
+                  <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700">{r.action}</code>
                   {r.target && <span className="font-medium">{r.target}</span>}
                   <span className="ml-auto text-xs text-muted-foreground">
                     {new Date(r.createdAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}

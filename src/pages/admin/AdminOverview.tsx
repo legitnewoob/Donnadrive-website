@@ -5,14 +5,9 @@ import {
   PoundSterling,
   Users,
   Sparkles,
-  Building2,
-  Phone,
-  CalendarCheck,
   AlertTriangle,
   Loader2,
   TrendingDown,
-  GraduationCap,
-  Undo2,
 } from "lucide-react";
 import AdminLayout, { StatCard, StatusBadge } from "@/components/admin/AdminLayout";
 import { adminApi, gbp, PLAN_LABELS, type Overview } from "@/lib/adminApi";
@@ -49,9 +44,9 @@ function Body({ data }: { data: Overview }) {
     <div className="space-y-6">
       {/* Headline numbers */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="MRR" value={gbp(revenue.mrr)} hint={`${gbp(revenue.arr)} a year · list price`} icon={PoundSterling} tone="green" />
-        <StatCard label="Paying" value={revenue.paying} hint={`${revenue.trialing} on trial · ${revenue.comped} comped`} icon={Sparkles} tone="violet" />
-        <StatCard label="Instructors" value={instructors.total} hint={`${data.signupsLast30} new in 30 days`} icon={Users} tone="sky" />
+        <StatCard label="MRR" value={gbp(revenue.mrr)} hint={`${gbp(revenue.arr)} a year · list price`} icon={PoundSterling} tone="violet" />
+        <StatCard label="Paying" value={revenue.paying} hint={`${revenue.trialing} on trial · ${revenue.comped} comped`} icon={Sparkles} />
+        <StatCard label="Instructors" value={instructors.total} hint={`${data.signupsLast30} new in 30 days`} icon={Users} />
         <StatCard
           label="Churned (30d)"
           value={revenue.canceledLast30}
@@ -73,15 +68,15 @@ function Body({ data }: { data: Overview }) {
               <AreaChart data={data.signups} margin={{ left: -20, right: 8, top: 8 }}>
                 <defs>
                   <linearGradient id="signups" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#F05442" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#F05442" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="date" tickFormatter={short} tick={{ fontSize: 11 }} interval="preserveStartEnd" minTickGap={24} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                 <Tooltip labelFormatter={(d) => short(String(d))} formatter={(v) => [v, "Sign-ups"]} />
-                <Area type="monotone" dataKey="count" stroke="#7c3aed" strokeWidth={2} fill="url(#signups)" />
+                <Area type="monotone" dataKey="count" stroke="#F05442" strokeWidth={2} fill="url(#signups)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -100,7 +95,7 @@ function Body({ data }: { data: Overview }) {
                     <span className="tabular-nums text-muted-foreground">{n}</span>
                   </div>
                   <div className="h-2 rounded-full bg-slate-100">
-                    <div className="h-2 rounded-full bg-violet-500" style={{ width: `${(n / planTotal) * 100}%` }} />
+                    <div className="h-2 rounded-full bg-primary" style={{ width: `${(n / planTotal) * 100}%` }} />
                   </div>
                 </div>
               );
@@ -133,7 +128,7 @@ function Body({ data }: { data: Overview }) {
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-slate-100">
-                  <div className="h-2 rounded-full bg-sky-500" style={{ width: `${(step.count / funnelTop) * 100}%` }} />
+                  <div className="h-2 rounded-full bg-primary" style={{ width: `${(step.count / funnelTop) * 100}%` }} />
                 </div>
               </li>
             ))}
@@ -145,26 +140,28 @@ function Body({ data }: { data: Overview }) {
           )}
         </section>
 
-        {/* Operations */}
-        <section className="grid grid-cols-2 gap-3 lg:col-span-2 lg:grid-cols-3">
-          <StatCard
-            label="Numbers free"
-            value={data.numbers.available}
-            hint={`${data.numbers.assigned} in use`}
-            icon={Phone}
-            tone={data.numbers.available < 3 ? "red" : "green"}
-          />
-          <StatCard label="Lessons next 7 days" value={data.lessons.next7Days} hint={`${data.lessons.last30Days} in the last 30`} icon={CalendarCheck} tone="sky" />
-          <StatCard label="Learners" value={data.learners} hint="Across all instructors" icon={GraduationCap} tone="violet" />
-          <StatCard label="School seats" value={data.schools.seats} hint={`${data.schools.extraSeats} paid extra`} icon={Building2} />
-          <StatCard label="On trial" value={revenue.trialing} hint={`${data.trialsEnding.length} ending this week`} icon={Sparkles} tone="amber" />
-          <StatCard
-            label="Came back"
-            value={instructors.returning}
-            hint={`${instructors.deletedLast30} deleted in 30 days · ${instructors.suspended} suspended`}
-            icon={Undo2}
-            tone="amber"
-          />
+        {/* Operations: one panel rather than a card per number */}
+        <section className="rounded-xl border bg-white p-4 lg:col-span-2">
+          <h2 className="mb-2 font-semibold">Operations</h2>
+          <dl className="grid grid-cols-2 gap-x-6 sm:grid-cols-3">
+            {[
+              { label: "Numbers free", value: data.numbers.available, hint: `${data.numbers.assigned} in use`, alert: data.numbers.available < 3 },
+              { label: "Lessons next 7 days", value: data.lessons.next7Days, hint: `${data.lessons.last30Days} in the last 30` },
+              { label: "Learners", value: data.learners, hint: "Across all instructors" },
+              { label: "School seats", value: data.schools.seats, hint: `${data.schools.extraSeats} paid extra` },
+              { label: "On trial", value: revenue.trialing, hint: `${data.trialsEnding.length} ending this week` },
+              { label: "Came back", value: instructors.returning, hint: `${instructors.deletedLast30} deleted in 30 days · ${instructors.suspended} suspended` },
+            ].map((item) => (
+              <div key={item.label} className="border-t py-3 [&:nth-child(-n+2)]:border-t-0 sm:[&:nth-child(-n+3)]:border-t-0">
+                <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{item.label}</dt>
+                <dd className={`mt-1 flex items-center gap-1.5 text-2xl font-bold tabular-nums ${item.alert ? "text-red-700" : "text-slate-900"}`}>
+                  {item.value}
+                  {item.alert && <AlertTriangle className="h-4 w-4" aria-label="Running low" />}
+                </dd>
+                <dd className="mt-0.5 text-xs text-muted-foreground">{item.hint}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
       </div>
 

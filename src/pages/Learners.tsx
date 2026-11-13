@@ -74,13 +74,6 @@ function CopyPhoneButton({ phone }: { phone: string }) {
   );
 }
 
-// Dates of birth arrive as typed, often "18072002": show those as 18/07/2002
-function formatDob(dob?: string | null) {
-  if (!dob) return "—";
-  const m = dob.match(/^(\d{2})(\d{2})(\d{4})$/);
-  return m ? `${m[1]}/${m[2]}/${m[3]}` : dob;
-}
-
 function money(n: number) {
   return `£${Number.isInteger(n) ? n : n.toFixed(2)}`;
 }
@@ -354,7 +347,6 @@ export default function Learners() {
                                 </div>
                                 {[
                                   ["Age", detail.age ?? "—"],
-                                  ["Date of birth", formatDob(detail.dob)],
                                   ["Postcode", detail.postalCode ?? "—"],
                                   ["Joined", detail.createdAt ? new Date(detail.createdAt).toLocaleDateString("en-GB") : "—"],
                                 ].map(([label, value]) => (

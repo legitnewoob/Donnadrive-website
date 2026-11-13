@@ -6,7 +6,7 @@ import { ArrowLeft, Check, Loader2, Lock, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { chooseFreePlan, createCheckoutSession, getProfile } from "@/lib/api";
-import { useDisplayPlans, gbp, type DisplayPlan, isFreePlan } from "@/lib/pricing";
+import { useDisplayPlans, gbp, type DisplayPlan, isFreePlan, foundingFreeFor, type FoundingOffer } from "@/lib/pricing";
 import { getAccess, isInstructorPage, markPlanChosen, signOut } from "@/lib/access";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
@@ -28,6 +28,8 @@ export default function PlanGate() {
   const [name, setName] = useState("");
   const [paying, setPaying] = useState<PaidSlug | null>(null);
   const [resumed, setResumed] = useState(false);
+  // Came in on a founding invite: paid plans show £0 for the free months
+  const [founding, setFounding] = useState<FoundingOffer | null>(null);
 
   const params = new URLSearchParams(search);
   // Back from checkout: the dashboard is finishing sign-in, so stay out of the way. Read
@@ -55,6 +57,7 @@ export default function PlanGate() {
       .then((p) => {
         setName(p.name?.split(" ")[0] || "");
         if (!p.needsPlan) return;
+        setFounding(p.founding ?? null);
         // ?plan= from the sign-up dialog, or a payment they didn't finish
         const asked = params.get("plan");
         const resume = (asked && ["pdi", "adi", "driving-school"].includes(asked) ? asked : p.pendingPlan) || null;
@@ -91,17 +94,18 @@ export default function PlanGate() {
         </div>
 
         {paying ? (
-          <PayStep plan={paying} resumed={resumed} />
+          <PayStep plan={paying} resumed={resumed} founding={founding} />
         ) : (
-          <ChooseStep name={name} onPaid={(slug) => { setPaying(slug); setResumed(false); }} />
+          <ChooseStep name={name} founding={founding} onPaid={(slug) => { setPaying(slug); setResumed(false); }} />
         )}
       </div>
     </div>
   );
 }
 
-function ChooseStep({ name, onPaid }: { name: string; onPaid: (slug: PaidSlug) => void }) {
+function ChooseStep({ name, founding, onPaid }: { name: string; founding: FoundingOffer | null; onPaid: (slug: PaidSlug) => void }) {
   const { plans } = useDisplayPlans();
+  const freeFor = founding ? foundingFreeFor(founding) : "";
   const [busy, setBusy] = useState(false);
 
   async function pick(plan: DisplayPlan) {
@@ -129,11 +133,20 @@ function ChooseStep({ name, onPaid }: { name: string; onPaid: (slug: PaidSlug) =
         {name ? `${name}, choose your plan` : "Choose your plan"}
       </h2>
       <p className="mt-1 text-center text-sm text-muted-foreground sm:mt-2">Your dashboard and Portal open as soon as you pick one.</p>
+      {founding && (
+        <p className="mx-auto mt-3 max-w-md rounded-xl bg-green-50 px-3 py-2 text-center text-sm text-green-900">
+          <strong>Founding offer:</strong> any paid plan is £0 for {freeFor}, then its usual price. No card needed.
+        </p>
+      )}
 
       <div className="mt-4 grid gap-2.5 sm:mt-6 md:grid-cols-3 md:gap-3">
         {plans.map((plan) => {
           const Icon = plan.icon;
-          const price = plan.sale ? gbp(plan.sale.amount) : plan.price;
+          // Founding customers pay nothing for their free months (no sale applies), then the usual price
+          const foundingPlan = !!founding && !isFreePlan(plan);
+          const price = foundingPlan ? "£0" : plan.sale ? gbp(plan.sale.amount) : plan.price;
+          const period = foundingPlan ? `for ${freeFor}` : plan.period;
+          const sale = foundingPlan ? null : plan.sale;
           return (
             <div key={plan.slug} className={`flex flex-col rounded-2xl border p-3.5 md:p-5 ${plan.popular ? "border-primary ring-1 ring-primary" : ""}`}>
               <div className="flex items-center gap-3">
@@ -149,19 +162,21 @@ function ChooseStep({ name, onPaid }: { name: string; onPaid: (slug: PaidSlug) =
                 </div>
                 {/* Phones: price beside the name, to keep each plan short */}
                 <div className="shrink-0 text-right md:hidden">
-                  {plan.sale && <p className="text-xs text-muted-foreground line-through">{plan.price}</p>}
+                  {sale && <p className="text-xs text-muted-foreground line-through">{plan.price}</p>}
                   <p className="text-xl font-black leading-tight">{price}</p>
-                  {plan.period && <p className="text-[11px] text-muted-foreground">{plan.period}</p>}
+                  {period && <p className="text-[11px] text-muted-foreground">{period}</p>}
                 </div>
               </div>
               <div className="mt-4 hidden flex-wrap items-end gap-x-1.5 md:flex">
-                {plan.sale && <span className="pb-0.5 text-sm font-semibold text-muted-foreground line-through">{plan.price}</span>}
+                {sale && <span className="pb-0.5 text-sm font-semibold text-muted-foreground line-through">{plan.price}</span>}
                 <span className="text-3xl font-black">{price}</span>
-                <span className="pb-1 text-sm text-muted-foreground">{plan.period}</span>
+                <span className="pb-1 text-sm text-muted-foreground">{period}</span>
               </div>
-              {plan.sale ? (
+              {foundingPlan ? (
+                <p className="mt-2 text-xs text-green-700 md:mt-1">Then {plan.price}{plan.period} · no card needed</p>
+              ) : sale ? (
                 <p className="mt-2 text-xs font-semibold text-rose-600 md:mt-1">
-                  {plan.sale.label}
+                  {sale.label}
                   {plan.trialDays > 0 && <span className="font-normal text-green-700 md:hidden"> · {plan.trialDays}-day free trial</span>}
                 </p>
               ) : plan.trialDays > 0 ? (
@@ -185,7 +200,7 @@ function ChooseStep({ name, onPaid }: { name: string; onPaid: (slug: PaidSlug) =
   );
 }
 
-function PayStep({ plan, resumed }: { plan: PaidSlug; resumed: boolean }) {
+function PayStep({ plan, resumed, founding }: { plan: PaidSlug; resumed: boolean; founding: FoundingOffer | null }) {
   const { plans } = useDisplayPlans();
   const p = plans.find((x) => x.slug === plan);
   const [redirecting, setRedirecting] = useState(false);
@@ -218,7 +233,9 @@ function PayStep({ plan, resumed }: { plan: PaidSlug; resumed: boolean }) {
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {resumed ? "You picked this plan last time but didn't finish paying. Pick up where you left off." : p?.subtitle}
-          {p && p.amount != null && (
+          {p && p.amount != null && founding ? (
+            <> · <strong>£0 today</strong>, free for {foundingFreeFor(founding)}, then {p.price}{p.period}. No card needed.</>
+          ) : p && p.amount != null && (
             <> · <strong>{p.sale ? gbp(p.sale.amount) : p.price}{p.period}</strong>{p.trialDays > 0 && `, ${p.trialDays} days free first`}</>
           )}
         </p>

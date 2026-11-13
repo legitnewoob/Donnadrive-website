@@ -56,6 +56,15 @@ export function usePricing() {
   return useQuery({ queryKey: ["pricing"], queryFn: fetchPricing, staleTime: 60_000, retry: 1 });
 }
 
+/** A founding customer's offer: any paid plan free for this many days, with no card */
+export type FoundingOffer = { trialDays: number };
+
+/** How long a founding customer's plan is free, e.g. "3 months" for 91 days */
+export function foundingFreeFor(offer: FoundingOffer) {
+  const months = Math.round(offer.trialDays / 30.4);
+  return months >= 1 ? `${months} month${months === 1 ? "" : "s"}` : `${offer.trialDays} days`;
+}
+
 export type DisplayPlan = (typeof builtInPlans)[number] & {
   amount: number | null;
   sale: LiveSale | null;

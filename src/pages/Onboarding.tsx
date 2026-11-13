@@ -59,6 +59,7 @@ import { Progress } from "@/components/ui/progress";
 import DashboardLayout from "@/components/DashboardLayout";
 import DashboardTour from "@/components/DashboardTour";
 import SchoolCard from "@/components/SchoolCard";
+import { foundingFreeFor, type FoundingOffer } from "@/lib/pricing";
 import {
   exchangeAuthCode,
   getProfile,
@@ -110,6 +111,7 @@ interface Profile {
     calendarTokenExpired?: boolean;
   };
   school?: SchoolInfo | null;
+  founding?: FoundingOffer | null;
 }
 
 type DashboardData = Awaited<ReturnType<typeof getDashboard>>;
@@ -471,7 +473,7 @@ export default function Onboarding({ variant }: { variant?: "school" } = {}) {
       subtitle={
         schoolInfo
           ? `${schoolInfo.role === "manager" ? "Manager" : "Instructor"} at ${schoolInfo.name || "your driving school"}`
-          : `${PLAN_LABELS[profile.plan] || profile.plan} plan${profile.subscriptionStatus === "trialing" ? " — 30-day free trial" : ""}`
+          : `${PLAN_LABELS[profile.plan] || profile.plan} plan${profile.subscriptionStatus === "trialing" ? (profile.founding ? ` — founding offer, £0 for ${foundingFreeFor(profile.founding)}` : " — free trial") : ""}`
       }
       initials={initials}
     >

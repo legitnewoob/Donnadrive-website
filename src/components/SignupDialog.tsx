@@ -11,9 +11,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { googleSignup, chooseFreePlan, getProfile, pendingInvite, WaitlistError } from "@/lib/api";
+import { googleSignup, chooseFreePlan, getProfile, pendingInvite, pendingFounding, WaitlistError } from "@/lib/api";
 import { isClosed, useLaunch, type WaitlistBlock } from "@/lib/launch";
-import { useDisplayPlans, gbp, isFreePlan, type DisplayPlan } from "@/lib/pricing";
+import { useDisplayPlans, gbp, isFreePlan, foundingFreeFor, type DisplayPlan, type FoundingOffer } from "@/lib/pricing";
 import { homePath, isSuperAdmin, setAccess, markPlanChosen } from "@/lib/access";
 
 interface Props {
@@ -30,6 +30,10 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
   const [isReturning, setIsReturning] = useState(false);
   const [userName, setUserName] = useState("");
   const [authToken, setAuthToken] = useState<string | null>(null);
+  // Signed up on a founding invite: paid plans are £0 for the free months, not the usual trial
+  const [signedUpFounding, setSignedUpFounding] = useState<FoundingOffer | null>(null);
+  const founding = signedUpFounding ?? pendingFounding();
+  const freeFor = founding ? foundingFreeFor(founding) : "";
   const navigate = useNavigate();
   const { plans, trialDays } = useDisplayPlans();
   // While the waitlist is on this dialog is only for signing in (or using an invite)
@@ -46,6 +50,7 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
             window.dispatchEvent(new Event("dd_auth_change"));
             // Signed in earlier but closed the plan picker: pick one now
             if (profile.needsPlan) {
+              setSignedUpFounding(profile.founding ?? null);
               setAuthToken(existingToken);
               setStep("plan");
               onOpenChange(true);
@@ -82,6 +87,7 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
         if (result.apiKey) localStorage.setItem("dd_apiKey", result.apiKey);
         setAccess({ staffRole: null, superAdmin: false, ...result.access, needsPlan: !!result.needsPlan, school: result.school ?? null });
         setAuthToken(result.token);
+        setSignedUpFounding(result.founding ?? null);
         window.dispatchEvent(new Event("dd_auth_change"));
 
         // Super admins aren't customers: straight to the admin panel, no plan to pick
@@ -168,6 +174,7 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
     setIsReturning(false);
     setUserName("");
     setAuthToken(null);
+    setSignedUpFounding(null);
     onOpenChange(false);
   };
 
@@ -183,7 +190,10 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
           </DialogTitle>
           <DialogDescription className="mt-1 text-sm sm:mt-2 sm:text-base">
             {step === "signin" && (signInOnly ? "Sign in with Google to open your dashboard." : "Sign in with Google to continue.")}
-            {step === "plan" && "Paid plans start with a free trial. No contracts, cancel anytime."}
+            {step === "plan" &&
+              (founding
+                ? `Founding offer: paid plans are £0 for ${freeFor}, then the usual price. No card needed.`
+                : "Paid plans start with a free trial. No contracts, cancel anytime.")}
             {step === "success" && (isReturning
               ? `Redirecting to ${isSuperAdmin() ? "the admin panel" : "your dashboard"}...`
               : `Your account is ready. Redirecting to ${isSuperAdmin() ? "the admin panel" : "your dashboard"}...`
@@ -215,11 +225,15 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
                     ? "Use the Google account you signed up with."
                     : "We use Google to verify your identity. You'll choose a plan next."}
                 </p>
-                {trialDays > 0 && !signInOnly && (
+                {founding && !signInOnly ? (
+                  <p className="text-center text-xs font-semibold text-green-700">
+                    🎉 Founding offer: any paid plan is £0 for {freeFor}. No card needed.
+                  </p>
+                ) : trialDays > 0 && !signInOnly ? (
                   <p className="text-center text-xs font-semibold text-green-700">
                     🎉 Paid plans start with a free trial. Cancel anytime.
                   </p>
-                )}
+                ) : null}
               </div>
 
               <Button
@@ -255,6 +269,7 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
             >
               {plans.map((plan) => {
                 const Icon = plan.icon;
+                const foundingPlan = !!founding && !isFreePlan(plan);
                 return (
                   <button
                     key={plan.slug}
@@ -281,12 +296,23 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
                       <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                         {plan.subtitle}
                       </p>
-                      {plan.trialDays > 0 && (
+                      {foundingPlan ? (
+                        <p className="mt-1 text-xs font-semibold text-green-700">
+                          £0 for {freeFor}<span className="hidden sm:inline"> · no card needed</span>
+                        </p>
+                      ) : plan.trialDays > 0 && (
                         <p className="mt-1 text-xs font-semibold text-green-700">
                           {plan.trialDays}-day free trial<span className="hidden sm:inline"> · cancel anytime</span>
                         </p>
                       )}
                     </div>
+                    {foundingPlan ? (
+                      <div className="text-right shrink-0">
+                        <p className="text-xl sm:text-2xl font-black text-slate-900">£0</p>
+                        <p className="text-xs text-muted-foreground">for {freeFor}</p>
+                        <p className="text-xs text-muted-foreground">then {plan.price}{plan.period}</p>
+                      </div>
+                    ) : (
                     <div className="text-right shrink-0">
                       {plan.sale && (
                         <p className="text-xs text-muted-foreground line-through">{plan.price}</p>
@@ -300,6 +326,7 @@ export default function SignupDialog({ open, onOpenChange, onWaitlist }: Props) 
                         </p>
                       )}
                     </div>
+                    )}
                   </button>
                 );
               })}

@@ -1,8 +1,11 @@
 import { setAccess, type SchoolInfo } from "./access";
 import { referralCode, type WaitlistBlock } from "./launch";
+import type { FoundingOffer } from "./pricing";
 
 // A launch invite opened on /join, used by the next Google sign-up
 const INVITE_KEY = "dd_invite";
+// Its founding offer's free days, when it's a founding invite
+const FOUNDING_KEY = "dd_invite_founding";
 export const pendingInvite = () => {
   try {
     return sessionStorage.getItem(INVITE_KEY);
@@ -10,16 +13,28 @@ export const pendingInvite = () => {
     return null;
   }
 };
-export const setPendingInvite = (token: string) => {
+export const setPendingInvite = (token: string, founding: FoundingOffer | null = null) => {
   try {
     sessionStorage.setItem(INVITE_KEY, token);
+    if (founding) sessionStorage.setItem(FOUNDING_KEY, String(founding.trialDays));
+    else sessionStorage.removeItem(FOUNDING_KEY);
   } catch {
     /* private mode */
+  }
+};
+/** The founding offer of the invite opened on /join, before they've signed up */
+export const pendingFounding = (): FoundingOffer | null => {
+  try {
+    const days = Number(sessionStorage.getItem(FOUNDING_KEY));
+    return pendingInvite() && days > 0 ? { trialDays: days } : null;
+  } catch {
+    return null;
   }
 };
 const clearPendingInvite = () => {
   try {
     sessionStorage.removeItem(INVITE_KEY);
+    sessionStorage.removeItem(FOUNDING_KEY);
   } catch {
     /* private mode */
   }
@@ -58,6 +73,8 @@ export async function googleSignup(credential: string, plan: string, opts: { inv
     instructor: { name: string; email: string; plan: string; subscriptionStatus: string | null };
     access?: { staffRole: "admin" | "support" | null; superAdmin: boolean; permissions: string[] };
     needsPlan?: boolean;
+    /** Came in on a founding invite (only while they still need to pick a plan) */
+    founding?: FoundingOffer | null;
     school?: SchoolInfo | null;
     isNew: boolean;
   };
@@ -131,6 +148,8 @@ export async function getProfile(token: string) {
     needsPlan?: boolean;
     /** Picked a paid plan but didn't finish paying */
     pendingPlan?: string | null;
+    /** Came in on a founding invite (while picking a plan or in the free months) */
+    founding?: FoundingOffer | null;
   };
 }
 

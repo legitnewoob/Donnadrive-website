@@ -7,6 +7,7 @@ import Confetti from "@/components/launch/Confetti";
 import { useLaunchActions } from "@/components/launch/LaunchProvider";
 import { setPendingInvite } from "@/lib/api";
 import { getInviteInfo, type InviteInfo } from "@/lib/launch";
+import { foundingFreeFor, type FoundingOffer } from "@/lib/pricing";
 
 const longDate = (d: string) => new Date(d).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
@@ -28,7 +29,7 @@ export default function InviteLanding() {
       getInviteInfo(token)
         .then((i) => {
           setInfo(i);
-          if (i.valid) setPendingInvite(token);
+          if (i.valid) setPendingInvite(token, i.founding && i.foundingTrialDays ? { trialDays: i.foundingTrialDays } : null);
         })
         .catch(() => setInfo({ valid: false }));
     return () => {
@@ -37,6 +38,9 @@ export default function InviteLanding() {
   }, [token]);
 
   const first = (info?.name || "").split(" ")[0];
+  // Older servers only say it's a founding invite: that was 3 months
+  const founding: FoundingOffer | null = info?.founding ? { trialDays: info.foundingTrialDays || 91 } : null;
+  const freeFor = founding ? foundingFreeFor(founding) : "";
 
   return (
     <div className="min-h-screen">
@@ -55,15 +59,15 @@ export default function InviteLanding() {
               </div>
               <h1 className="text-3xl font-black tracking-tight text-slate-900">You're in{first ? `, ${first}` : ""} 🎉</h1>
               <p className="mx-auto mt-2 max-w-sm text-muted-foreground">
-                {info.founding
-                  ? "Sign in with Google, pick your plan, and get 3 months completely free — no card needed."
+                {founding
+                  ? `Sign in with Google, pick your plan, and it's £0 for ${freeFor}. No card needed.`
                   : "Your spot on Donna Drive is ready. Sign in with Google, pick your plan and Donna will be answering your learners on WhatsApp in minutes."}
               </p>
-              {info.founding ? (
+              {founding ? (
                 <div className="mx-auto mt-5 flex max-w-sm items-center gap-3 rounded-2xl border border-purple-200 bg-purple-50 p-3 text-left">
                   <Sparkles className="h-6 w-6 shrink-0 text-purple-700" />
                   <p className="text-sm text-purple-900">
-                    <strong>3 months free</strong> — no card required. After your free period, you'll be invited to subscribe to continue.
+                    <strong>Founding offer: £0 for {freeFor}</strong>, no card needed. After that it's your plan's usual monthly price.
                   </p>
                 </div>
               ) : info.promo ? (

@@ -208,6 +208,8 @@ export interface InviteInfo {
   email?: string;
   expiresAt?: string;
   founding?: boolean;
+  /** A founding invite's free days */
+  foundingTrialDays?: number | null;
   promo?: { code: string; label: string } | null;
 }
 

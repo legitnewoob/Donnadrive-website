@@ -302,8 +302,19 @@ export default function SlotPlanner({
                 <Switch checked={list.length > 0} onCheckedChange={(on) => (toggleDay(key, on), on && setOpenDay(key))} aria-label={`Work on ${long}`} />
                 <button type="button" onClick={() => setOpenDay(open ? null : key)} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-2 py-1 text-left">
                   <span className={`w-9 shrink-0 text-sm font-medium ${list.length ? "text-slate-800" : "text-slate-400"}`}>{label}</span>
-                  <span className={`min-w-0 flex-1 truncate text-sm ${list.length ? "text-slate-600" : "text-slate-400"}`}>
-                    {list.length ? `${list[0].start} – ${toTime(Math.max(...list.map(endOf)))} · ${list.length} slot${list.length === 1 ? "" : "s"}` : "Day off"}
+                  {/* Phones: the slot count goes under the times rather than being cut off */}
+                  <span className={`flex min-w-0 flex-1 flex-col text-sm sm:flex-row sm:gap-1 ${list.length ? "text-slate-600" : "text-slate-400"}`}>
+                    {list.length ? (
+                      <>
+                        <span className="whitespace-nowrap">{list[0].start} – {toTime(Math.max(...list.map(endOf)))}</span>
+                        <span className="whitespace-nowrap text-xs text-slate-500 sm:text-sm sm:text-slate-600">
+                          <span className="hidden sm:inline">· </span>
+                          {list.length} slot{list.length === 1 ? "" : "s"}
+                        </span>
+                      </>
+                    ) : (
+                      "Day off"
+                    )}
                   </span>
                   {warnings > 0 && (
                     <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">

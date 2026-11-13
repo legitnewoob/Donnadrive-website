@@ -179,13 +179,13 @@ export default function LessonTypes() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {types.map((t) => (
                 <Card key={t._id} className={`relative ${!t.active ? "opacity-60" : ""}`}>
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-slate-900 truncate">{t.name}</h3>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-slate-900 break-words">{t.name}</h3>
                         <p className="text-2xl font-bold text-slate-900 mt-1">&pound;{t.price}</p>
                         {t.durationMin ? (
                           <p className="mt-1 inline-flex items-center gap-1 text-sm text-slate-600">

@@ -1319,7 +1319,11 @@ function DayHoursRow({
       </div>
       {hours ? (
         <>
-          <div className="flex min-w-0 flex-1 items-center gap-2">
+          {/* Phones: the total sits on the day's line and the times get a full-width line of their own */}
+          <span className={`ml-auto text-xs sm:order-last sm:ml-0 ${length < 30 ? "text-red-600" : "text-slate-500"}`}>
+            {length < 30 ? "Ends too early" : `${Math.floor(length / 60)}h${length % 60 ? ` ${length % 60}m` : ""}`}
+          </span>
+          <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:flex-1">
             <Input
               type="time"
               step={300}
@@ -1339,9 +1343,6 @@ function DayHoursRow({
               className="min-w-0 flex-1 sm:w-32 sm:flex-none"
             />
           </div>
-          <span className={`text-xs ${length < 30 ? "text-red-600" : "text-slate-500"}`}>
-            {length < 30 ? "Ends too early" : `${Math.floor(length / 60)}h${length % 60 ? ` ${length % 60}m` : ""}`}
-          </span>
         </>
       ) : (
         <span className="text-sm text-slate-400">Day off</span>

@@ -99,13 +99,13 @@ const SERIES = ["#f2584a", "#0ea5e9", "#8b5cf6", "#10b981", "#f59e0b", "#ec4899"
 
 /** "+12%" against the previous period; `goodWhenDown` for cancellations. */
 function Change({ value, goodWhenDown = false }: { value: number | null; goodWhenDown?: boolean }) {
-  if (value === null) return <span className="text-xs text-slate-400">new</span>;
-  if (value === 0) return <span className="text-xs text-slate-400">no change</span>;
+  if (value === null) return <span className="whitespace-nowrap text-xs text-slate-400">new</span>;
+  if (value === 0) return <span className="whitespace-nowrap text-xs text-slate-400">no change</span>;
   const up = value > 0;
   const good = goodWhenDown ? !up : up;
   const Icon = up ? ArrowUpRight : ArrowDownRight;
   return (
-    <span className={`inline-flex items-center text-xs font-medium ${good ? "text-green-700" : "text-red-600"}`}>
+    <span className={`inline-flex items-center whitespace-nowrap text-xs font-medium ${good ? "text-green-700" : "text-red-600"}`}>
       <Icon className="h-3.5 w-3.5" />
       {Math.abs(value)}%
     </span>
@@ -130,7 +130,8 @@ function Stat({
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="flex items-center justify-between gap-2">
+        {/* On narrow tiles the change drops under the label rather than squashing it */}
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
           <span className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
             <Icon className="h-3.5 w-3.5" /> {label}
           </span>

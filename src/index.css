@@ -115,6 +115,21 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* iOS Safari gives date/time inputs a fixed native width that ignores the
+     box they're in, so they spill out of narrow rows. Dropping the native
+     appearance lets them size like other inputs; the picker still opens. */
+  input[type="time"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="month"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+  }
+  input::-webkit-date-and-time-value {
+    text-align: left;
+  }
 }
 
 /* Pause the feature-card marquee whenever any card in it is hovered —
